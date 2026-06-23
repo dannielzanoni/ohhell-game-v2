@@ -92,7 +92,17 @@ export function NavBar({ isCollapsed, onToggle }) {
                 )
               }
             >
-              <Icon className="size-4 shrink-0" />
+              {Icon ? (
+                <Icon className="size-4 shrink-0" />
+              ) : item.primeIcon ? (
+                <i className={cn(item.primeIcon, 'shrink-0 text-base')} />
+              ) : (
+                <img
+                  src={item.iconSrc}
+                  alt=""
+                  className="size-4 shrink-0 object-contain"
+                />
+              )}
               {!isCollapsed && <span>{item.label}</span>}
             </NavLink>
           );
