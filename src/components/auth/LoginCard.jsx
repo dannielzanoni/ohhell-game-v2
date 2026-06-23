@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Pencil, UserRound } from 'lucide-react';
+import { AvatarEditModal } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
@@ -31,55 +33,77 @@ function GoogleLogo() {
 }
 
 export function LoginCard({ className }) {
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+
   return (
-    <section
-      className={cn(
-        'rounded-lg border border-border bg-card p-6 shadow-sm',
-        className,
-      )}
-    >
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          aria-label="Jogar como guest"
-          className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
-        >
-          <UserRound className="size-7 text-muted-foreground transition group-hover:text-primary-foreground" />
-          <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
-            <Pencil className="size-3" />
-          </span>
-        </button>
-        <span className="text-base font-semibold text-foreground">
-          Jogar como guest
-        </span>
-      </div>
-
-      <label className="mt-6 block">
-        <span className="text-sm font-medium text-muted-foreground">Nick</span>
-        <input
-          type="text"
-          name="nickname"
-          placeholder="Digite seu nick"
-          className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
-        />
-      </label>
-
-      <div className="my-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          ou
-        </span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="h-11 w-full cursor-pointer gap-3"
+    <>
+      <section
+        className={cn(
+          'rounded-lg border border-border bg-card p-6 shadow-sm',
+          className,
+        )}
       >
-        <GoogleLogo />
-        Login com Google
-      </Button>
-    </section>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            aria-label="Editar avatar guest"
+            className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
+            onClick={() => setIsAvatarModalOpen(true)}
+          >
+            {selectedAvatar ? (
+              <img
+                src={selectedAvatar.src}
+                alt=""
+                className="absolute inset-0 size-full rounded-full object-cover"
+              />
+            ) : (
+              <UserRound className="size-7 text-muted-foreground transition group-hover:text-primary-foreground" />
+            )}
+            <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+              <Pencil className="size-3" />
+            </span>
+          </button>
+          <span className="text-base font-semibold text-foreground">
+            Jogar como guest
+          </span>
+        </div>
+
+        <label className="mt-6 block">
+          <span className="text-sm font-medium text-muted-foreground">Nick</span>
+          <input
+            type="text"
+            name="nickname"
+            maxLength={24}
+            placeholder="Digite seu nick"
+            className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
+          />
+        </label>
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            ou
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full cursor-pointer gap-3"
+        >
+          <GoogleLogo />
+          Login com Google
+        </Button>
+      </section>
+
+      <AvatarEditModal
+        isOpen={isAvatarModalOpen}
+        selectedAvatar={selectedAvatar}
+        onClose={() => setIsAvatarModalOpen(false)}
+        onSelect={setSelectedAvatar}
+      />
+    </>
   );
 }
