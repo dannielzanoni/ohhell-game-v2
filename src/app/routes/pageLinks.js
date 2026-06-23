@@ -2,15 +2,15 @@ import { BookOpen, Crown, Play, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
-    label: 'Game',
+    label: 'Create a Game',
     path: '/game',
-    description: 'Tela principal da partida.',
+    description: 'Create a Game and invite your friends to play.',
     icon: Play,
   },
   {
     label: 'Rooms',
     path: '/rooms',
-    description: 'Criacao e gerenciamento de salas.',
+    description: 'View and enter the rooms.',
     icon: Users,
   },
   {
