@@ -1,29 +1,19 @@
 import {
-  BookOpen,
-  Code2,
-  Crown,
   Home,
-  Menu,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Play,
   Sun,
-  Users,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
+import { pageLinks } from '@/app/routes/pageLinks.js';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
 const navItems = [
   { label: 'Home', path: '/', icon: Home },
-  { label: 'Game', path: '/game', icon: Play },
-  { label: 'Rooms', path: '/rooms', icon: Users },
-  { label: 'View Rooms', path: '/view-rooms', icon: Menu },
-  { label: 'Leaderboard', path: '/leaderboard', icon: Crown },
-  { label: 'How To Play', path: '/how-to-play', icon: BookOpen },
-  { label: 'Github', path: '/github', icon: Code2 },
+  ...pageLinks,
 ];
 
 export function NavBar({ isCollapsed, onToggle }) {
@@ -63,6 +53,7 @@ export function NavBar({ isCollapsed, onToggle }) {
             variant="ghost"
             size="icon"
             aria-label="Minimizar menu"
+            className="cursor-pointer"
             onClick={onToggle}
           >
             <PanelLeftClose />
@@ -74,9 +65,9 @@ export function NavBar({ isCollapsed, onToggle }) {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="default"
           aria-label="Expandir menu"
-          className="mx-auto mt-4"
+          className="mx-3 mt-4 h-11 w-auto cursor-pointer justify-center px-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={onToggle}
         >
           <PanelLeftOpen />
@@ -112,7 +103,7 @@ export function NavBar({ isCollapsed, onToggle }) {
         <Button
           type="button"
           variant="outline"
-          className={cn('w-full', isCollapsed && 'px-0')}
+          className={cn('w-full cursor-pointer', isCollapsed && 'px-0')}
           title={isCollapsed ? 'Alternar tema' : undefined}
           aria-label="Alternar tema"
           onClick={toggleTheme}
