@@ -73,20 +73,20 @@ export function Home() {
               Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!
             </p>
 
-            <section className="mt-5 rounded-lg border border-border bg-background/55 p-4 shadow-lg shadow-black/10 backdrop-blur lg:mt-4 lg:p-3">
+            <section className="mt-4 rounded-lg border border-border bg-background/55 p-4 shadow-lg shadow-black/10 backdrop-blur lg:mt-4 lg:p-3">
               <div className="grid gap-4 md:grid-cols-2 lg:gap-3">
                 {cardGroups.map((group) => (
                   <div
                     key={group.title}
                     className="overflow-hidden px-4 pt-1"
                   >
-                    <div className="flex h-[8.5rem] items-start justify-center px-2 pt-2 md:h-36 lg:h-28 xl:h-32">
+                    <div className="flex h-[8.5rem] items-start justify-center px-2 pt-2 md:h-34 lg:h-28 xl:h-32">
                       {group.cards.map((card, index) => (
                         <img
                           key={card.label}
                           src={card.src}
                           alt={card.label}
-                          className="relative h-[12.65rem] w-[8.05rem] shrink-0 rounded-[8%] border border-black bg-card object-cover shadow-xl transition duration-200 hover:z-20 hover:-translate-y-5 hover:rotate-0 hover:scale-105 hover:shadow-2xl lg:h-[10.35rem] lg:w-[6.9rem] xl:h-[11.5rem] xl:w-[7.5rem]"
+                          className="relative mt-1 h-[12.65rem] w-[8.05rem] shrink-0 rounded-[8%] border border-black bg-card object-cover shadow-xl transition duration-200 hover:z-20 hover:-translate-y-5 hover:rotate-0 hover:scale-105 hover:shadow-2xl lg:h-[10.35rem] lg:w-[6.9rem] xl:h-[11.5rem] xl:w-[7.5rem]"
                           style={{
                             marginLeft: index === 0 ? 0 : '-2.75rem',
                             rotate: `${(index - 1) * 4.4}deg`,

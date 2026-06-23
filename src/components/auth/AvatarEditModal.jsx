@@ -31,7 +31,7 @@ function toAvatarList(entries, type) {
     .sort((first, second) => first.order - second.order);
 }
 
-const avatarGroups = [
+export const avatarGroups = [
   {
     title: 'Avatares',
     avatars: toAvatarList(pngAvatars, 'png'),
@@ -41,6 +41,8 @@ const avatarGroups = [
     avatars: toAvatarList(gifAvatars, 'gif'),
   },
 ];
+
+export const avatars = avatarGroups.flatMap((group) => group.avatars);
 
 export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
   useEffect(() => {

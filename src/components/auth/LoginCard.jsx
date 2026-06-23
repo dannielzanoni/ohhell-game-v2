@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pencil, UserRound } from 'lucide-react';
-import { AvatarEditModal } from './AvatarEditModal.jsx';
+import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { cn } from '@/lib/utils.js';
 
 function GoogleLogo() {
@@ -34,7 +35,34 @@ function GoogleLogo() {
 
 export function LoginCard({ className }) {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [selectedAvatar, setSelectedAvatar] = useState(() => {
+    const savedAvatarId = localStorage.getItem('ohhell_guest_avatar_id');
+
+    return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
+  });
+  const [nickname, setNickname] = useState(() => {
+    return localStorage.getItem('ohhell_guest_nickname') || '';
+  });
+  const [savedNickname, setSavedNickname] = useState(() => {
+    return localStorage.getItem('ohhell_guest_nickname') || '';
+  });
+
+  const saveNickname = () => {
+    const nextNickname = nickname.trim();
+
+    localStorage.setItem('ohhell_guest_nickname', nextNickname);
+    setNickname(nextNickname);
+    setSavedNickname(nextNickname);
+  };
+
+  const trimmedNickname = nickname.trim();
+  const canSaveNickname = trimmedNickname !== savedNickname;
+  const displayNickname = trimmedNickname || savedNickname || 'Guest';
+  const shouldAnimateNickname = Boolean(savedNickname) && !canSaveNickname;
+  const selectAvatar = (avatar) => {
+    localStorage.setItem('ohhell_guest_avatar_id', avatar.id);
+    setSelectedAvatar(avatar);
+  };
 
   return (
     <>
@@ -44,40 +72,81 @@ export function LoginCard({ className }) {
           className,
         )}
       >
+        <span className="mb-4 block w-full text-center text-xs font-semibold leading-5 text-muted-foreground">
+          Jogar como Guest
+        </span>
         <div className="flex items-center gap-4">
-          <button
-            type="button"
-            aria-label="Editar avatar guest"
-            className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
-            onClick={() => setIsAvatarModalOpen(true)}
-          >
-            {selectedAvatar ? (
-              <img
-                src={selectedAvatar.src}
-                alt=""
-                className="absolute inset-0 size-full rounded-full object-cover"
-              />
-            ) : (
-              <UserRound className="size-7 text-muted-foreground transition group-hover:text-primary-foreground" />
-            )}
-            <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
-              <Pencil className="size-3" />
+          <div className="flex w-20 shrink-0 flex-col items-center gap-2">
+            <button
+              type="button"
+              aria-label="Editar avatar guest"
+              className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
+              onClick={() => setIsAvatarModalOpen(true)}
+            >
+              {selectedAvatar ? (
+                <img
+                  src={selectedAvatar.src}
+                  alt=""
+                  className="absolute inset-0 size-full rounded-full object-cover"
+                />
+              ) : (
+                <UserRound className="size-7 text-muted-foreground transition group-hover:text-primary-foreground" />
+              )}
+              <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+                <Pencil className="size-3" />
+              </span>
+            </button>
+            <span className="text-center text-xs font-semibold leading-4 text-muted-foreground">
+              Selecione seu Avatar
             </span>
-          </button>
-          <span className="text-base font-semibold text-foreground">
-            Jogar como guest
-          </span>
+          </div>
+
+          <div className="min-w-0 flex-1 self-start pt-1 mt-2">
+            <div className="min-h-8 truncate text-2xl font-medium leading-none text-foreground">
+              {shouldAnimateNickname ? (
+                <TypingAnimation
+                  key={savedNickname}
+                  words={[savedNickname]}
+                  typeSpeed={45}
+                  startOnView={false}
+                  className="font-medium leading-none tracking-tight"
+                />
+              ) : (
+                <span>{displayNickname}</span>
+              )}
+            </div>
+          </div>
         </div>
 
         <label className="mt-6 block">
           <span className="text-sm font-medium text-muted-foreground">Nick</span>
-          <input
-            type="text"
-            name="nickname"
-            maxLength={24}
-            placeholder="Digite seu nick"
-            className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
-          />
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              name="nickname"
+              maxLength={24}
+              value={nickname}
+              placeholder="Digite seu nick"
+              className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
+              onChange={(event) => setNickname(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  saveNickname();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Salvar nick"
+              disabled={!canSaveNickname}
+              className="h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              onClick={saveNickname}
+            >
+              <i className="pi pi-save text-base" />
+            </Button>
+          </div>
         </label>
 
         <div className="my-6 flex items-center gap-3">
@@ -102,7 +171,7 @@ export function LoginCard({ className }) {
         isOpen={isAvatarModalOpen}
         selectedAvatar={selectedAvatar}
         onClose={() => setIsAvatarModalOpen(false)}
-        onSelect={setSelectedAvatar}
+        onSelect={selectAvatar}
       />
     </>
   );
