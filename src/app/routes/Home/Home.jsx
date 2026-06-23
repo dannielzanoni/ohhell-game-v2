@@ -8,6 +8,7 @@ import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
+import { cn } from '@/lib/utils.js';
 import { pageLinks } from '../pageLinks.js';
 
 const cardGroups = [
@@ -115,7 +116,17 @@ export function Home() {
                 >
                   <span className="flex items-center gap-3">
                     <span className="grid size-11 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground transition group-hover:bg-primary group-hover:text-primary-foreground lg:size-9">
-                      <Icon className="size-5 lg:size-4" />
+                      {Icon ? (
+                        <Icon className="size-5 lg:size-4" />
+                      ) : page.primeIcon ? (
+                        <i className={cn(page.primeIcon, 'text-lg lg:text-base')} />
+                      ) : (
+                        <img
+                          src={page.iconSrc}
+                          alt=""
+                          className="size-5 object-contain lg:size-4"
+                        />
+                      )}
                     </span>
                     <span className="text-xl font-bold text-foreground lg:text-base">
                       {page.label}

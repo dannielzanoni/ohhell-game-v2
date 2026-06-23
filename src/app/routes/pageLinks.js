@@ -1,4 +1,4 @@
-import { BookOpen, Code2, Crown, Menu, Play, Users } from 'lucide-react';
+import { BookOpen, Crown, Play, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
@@ -12,12 +12,6 @@ export const pageLinks = [
     path: '/rooms',
     description: 'Criacao e gerenciamento de salas.',
     icon: Users,
-  },
-  {
-    label: 'View Rooms',
-    path: '/view-rooms',
-    description: 'Lista de salas disponiveis.',
-    icon: Menu,
   },
   {
     label: 'Leaderboard',
@@ -35,6 +29,12 @@ export const pageLinks = [
     label: 'Github',
     path: '/github',
     description: 'Links e informacoes do repositorio.',
-    icon: Code2,
+    primeIcon: 'pi pi-github',
+  },
+  {
+    label: 'Settings',
+    path: '/settings',
+    description: 'Preferencias e configuracoes do jogo.',
+    primeIcon: 'pi pi-cog',
   },
 ];
