@@ -1,9 +1,27 @@
+import { useState } from 'react';
 import { Home, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 
+const lifeOptions = [1, 2, 3, 4, 5].map((life) => ({
+  label: String(life),
+  value: String(life),
+}));
+
 export function Game() {
+  const [lives, setLives] = useState('5');
+
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0 -z-20 overflow-hidden bg-black">
@@ -33,37 +51,46 @@ export function Game() {
           </p>
         </div>
 
-        <section className="rounded-lg border border-border bg-card/85 p-6 shadow-lg shadow-black/10 backdrop-blur md:p-8">
+        <section className="mx-auto w-full max-w-md min-w-0 rounded-lg border border-border bg-card/85 p-5 shadow-lg shadow-black/10 backdrop-blur md:p-6">
           <div>
             <h2 className="text-2xl font-bold">Game Configurations</h2>
           </div>
 
-          <div className="mt-8 grid gap-7">
-            <label className="block">
+          <div className="mt-6 grid gap-5">
+            <div className="block min-w-0">
               <span className="text-sm font-semibold text-foreground">
                 Numero de Vidas
               </span>
-              <br></br>
-              <select
-                name="lives"
-                defaultValue="5"
-                className="mt-3 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/40 md:max-w-xs"
+              <Combobox
+                data={lifeOptions}
+                type="vida"
+                value={lives}
+                onValueChange={setLives}
               >
-                {[1, 2, 3, 4, 5].map((life) => (
-                  <option key={life} value={life}>
-                    {life}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
+                <ComboboxContent className="rounded-xl border-border bg-popover">
+                  <ComboboxList>
+                    <ComboboxEmpty>Nenhuma opcao encontrada.</ComboboxEmpty>
+                    <ComboboxGroup>
+                      {lifeOptions.map((option) => (
+                        <ComboboxItem
+                          key={option.value}
+                          value={option.value}
+                          data-checked={lives === option.value}
+                        >
+                          {option.label}
+                        </ComboboxItem>
+                      ))}
+                    </ComboboxGroup>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background/55 p-4 md:max-w-xl">
-              <div>
+            <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
                   Sala publica
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Recurso reservado para uma etapa futura.
                 </p>
               </div>
               <button
@@ -76,10 +103,10 @@ export function Game() {
               </button>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2">
               <InteractiveHoverButton
                 type="button"
-                className="h-12 w-full border-border text-base md:w-56"
+                className="h-12 w-full min-w-0 border-border text-base"
               >
                 <span className="inline-flex items-center gap-2">
                   <Play className="size-4" />
@@ -89,7 +116,7 @@ export function Game() {
 
               <Link
                 to="/"
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background md:w-56"
+                className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Home className="size-4" />
                 Home
