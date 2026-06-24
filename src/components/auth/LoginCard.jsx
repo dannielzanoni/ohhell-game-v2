@@ -4,6 +4,7 @@ import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { cn } from '@/lib/utils.js';
+import { authService } from '@/services/authService.js';
 
 function GoogleLogo() {
   return (
@@ -40,28 +41,64 @@ export function LoginCard({ className }) {
 
     return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
   });
+  const [savedAvatarId, setSavedAvatarId] = useState(() => {
+    return localStorage.getItem('ohhell_guest_avatar_id') || '';
+  });
   const [nickname, setNickname] = useState(() => {
     return localStorage.getItem('ohhell_guest_nickname') || '';
   });
   const [savedNickname, setSavedNickname] = useState(() => {
     return localStorage.getItem('ohhell_guest_nickname') || '';
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const saveNickname = () => {
+  const saveGuestProfile = async () => {
     const nextNickname = nickname.trim();
+    const nextAvatarId = selectedAvatar?.id || '';
+    const picture = selectedAvatar?.picture || '';
+    const payload = {
+      nickname: nextNickname || 'Guest',
+      picture,
+    };
 
-    localStorage.setItem('ohhell_guest_nickname', nextNickname);
-    setNickname(nextNickname);
-    setSavedNickname(nextNickname);
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      if (authService.getAuthToken()) {
+        await authService.updateProfile(payload);
+      } else {
+        await authService.signUp(payload);
+      }
+
+      localStorage.setItem('ohhell_guest_nickname', nextNickname);
+      if (nextAvatarId) {
+        localStorage.setItem('ohhell_guest_avatar_id', nextAvatarId);
+      } else {
+        localStorage.removeItem('ohhell_guest_avatar_id');
+      }
+
+      setNickname(nextNickname);
+      setSavedNickname(nextNickname);
+      setSavedAvatarId(nextAvatarId);
+    } catch (error) {
+      setSaveError(error.message || 'Nao foi possivel salvar o perfil.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const trimmedNickname = nickname.trim();
-  const canSaveNickname = trimmedNickname !== savedNickname;
+  const selectedAvatarId = selectedAvatar?.id || '';
+  const canSaveProfile =
+    trimmedNickname !== savedNickname || selectedAvatarId !== savedAvatarId;
   const displayNickname = trimmedNickname || savedNickname || 'Guest';
-  const shouldAnimateNickname = Boolean(savedNickname) && !canSaveNickname;
+  const shouldAnimateNickname = Boolean(savedNickname) && !canSaveProfile;
   const selectAvatar = (avatar) => {
     localStorage.setItem('ohhell_guest_avatar_id', avatar.id);
     setSelectedAvatar(avatar);
+    setSaveError('');
   };
 
   return (
@@ -128,10 +165,13 @@ export function LoginCard({ className }) {
               value={nickname}
               placeholder="Digite seu nick"
               className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
-              onChange={(event) => setNickname(event.target.value)}
+              onChange={(event) => {
+                setNickname(event.target.value);
+                setSaveError('');
+              }}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  saveNickname();
+                if (event.key === 'Enter' && canSaveProfile && !isSaving) {
+                  void saveGuestProfile();
                 }
               }}
             />
@@ -140,14 +180,24 @@ export function LoginCard({ className }) {
               variant="outline"
               size="icon"
               aria-label="Salvar nick"
-              disabled={!canSaveNickname}
+              disabled={!canSaveProfile || isSaving}
               className="h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed"
-              onClick={saveNickname}
+              onClick={() => {
+                void saveGuestProfile();
+              }}
             >
-              <i className="pi pi-save text-base" />
+              <i
+                className={`pi ${
+                  isSaving ? 'pi-spin pi-spinner' : 'pi-save'
+                } text-base`}
+              />
             </Button>
           </div>
         </label>
+
+        {saveError ? (
+          <p className="mt-3 text-sm text-destructive">{saveError}</p>
+        ) : null}
 
         <div className="my-6 flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />

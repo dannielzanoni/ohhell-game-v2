@@ -24,6 +24,7 @@ function toAvatarList(entries, type) {
     .map(([path, src]) => ({
       id: `${type}-${avatarNumber(path)}`,
       label: `${type.toUpperCase()} ${avatarNumber(path)}`,
+      picture: path,
       src,
       type,
       order: avatarNumber(path),
