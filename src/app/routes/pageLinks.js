@@ -3,7 +3,7 @@ import { BookOpen, Crown, Play, Users } from 'lucide-react';
 export const pageLinks = [
   {
     label: 'Create a Game',
-    path: '/game',
+    path: '/create-game',
     description: 'Create a Game and invite your friends to play.',
     icon: Play,
   },
