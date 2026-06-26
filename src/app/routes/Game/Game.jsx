@@ -3,6 +3,9 @@ import { LogIn, UserRound } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import cardBack from '@/assets/cards/back_card3.png';
 import heartIcon from '@/assets/icons/heart.png';
+import bidTurnSound from '@/assets/sounds/bid.mp3';
+import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
+import playerTurnSound from '@/assets/sounds/default.mp3';
 import tableBackground from '@/assets/back.png';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
@@ -150,6 +153,18 @@ function getCardLabel(card) {
   const suit = suitLabels[card.suit] || card.suit;
 
   return `${rank} de ${suit}`;
+}
+
+function playGameSound(soundSrc, volume) {
+  const normalizedVolume = Math.max(0, Math.min(100, Number(volume) || 0));
+
+  if (!normalizedVolume) {
+    return;
+  }
+
+  const audio = new Audio(soundSrc);
+  audio.volume = normalizedVolume / 100;
+  audio.play().catch(() => {});
 }
 
 function getJokerLabel(upcard) {
@@ -909,11 +924,15 @@ function LobbyAuthGate({
 export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
+  const gamePreferencesRef = useRef(getGamePreferences());
   const localPlayerIdsRef = useRef([]);
+  const turnPromptSoundRef = useRef('');
   const socketRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
-  const [gamePreferences, setGamePreferencesState] = useState(getGamePreferences);
+  const [gamePreferences, setGamePreferencesState] = useState(
+    () => gamePreferencesRef.current,
+  );
   const [hasAuthToken, setHasAuthToken] = useState(() => Boolean(getAuthToken()));
   const [joinAttempt, setJoinAttempt] = useState(0);
   const [currentPlayerId, setCurrentPlayerId] = useState(() => getCurrentPlayerId());
@@ -996,8 +1015,30 @@ export function Game() {
       !isReadySending,
   );
 
+  const playConfiguredSound = (soundSrc) => {
+    playGameSound(soundSrc, gamePreferencesRef.current.volume);
+  };
+
+  const clearTurnPromptSound = () => {
+    turnPromptSoundRef.current = '';
+  };
+
+  const playTurnPromptSound = (type, playerId) => {
+    const soundKey = `${type}:${playerId}`;
+
+    if (turnPromptSoundRef.current === soundKey) {
+      return;
+    }
+
+    turnPromptSoundRef.current = soundKey;
+    playConfiguredSound(type === 'bid' ? bidTurnSound : playerTurnSound);
+  };
+
   useEffect(() => {
-    return subscribeToGamePreferences(setGamePreferencesState);
+    return subscribeToGamePreferences((preferences) => {
+      gamePreferencesRef.current = preferences;
+      setGamePreferencesState(preferences);
+    });
   }, []);
 
   const continueToLobby = () => {
@@ -1119,6 +1160,12 @@ export function Game() {
         localPlayerIds.includes(gameInfo.current_player)
       ) {
         setPossibleBids(gameInfo.stage.data?.possible_bids || []);
+        playTurnPromptSound('bid', gameInfo.current_player);
+      } else if (
+        gameInfo.stage?.type === 'Dealing' &&
+        localPlayerIds.includes(gameInfo.current_player)
+      ) {
+        playTurnPromptSound('play', gameInfo.current_player);
       } else {
         setPossibleBids([]);
       }
@@ -1199,6 +1246,7 @@ export function Game() {
           });
           break;
         case 'PlayerBidded':
+          clearTurnPromptSound();
           setGameStage('bidding');
           setMatchPhase('playing');
           setPossibleBids([]);
@@ -1219,6 +1267,7 @@ export function Game() {
           });
           break;
         case 'RoundEnded':
+          clearTurnPromptSound();
           setGameStage('dealing');
           setMatchPhase('playing');
           setPile([]);
@@ -1244,11 +1293,12 @@ export function Game() {
           setGameStage('bidding');
           setMatchPhase('playing');
           setTurnPlayerId(message.data.player_id);
-          setPossibleBids(
-            isLocalPlayerId(message.data.player_id)
-              ? message.data.possible_bids || []
-              : [],
-          );
+          if (isLocalPlayerId(message.data.player_id)) {
+            setPossibleBids(message.data.possible_bids || []);
+            playTurnPromptSound('bid', message.data.player_id);
+          } else {
+            setPossibleBids([]);
+          }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
               (nextPlayers, [playerId, player]) => {
@@ -1275,6 +1325,9 @@ export function Game() {
           setMatchPhase('playing');
           setPossibleBids([]);
           setTurnPlayerId(message.data.player_id);
+          if (isLocalPlayerId(message.data.player_id)) {
+            playTurnPromptSound('play', message.data.player_id);
+          }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
               (nextPlayers, [playerId, player]) => {
@@ -1290,6 +1343,7 @@ export function Game() {
           });
           break;
         case 'TurnPlayed':
+          clearTurnPromptSound();
           setIsReadySending(false);
           setGameStage('dealing');
           setMatchPhase('playing');
@@ -1318,6 +1372,7 @@ export function Game() {
           });
           break;
         case 'SetStart':
+          clearTurnPromptSound();
           setIsReadySending(false);
           setGameStage('bidding');
           setMatchPhase('playing');
@@ -1345,6 +1400,7 @@ export function Game() {
           });
           break;
         case 'SetEnded':
+          clearTurnPromptSound();
           setGameStage('dealing');
           setMatchPhase('playing');
           setPile([]);
@@ -1368,6 +1424,7 @@ export function Game() {
           });
           break;
         case 'GameEnded':
+          clearTurnPromptSound();
           setIsReadySending(false);
           setGameStage('ended');
           setMatchPhase('ended');
@@ -1506,6 +1563,7 @@ export function Game() {
     }
 
     setPossibleBids([]);
+    clearTurnPromptSound();
     setPlayersById((previousPlayers) => {
       if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
         return previousPlayers;
@@ -1545,6 +1603,8 @@ export function Game() {
 
     try {
       setJoinError('');
+      clearTurnPromptSound();
+      playConfiguredSound(cardAnimationSound);
       setPlayedCardAnimation({
         card,
         id: `${Date.now()}-${getCardKey(card)}`,
