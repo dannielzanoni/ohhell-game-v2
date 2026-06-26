@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
+import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
 import { Github } from './routes/Github/Github.jsx';
 import { Home } from './routes/Home/Home.jsx';
@@ -14,7 +15,9 @@ export function AppRouter() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/game" element={<Game />} />
+          <Route path="/create-game" element={<CreateGame />} />
+          <Route path="/game" element={<Navigate to="/create-game" replace />} />
+          <Route path="/game/:lobbyId" element={<Game />} />
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
