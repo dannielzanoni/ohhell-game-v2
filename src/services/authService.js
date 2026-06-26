@@ -5,6 +5,16 @@ import {
   setAuthToken,
 } from './apiClient.js';
 
+function isInvalidAuthTokenError(error) {
+  const message = String(error?.message || error?.data?.error || '');
+
+  return (
+    error?.status === 401 ||
+    message.includes("Invalid KeyId ('kid')") ||
+    message.toLowerCase().includes('invalid token')
+  );
+}
+
 function persistAuth(response) {
   if (typeof response === 'string') {
     setAuthToken(response);
@@ -37,9 +47,27 @@ export async function updateProfile({ nickname, picture }) {
   return persistAuth(response);
 }
 
+export async function saveGuestProfile(payload) {
+  if (!getAuthToken()) {
+    return signUp(payload);
+  }
+
+  try {
+    return await updateProfile(payload);
+  } catch (error) {
+    if (!isInvalidAuthTokenError(error)) {
+      throw error;
+    }
+
+    clearAuthToken();
+    return signUp(payload);
+  }
+}
+
 export const authService = {
   clearAuthToken,
   getAuthToken,
+  saveGuestProfile,
   signUp,
   updateProfile,
 };

@@ -164,3 +164,25 @@ select {
     @apply font-sans;
   }
 }
+
+@keyframes ohhell-card-to-pile {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.1) rotate(0deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -38vh) scale(0.96) rotate(6deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -44vh) scale(0.82) rotate(8deg);
+  }
+}
+
+.ohhell-card-play-animation {
+  animation: ohhell-card-to-pile 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  pointer-events: none;
+}
