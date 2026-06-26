@@ -34,7 +34,10 @@ function GoogleLogo() {
   );
 }
 
-export function LoginCard({ className }) {
+export function LoginCard({ className, onSaved }) {
+  const [hasAuthToken, setHasAuthToken] = useState(() =>
+    Boolean(authService.getAuthToken()),
+  );
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(() => {
     const savedAvatarId = localStorage.getItem('ohhell_guest_avatar_id');
@@ -66,7 +69,7 @@ export function LoginCard({ className }) {
     setSaveError('');
 
     try {
-      await authService.saveGuestProfile(payload);
+      const response = await authService.saveGuestProfile(payload);
 
       localStorage.setItem('ohhell_guest_nickname', nextNickname);
       if (nextAvatarId) {
@@ -78,6 +81,12 @@ export function LoginCard({ className }) {
       setNickname(nextNickname);
       setSavedNickname(nextNickname);
       setSavedAvatarId(nextAvatarId);
+      setHasAuthToken(Boolean(authService.getAuthToken()));
+      onSaved?.({
+        avatarId: nextAvatarId,
+        nickname: nextNickname || 'Guest',
+        token: response?.token || authService.getAuthToken(),
+      });
     } catch (error) {
       setSaveError(error.message || 'Nao foi possivel salvar o perfil.');
     } finally {
@@ -88,7 +97,9 @@ export function LoginCard({ className }) {
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
   const canSaveProfile =
-    trimmedNickname !== savedNickname || selectedAvatarId !== savedAvatarId;
+    !hasAuthToken ||
+    trimmedNickname !== savedNickname ||
+    selectedAvatarId !== savedAvatarId;
   const displayNickname = trimmedNickname || savedNickname || 'Guest';
   const shouldAnimateNickname = Boolean(savedNickname) && !canSaveProfile;
   const selectAvatar = (avatar) => {

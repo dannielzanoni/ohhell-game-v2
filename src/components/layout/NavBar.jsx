@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import {
   Home,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings as SettingsIcon,
   Sun,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
 import { pageLinks } from '@/app/routes/pageLinks.js';
+import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
@@ -18,6 +21,7 @@ const navItems = [
 
 export function NavBar({ isCollapsed, onToggle }) {
   const { theme, toggleTheme } = useTheme();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <aside
@@ -107,6 +111,19 @@ export function NavBar({ isCollapsed, onToggle }) {
             </NavLink>
           );
         })}
+
+        <button
+          type="button"
+          title={isCollapsed ? 'Settings' : undefined}
+          className={cn(
+            'flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+            isCollapsed && 'justify-center px-0',
+          )}
+          onClick={() => setIsSettingsOpen(true)}
+        >
+          <SettingsIcon className="size-4 shrink-0" />
+          {!isCollapsed && <span>Settings</span>}
+        </button>
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
@@ -124,6 +141,11 @@ export function NavBar({ isCollapsed, onToggle }) {
           )}
         </Button>
       </div>
+
+      <GameSettingsModal
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+      />
     </aside>
   );
 }
