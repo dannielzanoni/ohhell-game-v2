@@ -31,10 +31,4 @@ export const pageLinks = [
     description: 'Links e informacoes do repositorio.',
     primeIcon: 'pi pi-github',
   },
-  {
-    label: 'Settings',
-    path: '/settings',
-    description: 'Preferencias e configuracoes do jogo.',
-    primeIcon: 'pi pi-cog',
-  },
 ];

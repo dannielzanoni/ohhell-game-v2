@@ -1,17 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { UserRound } from 'lucide-react';
+import { LogIn, UserRound } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import cardBack from '@/assets/cards/back_card3.png';
 import heartIcon from '@/assets/icons/heart.png';
 import tableBackground from '@/assets/back.png';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
+import { LoginCard } from '@/components/auth/LoginCard.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog.jsx';
 import { getAuthToken } from '@/services/apiClient.js';
+import { isMissingAuthTokenError } from '@/services/authService.js';
 import {
   createGameSocket,
   playTurn,
   putBid,
   setPlayerReady,
 } from '@/services/gameSocketService.js';
+import {
+  deckTypes,
+  getGamePreferences,
+  subscribeToGamePreferences,
+} from '@/services/gamePreferencesService.js';
 import { joinLobby } from '@/services/lobbyService.js';
 
 const MAX_TABLE_PLAYERS = 10;
@@ -19,6 +35,10 @@ const MAX_DISPLAYED_LIFES = 5;
 const MAX_VISIBLE_SEAT_CARDS = 6;
 const CURRENT_PLAYER_SEAT_LIFT = 2;
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
+  eager: true,
+  import: 'default',
+});
+const frenchCardImages = import.meta.glob('/src/assets/cards/french/*.png', {
   eager: true,
   import: 'default',
 });
@@ -111,8 +131,12 @@ function getCardKey(card) {
   return rank && suit ? `${rank}${suit}` : '';
 }
 
-function getCardImageSrc(card) {
+function getCardImageSrc(card, deckType = deckTypes.SPANISH) {
   const key = getCardKey(card);
+
+  if (deckType === deckTypes.FRENCH) {
+    return frenchCardImages[`/src/assets/cards/french/${key}.png`] || cardBack;
+  }
 
   return spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] || cardBack;
 }
@@ -336,6 +360,54 @@ function getGameInfoFromSnapshot(snapshot) {
   return null;
 }
 
+function getLocalPlayerIdCandidates({
+  currentPlayerId,
+  gameInfo,
+  localPlayerIds = [],
+  playersById = {},
+  statusMap,
+}) {
+  const tokenPlayerId = getCurrentPlayerId();
+  const savedPlayer = getSavedPlayer();
+  const candidates = [
+    tokenPlayerId,
+    currentPlayerId,
+    ...localPlayerIds,
+  ].filter(Boolean);
+
+  Object.values(playersById).forEach((player) => {
+    if (player?.id && player.id === tokenPlayerId) {
+      candidates.push(player.id);
+    }
+  });
+
+  Object.entries(statusMap || {}).forEach(([id, status]) => {
+    const nickname = getClaimsNickname(status.player, id);
+    const avatarSrc = resolveAvatarSrc(getClaimsPicture(status.player));
+
+    if (tokenPlayerId && id === tokenPlayerId) {
+      candidates.push(id);
+      return;
+    }
+
+    if (!savedPlayer.nickname || nickname !== savedPlayer.nickname) {
+      return;
+    }
+
+    if (savedPlayer.avatarSrc && avatarSrc && savedPlayer.avatarSrc !== avatarSrc) {
+      return;
+    }
+
+    candidates.push(id);
+  });
+
+  const gamePlayerIds = new Set((gameInfo?.info || []).map((info) => info.id));
+
+  return Array.from(new Set(candidates)).filter((id) => {
+    return !gamePlayerIds.size || gamePlayerIds.has(id);
+  });
+}
+
 function applyGameInfo(playersById, gameInfo, defaultLifes) {
   if (!gameInfo?.info) {
     return playersById;
@@ -522,17 +594,25 @@ function SeatCardBacks({ count }) {
 }
 
 function BidProgress({ bid, points }) {
-  const bidCount = Number(bid);
-  const completedCount = Number(points) || 0;
+  const numericBid = Number(bid);
+  const numericPoints = Number(points);
+  const bidCount = Number.isFinite(numericBid)
+    ? Math.max(0, Math.trunc(numericBid))
+    : 0;
+  const completedCount = Number.isFinite(numericPoints)
+    ? Math.max(0, Math.trunc(numericPoints))
+    : 0;
+  const visibleCount = Math.max(bidCount, completedCount);
 
-  if (!Number.isFinite(bidCount) || bidCount <= 0) {
+  if (visibleCount <= 0) {
     return null;
   }
 
   return (
-    <div className="relative z-20 flex justify-center">
-      {Array.from({ length: bidCount }).map((_, index) => {
+    <div className="relative z-20 mt-1 flex flex-wrap items-center justify-start gap-1">
+      {Array.from({ length: visibleCount }).map((_, index) => {
         const isChecked = index < completedCount;
+        const isExtraPoint = index >= bidCount;
 
         return (
           <input
@@ -540,7 +620,11 @@ function BidProgress({ bid, points }) {
             checked={isChecked}
             readOnly
             key={index}
-            aria-label={`Bid ${index + 1} ${isChecked ? 'feito' : 'pendente'}`}
+            aria-label={
+              isExtraPoint
+                ? `Ponto extra ${index - bidCount + 1} feito`
+                : `Bid ${index + 1} ${isChecked ? 'feito' : 'pendente'}`
+            }
             className={`size-6 appearance-none rounded border shadow-md shadow-black/35 ${
               isChecked
                 ? 'border-emerald-300 bg-emerald-400'
@@ -624,6 +708,7 @@ function PlayerSeat({
               {nickname}
             </p>
             <LifeHearts lifes={lifes} />
+            <BidProgress bid={bid} points={points} />
           </div>
 
           <div
@@ -634,8 +719,6 @@ function PlayerSeat({
           </div>
         </div>
       </div>
-
-      <BidProgress bid={bid} points={points} />
 
       {showReadyState && isCurrent && readyControls ? (
         <div className="absolute left-1/2 top-full z-30 mt-3 w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 sm:w-auto">
@@ -648,19 +731,19 @@ function PlayerSeat({
   );
 }
 
-function TableCenter({ pile, playersById, upcard }) {
+function TableCenter({ deckType, pile, playersById, upcard }) {
   if (!upcard && pile.length === 0) {
     return null;
   }
 
   return (
-    <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(34rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 rounded-3xl border border-white/10 bg-black/35 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-sm sm:gap-8">
+    <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 rounded-3xl border border-white/10 bg-black/35 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-sm sm:gap-8">
       {upcard ? (
-        <div className="grid justify-items-center gap-2">
+        <div className="grid justify-items-center gap-1">
           <img
-            src={getCardImageSrc(upcard)}
+            src={getCardImageSrc(upcard, deckType)}
             alt={getCardLabel(upcard)}
-            className="h-24 w-16 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-32 sm:w-[5.4rem]"
+            className="h-[6.6rem] w-[4.4rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[8.8rem] sm:w-[5.94rem]"
             draggable="false"
           />
         </div>
@@ -676,7 +759,7 @@ function TableCenter({ pile, playersById, upcard }) {
               return (
                 <img
                   key={`${turn.player_id}-${getCardKey(turn.card)}-${index}`}
-                  src={getCardImageSrc(turn.card)}
+                  src={getCardImageSrc(turn.card, deckType)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
                   className="absolute left-1/2 top-1/2 h-24 w-16 -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 sm:h-32 sm:w-[5.4rem]"
@@ -705,12 +788,12 @@ function BidControls({ onBid, possibleBids }) {
   }
 
   return (
-    <div className="absolute bottom-36 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-3 shadow-2xl shadow-black/50 backdrop-blur sm:bottom-68">
+    <div className="absolute bottom-40 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-3 shadow-2xl shadow-black/50 backdrop-blur sm:bottom-73">
       {possibleBids.map((bid) => (
         <button
           key={bid}
           type="button"
-          className="size-12 cursor-pointer rounded-2xl border border-amber-300/60 bg-amber-400 text-base font-black text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-amber-300"
+          className="size-12 cursor-pointer rounded-xl border border-amber-300/50 bg-amber-400 text-base font-black text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-amber-300"
           onClick={() => onBid(bid)}
         >
           {bid}
@@ -720,14 +803,14 @@ function BidControls({ onBid, possibleBids }) {
   );
 }
 
-function PlayedCardAnimation({ card, onAnimationEnd }) {
+function PlayedCardAnimation({ card, deckType, onAnimationEnd }) {
   if (!card) {
     return null;
   }
 
   return (
     <img
-      src={getCardImageSrc(card)}
+      src={getCardImageSrc(card, deckType)}
       alt=""
       className="ohhell-card-play-animation absolute bottom-8 left-1/2 z-50 h-[7.7rem] w-[5.2rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/70 sm:h-[9.9rem] sm:w-[6.6rem]"
       draggable="false"
@@ -736,7 +819,7 @@ function PlayedCardAnimation({ card, onAnimationEnd }) {
   );
 }
 
-function PlayerHand({ canPlayCards, cards, onPlayCard }) {
+function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
   if (!cards.length) {
     return null;
   }
@@ -762,7 +845,7 @@ function PlayerHand({ canPlayCards, cards, onPlayCard }) {
             onClick={() => onPlayCard(card)}
           >
             <img
-              src={getCardImageSrc(card)}
+              src={getCardImageSrc(card, deckType)}
               alt={getCardLabel(card)}
               className="h-[7.7rem] w-[5.2rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/60 sm:h-[9.9rem] sm:w-[6.6rem]"
               draggable="false"
@@ -774,11 +857,65 @@ function PlayerHand({ canPlayCards, cards, onPlayCard }) {
   );
 }
 
+function LobbyAuthGate({
+  canContinue,
+  error,
+  onContinue,
+  onProfileSaved,
+  open,
+}) {
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        className="max-w-md border-white/10 bg-zinc-950/95 p-5 text-white shadow-2xl shadow-black/50"
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>Entrar na sala</DialogTitle>
+          <DialogDescription>
+            Cadastre seu guest antes de continuar.
+          </DialogDescription>
+        </DialogHeader>
+
+        <LoginCard
+          className="border-white/10 bg-black/30 p-5 shadow-none"
+          onSaved={onProfileSaved}
+        />
+
+        {error ? (
+          <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        <DialogFooter className="-mx-5 -mb-5 border-white/10 bg-black/30 px-5">
+          <Button
+            type="button"
+            disabled={!canContinue}
+            className="h-11 w-full gap-2 sm:w-auto"
+            onClick={onContinue}
+          >
+            <LogIn className="size-4" />
+            Entrar na sala
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
   const localPlayerIdsRef = useRef([]);
   const socketRef = useRef(null);
+  const [authGateError, setAuthGateError] = useState('');
+  const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
+  const [gamePreferences, setGamePreferencesState] = useState(getGamePreferences);
+  const [hasAuthToken, setHasAuthToken] = useState(() => Boolean(getAuthToken()));
+  const [joinAttempt, setJoinAttempt] = useState(0);
   const [currentPlayerId, setCurrentPlayerId] = useState(() => getCurrentPlayerId());
   const [lifes, setLifes] = useState(() =>
     getLobbyLifes(lobbyId, location.state?.lifes),
@@ -860,11 +997,45 @@ export function Game() {
   );
 
   useEffect(() => {
+    return subscribeToGamePreferences(setGamePreferencesState);
+  }, []);
+
+  const continueToLobby = () => {
+    const token = getAuthToken();
+
+    if (!token) {
+      setAuthGateError('Salve seu guest antes de entrar na sala.');
+      setHasAuthToken(false);
+      return;
+    }
+
+    const nextCurrentPlayerId = getCurrentPlayerId();
+
+    setAuthGateError('');
+    setAuthGateOpen(false);
+    setHasAuthToken(true);
+    setCurrentPlayerId(nextCurrentPlayerId);
+    setPlayersById((previousPlayers) => {
+      if (!nextCurrentPlayerId || previousPlayers[nextCurrentPlayerId]) {
+        return previousPlayers;
+      }
+
+      return {
+        ...previousPlayers,
+        [nextCurrentPlayerId]: createFallbackPlayer(nextCurrentPlayerId, lifes),
+      };
+    });
+    setJoinAttempt((attempt) => attempt + 1);
+  };
+
+  useEffect(() => {
     const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
     const nextCurrentPlayerId = getCurrentPlayerId();
+    const token = getAuthToken();
 
     setLifes(nextLifes);
     setCurrentPlayerId(nextCurrentPlayerId);
+    setHasAuthToken(Boolean(token));
     setGameStage('waiting');
     setJoinError('');
     setHasGameSocket(false);
@@ -882,6 +1053,15 @@ export function Game() {
       return undefined;
     }
 
+    if (!token) {
+      setAuthGateOpen(true);
+      setPlayersById({});
+      return undefined;
+    }
+
+    setAuthGateOpen(false);
+    setAuthGateError('');
+
     let isCurrent = true;
     let socket = null;
 
@@ -897,27 +1077,37 @@ export function Game() {
       });
     };
 
-    const isLocalPlayerId = (playerId) => {
-      const latestCurrentPlayerId = getCurrentPlayerId();
-      const candidateIds = [
-        nextCurrentPlayerId,
-        latestCurrentPlayerId,
-        ...localPlayerIdsRef.current,
-      ].filter(Boolean);
-
-      return candidateIds.includes(playerId);
+    const getLocalPlayerIds = (gameInfo, statusMap) => {
+      return getLocalPlayerIdCandidates({
+        currentPlayerId: nextCurrentPlayerId,
+        gameInfo,
+        localPlayerIds: localPlayerIdsRef.current,
+        playersById,
+        statusMap,
+      });
     };
 
-    const applyGameState = (gameInfo) => {
+    const isLocalPlayerId = (playerId, gameInfo, statusMap) => {
+      return getLocalPlayerIds(gameInfo, statusMap).includes(playerId);
+    };
+
+    const applyGameState = (gameInfo, statusMap) => {
       if (!gameInfo) {
         return;
       }
+
+      const localPlayerIds = getLocalPlayerIds(gameInfo, statusMap);
+      const localPlayerId = localPlayerIds[0] || null;
 
       setIsReadySending(false);
       setMatchPhase('playing');
       setUpcard(gameInfo.upcard || null);
       setTurnPlayerId(gameInfo.current_player || null);
       setGameStage(gameInfo.stage?.type === 'Bidding' ? 'bidding' : 'dealing');
+
+      if (localPlayerId) {
+        setCurrentPlayerId(localPlayerId);
+      }
 
       if (Array.isArray(gameInfo.deck)) {
         setPlayerDeck(gameInfo.deck);
@@ -926,7 +1116,7 @@ export function Game() {
 
       if (
         gameInfo.stage?.type === 'Bidding' &&
-        isLocalPlayerId(gameInfo.current_player)
+        localPlayerIds.includes(gameInfo.current_player)
       ) {
         setPossibleBids(gameInfo.stage.data?.possible_bids || []);
       } else {
@@ -960,7 +1150,7 @@ export function Game() {
             applyStatusMap(statusMap, gameInfo);
           }
           if (gameInfo) {
-            applyGameState(gameInfo);
+            applyGameState(gameInfo, statusMap);
           }
           break;
         }
@@ -1222,8 +1412,13 @@ export function Game() {
           return;
         }
 
+        const latestCurrentPlayerId = getCurrentPlayerId();
         const statusMap = getLobbyStatusMap(lobbyInfo);
         const gameInfo = getLobbyGameInfo(lobbyInfo);
+
+        if (latestCurrentPlayerId) {
+          setCurrentPlayerId(latestCurrentPlayerId);
+        }
 
         if (statusMap) {
           setMatchPhase('waiting');
@@ -1231,7 +1426,7 @@ export function Game() {
         }
 
         if (gameInfo) {
-          applyGameState(gameInfo);
+          applyGameState(gameInfo, statusMap);
           setPlayersById((previousPlayers) =>
             applyGameInfo(previousPlayers, gameInfo, nextLifes),
           );
@@ -1263,7 +1458,14 @@ export function Game() {
       })
       .catch((error) => {
         if (isCurrent) {
-          setJoinError(error.message || 'Nao foi possivel entrar na sala.');
+          if (isMissingAuthTokenError(error) || !getAuthToken()) {
+            setHasAuthToken(false);
+            setAuthGateOpen(true);
+            setAuthGateError('Cadastre seu guest antes de entrar na sala.');
+            setJoinError('');
+          } else {
+            setJoinError(error.message || 'Nao foi possivel entrar na sala.');
+          }
         }
       });
 
@@ -1280,7 +1482,7 @@ export function Game() {
         socketRef.current = null;
       }
     };
-  }, [lobbyId, location.state?.lifes]);
+  }, [joinAttempt, lobbyId, location.state?.lifes]);
 
   const toggleReady = () => {
     if (!canToggleReady || !socketRef.current) {
@@ -1377,7 +1579,12 @@ export function Game() {
         style={{ backgroundImage: `url(${tableBackground})` }}
       />
 
-      <TableCenter pile={pile} playersById={playersById} upcard={upcard} />
+      <TableCenter
+        deckType={gamePreferences.deckType}
+        pile={pile}
+        playersById={playersById}
+        upcard={upcard}
+      />
 
       {tablePlayers.map((player, index) => {
         const isCurrentPlayer = player.id === resolvedCurrentPlayerId;
@@ -1428,11 +1635,13 @@ export function Game() {
       <PlayerHand
         canPlayCards={canPlayCards}
         cards={playerDeck}
+        deckType={gamePreferences.deckType}
         onPlayCard={handlePlayCard}
       />
       <PlayedCardAnimation
         key={playedCardAnimation?.id}
         card={playedCardAnimation?.card}
+        deckType={gamePreferences.deckType}
         onAnimationEnd={() => setPlayedCardAnimation(null)}
       />
 
@@ -1441,6 +1650,17 @@ export function Game() {
           {joinError}
         </div>
       ) : null}
+
+      <LobbyAuthGate
+        canContinue={hasAuthToken}
+        error={authGateError}
+        onContinue={continueToLobby}
+        onProfileSaved={() => {
+          setAuthGateError('');
+          setHasAuthToken(Boolean(getAuthToken()));
+        }}
+        open={authGateOpen}
+      />
     </main>
   );
 }
