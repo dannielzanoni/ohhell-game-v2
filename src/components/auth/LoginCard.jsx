@@ -66,11 +66,7 @@ export function LoginCard({ className }) {
     setSaveError('');
 
     try {
-      if (authService.getAuthToken()) {
-        await authService.updateProfile(payload);
-      } else {
-        await authService.signUp(payload);
-      }
+      await authService.saveGuestProfile(payload);
 
       localStorage.setItem('ohhell_guest_nickname', nextNickname);
       if (nextAvatarId) {

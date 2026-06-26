@@ -19,15 +19,45 @@ function canUseStorage() {
   return typeof window !== 'undefined' && window.localStorage;
 }
 
+function normalizeStoredToken(value) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  try {
+    const parsed = JSON.parse(trimmedValue);
+
+    if (typeof parsed === 'string') {
+      return parsed;
+    }
+
+    if (typeof parsed?.token === 'string') {
+      return parsed.token;
+    }
+  } catch {
+    return trimmedValue;
+  }
+
+  return trimmedValue;
+}
+
 export function getAuthToken() {
   if (!canUseStorage()) {
     return null;
   }
 
-  return (
+  const token = normalizeStoredToken(
     localStorage.getItem(JWT_TOKEN) ||
-    localStorage.getItem(LEGACY_AUTH_TOKEN_STORAGE_KEY)
+      localStorage.getItem(LEGACY_AUTH_TOKEN_STORAGE_KEY),
   );
+
+  if (token && token !== localStorage.getItem(JWT_TOKEN)) {
+    setAuthToken(token);
+  }
+
+  return token;
 }
 
 export function setAuthToken(token) {
@@ -35,7 +65,7 @@ export function setAuthToken(token) {
     return;
   }
 
-  localStorage.setItem(JWT_TOKEN, token);
+  localStorage.setItem(JWT_TOKEN, normalizeStoredToken(token) || '');
   localStorage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
 }
 
