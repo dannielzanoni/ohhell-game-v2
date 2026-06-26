@@ -1,6 +1,8 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
 
+const pendingCommandsBySocket = new WeakMap();
+
 export function getGameSocketUrl(token = getAuthToken()) {
   if (!token) {
     throw new Error('Missing auth token');
@@ -22,6 +24,13 @@ export function createGameSocket({
   const socket = new WebSocket(getGameSocketUrl(token));
 
   socket.addEventListener('open', (event) => {
+    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
+
+    pendingCommands.forEach((command) => {
+      socket.send(JSON.stringify(command));
+    });
+    pendingCommandsBySocket.delete(socket);
+
     onOpen?.(event);
   });
 
@@ -42,6 +51,21 @@ export function createGameSocket({
 }
 
 export function sendGameCommand(socket, command) {
+  if (!socket) {
+    throw new Error('WebSocket is not open');
+  }
+
+  if (socket.readyState === WebSocket.CONNECTING) {
+    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
+    pendingCommands.push(command);
+    pendingCommandsBySocket.set(socket, pendingCommands);
+    return;
+  }
+
+  if (socket.readyState !== WebSocket.OPEN) {
+    throw new Error('WebSocket is not open');
+  }
+
   socket.send(JSON.stringify(command));
 }
 
