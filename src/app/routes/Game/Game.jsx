@@ -37,6 +37,7 @@ const MAX_TABLE_PLAYERS = 10;
 const MAX_DISPLAYED_LIFES = 5;
 const MAX_VISIBLE_SEAT_CARDS = 6;
 const CURRENT_PLAYER_SEAT_LIFT = 2;
+const ROUND_END_DELAY_MS = 1000;
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
   import: 'default',
@@ -751,21 +752,45 @@ function TableCenter({ deckType, pile, playersById, upcard }) {
     return null;
   }
 
+  const deckBackCards = Array.from({ length: 4 });
+
   return (
     <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 rounded-3xl border border-white/10 bg-black/35 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-sm sm:gap-8">
       {upcard ? (
         <div className="grid justify-items-center gap-1">
-          <img
-            src={getCardImageSrc(upcard, deckType)}
-            alt={getCardLabel(upcard)}
-            className="h-[6.6rem] w-[4.4rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[8.8rem] sm:w-[5.94rem]"
-            draggable="false"
-          />
+          <div
+            aria-label="Baralho e carta joker"
+            className="relative h-[7.99rem] w-[5.32rem] [--deck-gap:0.67rem] sm:h-[10.65rem] sm:w-[7.18rem] sm:[--deck-gap:0.97rem]"
+          >
+            {deckBackCards.map((_, index) => (
+              <img
+                key={`deck-back-${index}`}
+                src={cardBack}
+                alt=""
+                aria-hidden="true"
+                className="absolute left-0 top-0 h-[7.99rem] w-[5.32rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[10.65rem] sm:w-[7.18rem]"
+                draggable="false"
+                style={{
+                  transform: `translateX(calc(var(--deck-gap) * -${deckBackCards.length - index}))`,
+                  zIndex: index + 1,
+                }}
+              />
+            ))}
+            <img
+              src={getCardImageSrc(upcard, deckType)}
+              alt={getCardLabel(upcard)}
+              className="absolute left-0 top-0 h-[7.99rem] w-[5.32rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[10.65rem] sm:w-[11.58rem]"
+              draggable="false"
+              style={{
+                zIndex: deckBackCards.length + 1,
+              }}
+            />
+          </div>
         </div>
       ) : null}
 
       <div className="grid min-w-28 justify-items-center gap-2">
-        <div className="relative h-28 w-32 sm:h-36 sm:w-44">
+        <div className="relative h-[7.7rem] w-[8.8rem] translate-y-[20%] sm:h-[9.9rem] sm:w-[12.1rem]">
           {pile.length ? (
             pile.map((turn, index) => {
               const playerName =
@@ -777,10 +802,10 @@ function TableCenter({ deckType, pile, playersById, upcard }) {
                   src={getCardImageSrc(turn.card, deckType)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
-                  className="absolute left-1/2 top-1/2 h-24 w-16 -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 sm:h-32 sm:w-[5.4rem]"
+                  className="absolute left-1/2 top-1/2 h-[6.6rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 sm:h-[8.8rem] sm:w-[5.94rem]"
                   draggable="false"
                   style={{
-                    transform: `translate(-50%, -50%) translateX(${index * 20}px) rotate(${index * 5 - 8}deg)`,
+                    transform: `translate(-50%, -50%) translateX(${index * 22}px) rotate(${index * 5 - 8}deg)`,
                     zIndex: index + 1,
                   }}
                 />
@@ -827,7 +852,7 @@ function PlayedCardAnimation({ card, deckType, onAnimationEnd }) {
     <img
       src={getCardImageSrc(card, deckType)}
       alt=""
-      className="ohhell-card-play-animation absolute bottom-8 left-1/2 z-50 h-[7.7rem] w-[5.2rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/70 sm:h-[9.9rem] sm:w-[6.6rem]"
+      className="ohhell-card-play-animation absolute bottom-8 left-1/2 z-50 h-[8.47rem] w-[5.72rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/70 sm:h-[10.89rem] sm:w-[7.26rem]"
       draggable="false"
       onAnimationEnd={onAnimationEnd}
     />
@@ -839,30 +864,42 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
     return null;
   }
 
-  const overlapRem =
-    cards.length >= 16 ? 4.1 : cards.length >= 12 ? 3.2 : 1.25;
+  const isFrenchDeck = deckType === deckTypes.FRENCH;
+  const overlapClass = isFrenchDeck
+    ? cards.length >= 16
+      ? 'ml-[-3.25rem] sm:ml-[-4.06rem]'
+      : cards.length >= 12
+        ? 'ml-[-2.75rem] sm:ml-[-3.17rem]'
+        : 'ml-[-2.25rem] sm:ml-[-1.24rem]'
+    : cards.length >= 16
+      ? 'ml-[-3.7rem] sm:ml-[-4.51rem]'
+      : cards.length >= 12
+        ? 'ml-[-3.1rem] sm:ml-[-3.52rem]'
+        : 'ml-[-2.5rem] sm:ml-[-1.38rem]';
+  const cardSizeClass = isFrenchDeck
+    ? 'h-[8.38rem] w-[5.67rem] sm:h-[9.8rem] sm:w-[6.53rem]'
+    : 'h-[9.32rem] w-[6.29rem] sm:h-[10.89rem] sm:w-[7.26rem]';
 
   return (
-    <div className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 translate-y-[10%] items-end justify-center overflow-x-auto px-2 pb-3 sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:overflow-visible sm:px-0">
-      <div className="flex items-end justify-center gap-0">
+    <div className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 translate-y-[10%] items-end justify-start overflow-x-auto px-2 pb-3 sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:justify-center sm:overflow-visible sm:px-0">
+      <div className="flex w-max shrink-0 items-end justify-center gap-0">
         {cards.map((card, index) => (
           <button
             key={`${getCardKey(card)}-${index}`}
             type="button"
             disabled={!canPlayCards}
             title={getCardLabel(card)}
-            className={`scale-110 ${
+            className={`shrink-0 scale-110 ${index === 0 ? '' : overlapClass} ${
               canPlayCards
                 ? 'cursor-pointer hover:-translate-y-6 hover:scale-125'
                 : 'cursor-not-allowed opacity-98'
             } transition duration-200`}
-            style={{ marginLeft: index === 0 ? 0 : `-${overlapRem}rem` }}
             onClick={() => onPlayCard(card)}
           >
             <img
               src={getCardImageSrc(card, deckType)}
               alt={getCardLabel(card)}
-              className="h-[7.7rem] w-[5.2rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/60 sm:h-[9.9rem] sm:w-[6.6rem]"
+              className={`${cardSizeClass} rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/60`}
               draggable="false"
             />
           </button>
@@ -926,6 +963,9 @@ export function Game() {
   const location = useLocation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const localPlayerIdsRef = useRef([]);
+  const queuedRoundEndMessagesRef = useRef([]);
+  const roundEndDelayTimeoutRef = useRef(null);
+  const roundEndDelayActiveRef = useRef(false);
   const turnPromptSoundRef = useRef('');
   const socketRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
@@ -1106,6 +1146,18 @@ export function Game() {
     let isCurrent = true;
     let socket = null;
 
+    const clearRoundEndDelay = () => {
+      if (roundEndDelayTimeoutRef.current) {
+        window.clearTimeout(roundEndDelayTimeoutRef.current);
+      }
+
+      queuedRoundEndMessagesRef.current = [];
+      roundEndDelayTimeoutRef.current = null;
+      roundEndDelayActiveRef.current = false;
+    };
+
+    clearRoundEndDelay();
+
     const applyStatusMap = (statusMap, gameInfo) => {
       setPlayersById((previousPlayers) => {
         const normalizedPlayers = normalizeStatusMap(
@@ -1171,11 +1223,42 @@ export function Game() {
       }
     };
 
-    const handleServerMessage = (message) => {
+    const completeRoundEndDelay = () => {
       if (!isCurrent) {
         return;
       }
 
+      roundEndDelayTimeoutRef.current = null;
+      roundEndDelayActiveRef.current = false;
+      setPile([]);
+      setRoundCardCount((currentCount) => Math.max(0, currentCount - 1));
+
+      const queuedMessages = queuedRoundEndMessagesRef.current;
+      queuedRoundEndMessagesRef.current = [];
+
+      for (let index = 0; index < queuedMessages.length; index += 1) {
+        if (roundEndDelayActiveRef.current) {
+          queuedRoundEndMessagesRef.current = queuedMessages.slice(index);
+          break;
+        }
+
+        processServerMessage(queuedMessages[index]);
+      }
+    };
+
+    const startRoundEndDelay = () => {
+      if (roundEndDelayTimeoutRef.current) {
+        window.clearTimeout(roundEndDelayTimeoutRef.current);
+      }
+
+      roundEndDelayActiveRef.current = true;
+      roundEndDelayTimeoutRef.current = window.setTimeout(
+        completeRoundEndDelay,
+        ROUND_END_DELAY_MS,
+      );
+    };
+
+    function processServerMessage(message) {
       switch (message.type) {
         case 'Snapshot': {
           if (message.data?.type === 'Waiting') {
@@ -1270,8 +1353,8 @@ export function Game() {
           clearTurnPromptSound();
           setGameStage('dealing');
           setMatchPhase('playing');
-          setPile([]);
-          setRoundCardCount((currentCount) => Math.max(0, currentCount - 1));
+          setPossibleBids([]);
+          setTurnPlayerId(null);
           setPlayersById((previousPlayers) => {
             const nextPlayers = { ...previousPlayers };
 
@@ -1287,6 +1370,7 @@ export function Game() {
 
             return nextPlayers;
           });
+          startRoundEndDelay();
           break;
         case 'PlayerBiddingTurn':
           setIsReadySending(false);
@@ -1461,6 +1545,22 @@ export function Game() {
         default:
           break;
       }
+    }
+
+    const handleServerMessage = (message) => {
+      if (!isCurrent) {
+        return;
+      }
+
+      if (roundEndDelayActiveRef.current && message.type !== 'Error') {
+        queuedRoundEndMessagesRef.current = [
+          ...queuedRoundEndMessagesRef.current,
+          message,
+        ];
+        return;
+      }
+
+      processServerMessage(message);
     };
 
     joinLobby(lobbyId)
@@ -1528,6 +1628,7 @@ export function Game() {
 
     return () => {
       isCurrent = false;
+      clearRoundEndDelay();
       setHasGameSocket(false);
       setIsReadySending(false);
 
