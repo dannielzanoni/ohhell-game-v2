@@ -30,8 +30,16 @@ export function CreateGame() {
     setCreateError('');
 
     try {
-      const lobby = await createLobby({ lifes: Number(lives) });
-      navigate(`/game/${lobby.lobby_id}`);
+      const selectedLives = Number(lives);
+      const lobby = await createLobby({ lifes: selectedLives });
+
+      localStorage.setItem(
+        `ohhell_lobby_lifes_${lobby.lobby_id}`,
+        String(selectedLives),
+      );
+      navigate(`/game/${lobby.lobby_id}`, {
+        state: { lifes: selectedLives },
+      });
     } catch (error) {
       setCreateError(error.message || 'Nao foi possivel criar a sala.');
     } finally {
