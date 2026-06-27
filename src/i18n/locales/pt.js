@@ -15,7 +15,7 @@ export const pt = {
     selectAvatarAria: 'Selecionar avatar {{label}}',
   },
   common: {
-    appName: 'Oh Hell Game',
+    appName: 'Fodinha',
     backHome: 'Voltar para Home',
     create: 'Criar',
     home: 'Home',
@@ -83,7 +83,7 @@ export const pt = {
     closeMenu: 'Fechar menu',
     darkTheme: 'Tema escuro',
     expandMenu: 'Expandir menu',
-    gameHub: 'Game hub',
+    gameHub: 'Jogo de cartas',
     languageTitle: 'Idioma: {{language}}',
     lightTheme: 'Tema claro',
     minimizeMenu: 'Minimizar menu',
@@ -110,7 +110,7 @@ export const pt = {
     },
     home: {
       tagline:
-        'Fodinha, tambem conhecido como Oh Hell, e um jogo clássico de cartas originário do Truco. Preveja suas vitorias, supere seus amigos e divirta-se online!',
+        'Fodinha, tambem conhecido como Oh Hell, é um jogo clássico de cartas originário do Truco. Preveja suas vitorias, supere seus amigos e divirta-se online!',
     },
     howToPlay: {
       description: 'Pagina reservada para explicar regras, rodadas e pontuacao.',
@@ -126,15 +126,15 @@ export const pt = {
         label: 'GitHub',
       },
       howToPlay: {
-        description: 'Regras e guia do jogo.',
+        description: 'Regras e guia de como jogador Fodinha.',
         label: 'Como jogar',
       },
       leaderboard: {
-        description: 'Ranking dos jogadores.',
+        description: 'Ranking Global dos jogadores.',
         label: 'Ranking',
       },
       rooms: {
-        description: 'Veja e entre nas salas abertas.',
+        description: 'Entre em salas abertas.',
         label: 'Salas',
       },
     },
