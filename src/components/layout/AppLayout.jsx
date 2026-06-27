@@ -34,7 +34,7 @@ export function AppLayout() {
       />
       <div
         className={`min-h-screen transition-[padding] duration-300 ${
-          isNavCollapsed ? 'pl-20' : 'pl-20 md:pl-64'
+          isNavCollapsed ? 'md:pl-20' : 'md:pl-64'
         }`}
       >
         <Outlet />
