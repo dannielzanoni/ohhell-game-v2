@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import { RoutePage } from '../RoutePage.jsx';
 
 export function Settings() {
+  const { t } = useTranslation();
+
   return (
     <RoutePage
-      title="Settings"
-      description="Pagina reservada para preferencias, opcoes de mesa e configuracoes da conta."
+      title={t('pages.settings.title')}
+      description={t('pages.settings.description')}
     />
   );
 }

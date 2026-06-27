@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Layers, Volume2 } from 'lucide-react';
+import { Translate01 as TranslateIcon } from '@untitledui/icons/Translate01';
+import { useTranslation } from 'react-i18next';
 import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import {
@@ -8,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog.jsx';
+import { LanguagePanel } from '@/components/i18n/LanguageSwitcher.jsx';
 import { cn } from '@/lib/utils.js';
 import {
   deckTypes,
@@ -16,26 +19,28 @@ import {
 } from '@/services/gamePreferencesService.js';
 
 const tabs = [
-  { id: 'sounds', icon: Volume2, label: 'Sounds' },
-  { id: 'deck', icon: Layers, label: 'Type of deck' },
+  { id: 'sounds', icon: Volume2, labelKey: 'settings.sounds' },
+  { id: 'deck', icon: Layers, labelKey: 'settings.deck' },
+  { id: 'language', icon: TranslateIcon, labelKey: 'settings.language' },
 ];
 
 const deckOptions = [
   {
     description: 'Spanish',
     image: spanishCard3Paus,
-    label: 'Spanish',
+    labelKey: 'settings.spanish',
     value: deckTypes.SPANISH,
   },
   {
     description: 'French',
     image: frenchCard3Paus,
-    label: 'French',
+    labelKey: 'settings.french',
     value: deckTypes.FRENCH,
   },
 ];
 
 export function GameSettingsModal({ onOpenChange, open }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('sounds');
   const [preferences, setPreferences] = useState(getGamePreferences);
 
@@ -51,12 +56,12 @@ export function GameSettingsModal({ onOpenChange, open }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-[calc(100vw-1rem)] overflow-hidden p-0 sm:max-w-2xl">
+      <DialogContent className="flex h-[54dvh] max-w-[calc(100vw-1rem)] flex-col overflow-hidden p-0 sm:h-auto sm:max-h-[46vh] sm:max-w-2xl">
         <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
-          <DialogTitle>Settings</DialogTitle>
+          <DialogTitle>{t('settings.title')}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid max-h-[calc(92vh-4rem)] gap-0 overflow-hidden sm:grid-cols-[12rem_1fr]">
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-0 overflow-hidden sm:grid-cols-[12rem_1fr] sm:grid-rows-1">
           <div
             className="flex gap-2 overflow-x-auto border-b border-border bg-muted/40 p-2 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3"
             role="tablist"
@@ -78,7 +83,7 @@ export function GameSettingsModal({ onOpenChange, open }) {
                   onClick={() => setActiveTab(tab.id)}
                 >
                   <Icon className="size-4" />
-                  <span>{tab.label}</span>
+                  <span>{t(tab.labelKey)}</span>
                 </button>
               );
             })}
@@ -92,7 +97,9 @@ export function GameSettingsModal({ onOpenChange, open }) {
                     <span className="grid size-10 place-items-center rounded-md bg-secondary text-secondary-foreground">
                       <Volume2 className="size-5" />
                     </span>
-                    <span className="text-sm font-semibold">Volume geral</span>
+                    <span className="text-sm font-semibold">
+                      {t('settings.generalVolume')}
+                    </span>
                   </div>
                   <span className="rounded-md border border-border px-2 py-1 text-sm font-semibold">
                     {preferences.volume}%
@@ -105,14 +112,14 @@ export function GameSettingsModal({ onOpenChange, open }) {
                   max="100"
                   step="1"
                   value={preferences.volume}
-                  aria-label="Volume geral"
+                  aria-label={t('settings.generalVolume')}
                   className="h-2 w-full cursor-pointer accent-primary"
                   onChange={(event) =>
                     updatePreferences({ volume: event.target.value })
                   }
                 />
               </div>
-            ) : (
+            ) : activeTab === 'deck' ? (
               <div className="grid gap-4" role="tabpanel">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {deckOptions.map((deck) => {
@@ -132,13 +139,15 @@ export function GameSettingsModal({ onOpenChange, open }) {
                         <span className="flex justify-center rounded-md bg-muted/60 py-3 sm:order-2 sm:py-4">
                           <img
                             src={deck.image}
-                            alt={`3 de paus ${deck.description}`}
+                            alt={`3 de paus ${t(deck.labelKey)}`}
                             className="h-28 w-[4.65rem] rounded-md border border-black object-cover shadow-xl sm:h-36 sm:w-24"
                             draggable="false"
                           />
                         </span>
                         <span className="flex min-w-0 items-center justify-between gap-3 sm:order-1">
-                          <span className="text-sm font-bold">{deck.label}</span>
+                          <span className="text-sm font-bold">
+                            {t(deck.labelKey)}
+                          </span>
                           <span
                             className={cn(
                               'grid size-6 place-items-center rounded-full border border-border text-transparent',
@@ -153,6 +162,10 @@ export function GameSettingsModal({ onOpenChange, open }) {
                     );
                   })}
                 </div>
+              </div>
+            ) : (
+              <div role="tabpanel">
+                <LanguagePanel />
               </div>
             )}
           </div>

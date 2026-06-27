@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, RefreshCw, Trophy, UserRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { getLeaderboard } from '@/services/statsService.js';
@@ -62,9 +63,9 @@ function getPlayerPicture(player) {
   return resolveAvatarSrc(player?.data?.picture || player?.picture);
 }
 
-function getCardLabel(card) {
+function getCardLabel(card, t) {
   if (!card) {
-    return 'Sem rounds';
+    return t('leaderboard.noRounds');
   }
 
   const rank = rankLabels[card.rank] || card.rank;
@@ -98,6 +99,7 @@ function PlayerAvatar({ player }) {
 }
 
 export function Leaderboard() {
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -110,7 +112,7 @@ export function Leaderboard() {
       const response = await getLeaderboard({ limit: 100 });
       setLeaderboard(Array.isArray(response) ? response : []);
     } catch (requestError) {
-      setError(requestError.message || 'Nao foi possivel carregar o ranking.');
+      setError(requestError.message || t('leaderboard.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -126,10 +128,10 @@ export function Leaderboard() {
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Global statistics
+              {t('leaderboard.eyebrow')}
             </p>
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-              Leaderboard
+              {t('leaderboard.title')}
             </h1>
           </div>
 
@@ -141,7 +143,7 @@ export function Leaderboard() {
             onClick={() => void loadLeaderboard()}
           >
             <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
+            {t('common.refresh')}
           </Button>
         </div>
 
@@ -176,23 +178,28 @@ export function Leaderboard() {
                         {getPlayerName(stats.player, stats.player_id)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {stats.matches_won} wins · {formatPercent(stats.win_rate)}
+                        {stats.matches_won} {t('leaderboard.winsShort')} -{' '}
+                        {formatPercent(stats.win_rate)}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                     <span className="rounded-md bg-muted px-3 py-2">
-                      Games <strong>{stats.games_played}</strong>
+                      {t('leaderboard.games')}{' '}
+                      <strong>{stats.games_played}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
-                      Rounds <strong>{stats.rounds_won}</strong>
+                      {t('leaderboard.rounds')}{' '}
+                      <strong>{stats.rounds_won}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
-                      Bid <strong>{formatPercent(stats.bid_accuracy)}</strong>
+                      {t('leaderboard.bid')}{' '}
+                      <strong>{formatPercent(stats.bid_accuracy)}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
-                      Avg <strong>{formatNumber(stats.average_bid, 2)}</strong>
+                      {t('leaderboard.averageBid')}{' '}
+                      <strong>{formatNumber(stats.average_bid, 2)}</strong>
                     </span>
                   </div>
                 </article>
@@ -205,15 +212,33 @@ export function Leaderboard() {
                   <thead className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3 text-left">#</th>
-                      <th className="px-4 py-3 text-left">Player</th>
-                      <th className="px-4 py-3 text-right">Games</th>
-                      <th className="px-4 py-3 text-right">Wins</th>
-                      <th className="px-4 py-3 text-right">Win rate</th>
-                      <th className="px-4 py-3 text-right">Rounds</th>
-                      <th className="px-4 py-3 text-right">Bid hit</th>
-                      <th className="px-4 py-3 text-right">Avg bid</th>
-                      <th className="px-4 py-3 text-right">Trumps</th>
-                      <th className="px-4 py-3 text-left">Favorite</th>
+                      <th className="px-4 py-3 text-left">
+                        {t('leaderboard.player')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.games')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.wins')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.winRate')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.rounds')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.bidHit')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.averageBid')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.trumps')}
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        {t('leaderboard.favorite')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -241,7 +266,9 @@ export function Leaderboard() {
                           {formatNumber(stats.average_bid, 2)}
                         </td>
                         <td className="px-4 py-3 text-right">{stats.trump_cards}</td>
-                        <td className="px-4 py-3">{getCardLabel(stats.favorite_card)}</td>
+                        <td className="px-4 py-3">
+                          {getCardLabel(stats.favorite_card, t)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -253,9 +280,11 @@ export function Leaderboard() {
           <div className="grid min-h-72 place-items-center rounded-lg border border-border bg-card px-4 py-10 text-center shadow-sm">
             <div>
               <Trophy className="mx-auto size-10 text-muted-foreground" />
-              <p className="mt-3 text-sm font-semibold">Sem dados ainda</p>
+              <p className="mt-3 text-sm font-semibold">
+                {t('leaderboard.emptyTitle')}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Finalize partidas para aparecer no ranking.
+                {t('leaderboard.emptyDescription')}
               </p>
             </div>
           </div>

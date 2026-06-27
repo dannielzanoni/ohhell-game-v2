@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function RoutePage({ title, description }) {
+  const { t } = useTranslation();
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -8,7 +11,7 @@ export function RoutePage({ title, description }) {
           to="/"
           className="w-fit rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm transition hover:text-foreground"
         >
-          Voltar para Home
+          {t('common.backHome')}
         </Link>
 
         <section className="rounded-lg border border-border bg-card p-8 shadow-sm">
