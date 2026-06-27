@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LogIn, UserRound } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import cardBack from '@/assets/cards/back_card3.png';
@@ -912,14 +912,17 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
 function LobbyAuthGate({
   canContinue,
   error,
+  isConfirming,
   onContinue,
   onProfileSaved,
+  onProfileStateChange,
   open,
+  profileCardRef,
 }) {
   return (
     <Dialog open={open}>
       <DialogContent
-        className="max-w-md border-white/10 bg-zinc-950/95 p-5 text-white shadow-2xl shadow-black/50"
+        className="pointer-events-auto z-[70] max-w-md border-white/10 bg-zinc-950/95 p-5 text-white shadow-2xl shadow-black/50"
         showCloseButton={false}
         onEscapeKeyDown={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
@@ -927,12 +930,14 @@ function LobbyAuthGate({
         <DialogHeader>
           <DialogTitle>Entrar na sala</DialogTitle>
           <DialogDescription>
-            Cadastre seu guest antes de continuar.
+            Confirme seu nick e avatar antes de entrar na lobby.
           </DialogDescription>
         </DialogHeader>
 
         <LoginCard
+          ref={profileCardRef}
           className="border-white/10 bg-black/30 p-5 shadow-none"
+          onProfileStateChange={onProfileStateChange}
           onSaved={onProfileSaved}
         />
 
@@ -945,12 +950,16 @@ function LobbyAuthGate({
         <DialogFooter className="-mx-5 -mb-5 border-white/10 bg-black/30 px-5">
           <Button
             type="button"
-            disabled={!canContinue}
+            disabled={!canContinue || isConfirming}
             className="h-11 w-full gap-2 sm:w-auto"
             onClick={onContinue}
           >
-            <LogIn className="size-4" />
-            Entrar na sala
+            {isConfirming ? (
+              <i className="pi pi-spin pi-spinner text-sm" />
+            ) : (
+              <LogIn className="size-4" />
+            )}
+            {isConfirming ? 'Entrando...' : 'Entrar na sala'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -964,6 +973,7 @@ export function Game() {
   const gamePreferencesRef = useRef(getGamePreferences());
   const localPlayerIdsRef = useRef([]);
   const queuedRoundEndMessagesRef = useRef([]);
+  const profileCardRef = useRef(null);
   const roundEndDelayTimeoutRef = useRef(null);
   const roundEndDelayActiveRef = useRef(false);
   const turnPromptSoundRef = useRef('');
@@ -973,7 +983,13 @@ export function Game() {
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
   );
-  const [hasAuthToken, setHasAuthToken] = useState(() => Boolean(getAuthToken()));
+  const [isProfileConfirming, setIsProfileConfirming] = useState(false);
+  const [profileGateState, setProfileGateState] = useState({
+    canSaveProfile: false,
+    hasAuthToken: Boolean(getAuthToken()),
+    isSaving: false,
+    saveError: '',
+  });
   const [joinAttempt, setJoinAttempt] = useState(0);
   const [currentPlayerId, setCurrentPlayerId] = useState(() => getCurrentPlayerId());
   const [lifes, setLifes] = useState(() =>
@@ -1081,32 +1097,58 @@ export function Game() {
     });
   }, []);
 
-  const continueToLobby = () => {
-    const token = getAuthToken();
+  const handleProfileStateChange = useCallback((state) => {
+    setProfileGateState((previousState) => {
+      if (
+        previousState.canSaveProfile === state.canSaveProfile &&
+        previousState.hasAuthToken === state.hasAuthToken &&
+        previousState.isSaving === state.isSaving &&
+        previousState.saveError === state.saveError
+      ) {
+        return previousState;
+      }
 
-    if (!token) {
-      setAuthGateError('Salve seu guest antes de entrar na sala.');
-      setHasAuthToken(false);
+      return state;
+    });
+  }, []);
+
+  const continueToLobby = async () => {
+    if (isProfileConfirming) {
       return;
     }
 
-    const nextCurrentPlayerId = getCurrentPlayerId();
-
+    setIsProfileConfirming(true);
     setAuthGateError('');
-    setAuthGateOpen(false);
-    setHasAuthToken(true);
-    setCurrentPlayerId(nextCurrentPlayerId);
-    setPlayersById((previousPlayers) => {
-      if (!nextCurrentPlayerId || previousPlayers[nextCurrentPlayerId]) {
-        return previousPlayers;
+
+    try {
+      const savedProfile = await profileCardRef.current?.saveIfNeeded?.();
+      const token = savedProfile?.token || getAuthToken();
+
+      if (!token) {
+        setAuthGateError('Salve seu guest antes de entrar na sala.');
+        return;
       }
 
-      return {
-        ...previousPlayers,
-        [nextCurrentPlayerId]: createFallbackPlayer(nextCurrentPlayerId, lifes),
-      };
-    });
-    setJoinAttempt((attempt) => attempt + 1);
+      const nextCurrentPlayerId = getCurrentPlayerId();
+
+      setAuthGateOpen(false);
+      setCurrentPlayerId(nextCurrentPlayerId);
+      setPlayersById((previousPlayers) => {
+        if (!nextCurrentPlayerId || previousPlayers[nextCurrentPlayerId]) {
+          return previousPlayers;
+        }
+
+        return {
+          ...previousPlayers,
+          [nextCurrentPlayerId]: createFallbackPlayer(nextCurrentPlayerId, lifes),
+        };
+      });
+      setJoinAttempt((attempt) => attempt + 1);
+    } catch (error) {
+      setAuthGateError(error.message || 'Nao foi possivel confirmar o perfil.');
+    } finally {
+      setIsProfileConfirming(false);
+    }
   };
 
   useEffect(() => {
@@ -1116,7 +1158,6 @@ export function Game() {
 
     setLifes(nextLifes);
     setCurrentPlayerId(nextCurrentPlayerId);
-    setHasAuthToken(Boolean(token));
     setGameStage('waiting');
     setJoinError('');
     setHasGameSocket(false);
@@ -1616,7 +1657,6 @@ export function Game() {
       .catch((error) => {
         if (isCurrent) {
           if (isMissingAuthTokenError(error) || !getAuthToken()) {
-            setHasAuthToken(false);
             setAuthGateOpen(true);
             setAuthGateError('Cadastre seu guest antes de entrar na sala.');
             setJoinError('');
@@ -1813,14 +1853,18 @@ export function Game() {
       ) : null}
 
       <LobbyAuthGate
-        canContinue={hasAuthToken}
+        canContinue={
+          Boolean(lobbyId) && !isProfileConfirming && !profileGateState.isSaving
+        }
         error={authGateError}
+        isConfirming={isProfileConfirming}
         onContinue={continueToLobby}
         onProfileSaved={() => {
           setAuthGateError('');
-          setHasAuthToken(Boolean(getAuthToken()));
         }}
+        onProfileStateChange={handleProfileStateChange}
         open={authGateOpen}
+        profileCardRef={profileCardRef}
       />
     </main>
   );
