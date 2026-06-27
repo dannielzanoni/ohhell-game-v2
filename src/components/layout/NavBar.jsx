@@ -7,20 +7,27 @@ import {
   Settings as SettingsIcon,
   Sun,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
 import { pageLinks } from '@/app/routes/pageLinks.js';
+import {
+  LanguageNavButton,
+  LanguageSettingsModal,
+} from '@/components/i18n/LanguageSwitcher.jsx';
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
 const navItems = [
-  { label: 'Home', path: '/', icon: Home },
+  { label: 'Home', labelKey: 'common.home', path: '/', icon: Home },
   ...pageLinks,
 ];
 
 export function NavBar({ isCollapsed, onToggle }) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
@@ -30,7 +37,7 @@ export function NavBar({ isCollapsed, onToggle }) {
           type="button"
           variant="outline"
           size="icon"
-          aria-label="Expandir menu"
+          aria-label={t('nav.expandMenu')}
           className="fixed left-3 top-3 z-50 size-11 cursor-pointer border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl shadow-black/20 backdrop-blur hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
           onClick={onToggle}
         >
@@ -41,7 +48,7 @@ export function NavBar({ isCollapsed, onToggle }) {
       {!isCollapsed ? (
         <button
           type="button"
-          aria-label="Fechar menu"
+          aria-label={t('nav.closeMenu')}
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] md:hidden"
           onClick={onToggle}
         />
@@ -68,7 +75,7 @@ export function NavBar({ isCollapsed, onToggle }) {
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold">Oh Hell</span>
               <span className="block truncate text-xs text-muted-foreground">
-                Game hub
+                {t('nav.gameHub')}
               </span>
             </span>
           )}
@@ -79,7 +86,7 @@ export function NavBar({ isCollapsed, onToggle }) {
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Minimizar menu"
+            aria-label={t('nav.minimizeMenu')}
             className="cursor-pointer"
             onClick={onToggle}
           >
@@ -93,7 +100,7 @@ export function NavBar({ isCollapsed, onToggle }) {
           type="button"
           variant="ghost"
           size="default"
-          aria-label="Expandir menu"
+          aria-label={t('nav.expandMenu')}
           className="mx-3 mt-4 h-11 w-auto cursor-pointer justify-center px-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={onToggle}
         >
@@ -104,6 +111,7 @@ export function NavBar({ isCollapsed, onToggle }) {
       <nav className="flex flex-1 flex-col gap-2 px-3 py-5">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const label = item.labelKey ? t(item.labelKey) : item.label;
           const content = (
             <>
               {Icon ? (
@@ -117,7 +125,7 @@ export function NavBar({ isCollapsed, onToggle }) {
                   className="size-4 shrink-0 object-contain"
                 />
               )}
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && <span>{label}</span>}
             </>
           );
 
@@ -128,7 +136,7 @@ export function NavBar({ isCollapsed, onToggle }) {
                 href={item.externalUrl}
                 target="_blank"
                 rel="noreferrer"
-                title={isCollapsed ? item.label : undefined}
+                title={isCollapsed ? label : undefined}
                 className={cn(
                   'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                   isCollapsed && 'justify-center px-0',
@@ -144,7 +152,7 @@ export function NavBar({ isCollapsed, onToggle }) {
               key={item.path}
               to={item.path}
               end={item.path === '/'}
-              title={isCollapsed ? item.label : undefined}
+              title={isCollapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(
                   'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
@@ -160,7 +168,7 @@ export function NavBar({ isCollapsed, onToggle }) {
 
         <button
           type="button"
-          title={isCollapsed ? 'Settings' : undefined}
+          title={isCollapsed ? t('settings.title') : undefined}
           className={cn(
             'flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
             isCollapsed && 'justify-center px-0',
@@ -168,8 +176,13 @@ export function NavBar({ isCollapsed, onToggle }) {
           onClick={() => setIsSettingsOpen(true)}
         >
           <SettingsIcon className="size-4 shrink-0" />
-          {!isCollapsed && <span>Settings</span>}
+          {!isCollapsed && <span>{t('settings.title')}</span>}
         </button>
+
+        <LanguageNavButton
+          isCollapsed={isCollapsed}
+          onClick={() => setIsLanguageOpen(true)}
+        />
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
@@ -177,13 +190,15 @@ export function NavBar({ isCollapsed, onToggle }) {
           type="button"
           variant="outline"
           className={cn('w-full cursor-pointer', isCollapsed && 'px-0')}
-          title={isCollapsed ? 'Alternar tema' : undefined}
-          aria-label="Alternar tema"
+          title={isCollapsed ? t('nav.toggleTheme') : undefined}
+          aria-label={t('nav.toggleTheme')}
           onClick={toggleTheme}
         >
           {theme === 'dark' ? <Moon /> : <Sun />}
           {!isCollapsed && (
-            <span>{theme === 'dark' ? 'Dark theme' : 'Light theme'}</span>
+            <span>
+              {theme === 'dark' ? t('nav.darkTheme') : t('nav.lightTheme')}
+            </span>
           )}
         </Button>
       </div>
@@ -191,6 +206,10 @@ export function NavBar({ isCollapsed, onToggle }) {
       <GameSettingsModal
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+      />
+      <LanguageSettingsModal
+        open={isLanguageOpen}
+        onOpenChange={setIsLanguageOpen}
       />
       </aside>
     </>

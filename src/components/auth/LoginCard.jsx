@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import { Pencil, UserRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
@@ -44,6 +45,7 @@ export const LoginCard = forwardRef(function LoginCard(
   { className, onProfileStateChange, onSaved },
   ref,
 ) {
+  const { t } = useTranslation();
   const [hasAuthToken, setHasAuthToken] = useState(() =>
     Boolean(authService.getAuthToken()),
   );
@@ -97,11 +99,11 @@ export const LoginCard = forwardRef(function LoginCard(
         token: response?.token || authService.getAuthToken(),
       });
     } catch (error) {
-      setSaveError(error.message || 'Nao foi possivel salvar o perfil.');
+      setSaveError(error.message || t('auth.saveProfileError'));
     } finally {
       setIsSaving(false);
     }
-  }, [nickname, onSaved, selectedAvatar]);
+  }, [nickname, onSaved, selectedAvatar, t]);
 
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
@@ -159,13 +161,13 @@ export const LoginCard = forwardRef(function LoginCard(
         )}
       >
         <span className="mb-4 block w-full text-center text-xs font-semibold leading-5 text-muted-foreground">
-          Jogar como Guest
+          {t('auth.playAsGuest')}
         </span>
         <div className="flex items-center gap-4">
           <div className="flex w-20 shrink-0 flex-col items-center gap-2">
             <button
               type="button"
-              aria-label="Editar avatar guest"
+              aria-label={t('auth.editGuestAvatar')}
               className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
               onClick={() => setIsAvatarModalOpen(true)}
             >
@@ -183,7 +185,7 @@ export const LoginCard = forwardRef(function LoginCard(
               </span>
             </button>
             <span className="text-center text-xs font-semibold leading-4 text-muted-foreground">
-              Selecione seu Avatar
+              {t('auth.selectAvatar')}
             </span>
           </div>
 
@@ -205,14 +207,16 @@ export const LoginCard = forwardRef(function LoginCard(
         </div>
 
         <label className="mt-6 block">
-          <span className="text-sm font-medium text-muted-foreground">Nick</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('auth.nick')}
+          </span>
           <div className="mt-2 flex gap-2">
             <input
               type="text"
               name="nickname"
               maxLength={24}
               value={nickname}
-              placeholder="Digite seu nick"
+              placeholder={t('auth.nickPlaceholder')}
               className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
               onChange={(event) => {
                 setNickname(event.target.value);
@@ -228,7 +232,7 @@ export const LoginCard = forwardRef(function LoginCard(
               type="button"
               variant="outline"
               size="icon"
-              aria-label="Salvar nick"
+              aria-label={t('auth.saveNick')}
               disabled={!canSaveProfile || isSaving}
               className="h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed"
               onClick={() => {
@@ -251,7 +255,7 @@ export const LoginCard = forwardRef(function LoginCard(
         <div className="my-6 flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            ou
+            {t('auth.or')}
           </span>
           <span className="h-px flex-1 bg-border" />
         </div>
@@ -262,7 +266,7 @@ export const LoginCard = forwardRef(function LoginCard(
           className="h-11 w-full cursor-pointer gap-3"
         >
           <GoogleLogo />
-          Login com Google
+          {t('auth.loginGoogle')}
         </Button>
       </section>
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router-dom';
 import cardBack from '@/assets/cards/back_card3.png';
 import heartIcon from '@/assets/icons/heart.png';
@@ -617,14 +618,15 @@ function ReadyControls({
   readyCount,
   totalPlayers,
 }) {
-  const buttonLabel = isPending ? 'Enviando...' : isReady ? 'Pronto' : 'Ready';
+  const { t } = useTranslation();
+  const buttonLabel = isPending ? t('game.readySending') : t('game.ready');
 
   return (
     <div className="flex w-full flex-col items-stretch justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl shadow-black/50 backdrop-blur sm:w-auto sm:flex-row sm:items-center">
       <button
         type="button"
         disabled={!canToggleReady}
-        title={!hasEnoughPlayers ? 'Aguardando pelo menos 2 players' : undefined}
+        title={!hasEnoughPlayers ? t('game.waitingForPlayersTitle') : undefined}
         className={`h-11 rounded-xl border px-7 text-sm font-semibold shadow-lg transition sm:h-10 sm:rounded-full ${
           isReady
             ? 'border-emerald-400/70 bg-emerald-500 text-emerald-950 enabled:hover:bg-emerald-400'
@@ -636,13 +638,15 @@ function ReadyControls({
       </button>
 
       <span className="rounded-xl border border-white/10 bg-black/75 px-4 py-2 text-center text-xs font-semibold text-white shadow-lg sm:rounded-full">
-        {readyCount}/{totalPlayers} players ready
+        {t('game.playersReady', { readyCount, totalPlayers })}
       </span>
     </div>
   );
 }
 
 function ReadyStatusBadge({ isReady }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={`absolute left-1/2 top-full mt-3 -translate-x-1/2 rounded-full border px-3 py-2 text-xs font-semibold shadow-lg ${
@@ -651,7 +655,7 @@ function ReadyStatusBadge({ isReady }) {
           : 'border-white/10 bg-black/75 text-white'
       }`}
     >
-      {isReady ? 'Ready' : 'Waiting'}
+      {isReady ? t('game.ready') : t('game.waiting')}
     </div>
   );
 }
@@ -686,6 +690,7 @@ function SeatCardBacks({ count }) {
 }
 
 function BidProgress({ bid, points }) {
+  const { t } = useTranslation();
   const numericBid = Number(bid);
   const numericPoints = Number(points);
   const bidCount = Number.isFinite(numericBid)
@@ -714,8 +719,10 @@ function BidProgress({ bid, points }) {
             key={index}
             aria-label={
               isExtraPoint
-                ? `Ponto extra ${index - bidCount + 1} feito`
-                : `Bid ${index + 1} ${isChecked ? 'feito' : 'pendente'}`
+                ? t('game.extraPointDone', { number: index - bidCount + 1 })
+                : t(isChecked ? 'game.bidDone' : 'game.bidPending', {
+                    number: index + 1,
+                  })
             }
             className={`size-6 appearance-none rounded border shadow-md shadow-black/35 ${
               isChecked
@@ -730,10 +737,11 @@ function BidProgress({ bid, points }) {
 }
 
 function LifeHearts({ lifes }) {
+  const { t } = useTranslation();
   const lifeCount = Number.isFinite(Number(lifes))
     ? Math.max(0, Math.min(MAX_DISPLAYED_LIFES, Math.trunc(Number(lifes))))
     : 0;
-  const label = lifeCount === 1 ? '1 vida' : `${lifeCount} vidas`;
+  const label = t('game.lives', { count: lifeCount });
 
   return (
     <div className="mt-1 flex items-center gap-0.5" aria-label={label}>
@@ -830,6 +838,8 @@ function TableCenter({
   playersById,
   upcard,
 }) {
+  const { t } = useTranslation();
+
   if (!upcard && pile.length === 0) {
     return null;
   }
@@ -863,7 +873,7 @@ function TableCenter({
       {upcard ? (
         <div className="grid justify-items-center gap-1">
           <div
-            aria-label="Baralho e carta joker"
+            aria-label={t('game.deckAndJoker')}
             className="relative h-[7.99rem] w-[5.32rem] [--deck-gap:0.67rem] sm:h-[10.65rem] sm:w-[7.18rem] sm:[--deck-gap:0.97rem]"
           >
             {deckBackCards.map((_, index) => (
@@ -944,6 +954,7 @@ function BidControls({ onBid, possibleBids }) {
 }
 
 function ActionTimer({ onExpire, timer }) {
+  const { t } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
   const expiredTimerIdRef = useRef('');
 
@@ -989,7 +1000,12 @@ function ActionTimer({ onExpire, timer }) {
     ? Math.max(0, Math.min(100, (remainingMs / timer.durationMs) * 100))
     : 0;
   const seconds = Math.ceil(remainingMs / 1000);
-  const label = timer.type === 'bid' ? 'Bid' : timer.type === 'cards' ? 'Cartas' : 'Jogada';
+  const label =
+    timer.type === 'bid'
+      ? t('game.timerBid')
+      : timer.type === 'cards'
+        ? t('game.timerCards')
+        : t('game.timerPlay');
 
   return (
     <div
@@ -1011,6 +1027,7 @@ function ActionTimer({ onExpire, timer }) {
 }
 
 function RoomLinkCopy({ lobbyId }) {
+  const { t } = useTranslation();
   const [wasCopied, setWasCopied] = useState(false);
   const roomLink = `${window.location.origin}/game/${lobbyId}`;
 
@@ -1028,18 +1045,18 @@ function RoomLinkCopy({ lobbyId }) {
     <div className="absolute left-1/2 top-4 z-40 flex w-[min(28rem,calc(100vw-5rem))] -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-black/80 p-2 text-white shadow-2xl shadow-black/50 backdrop-blur">
       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wide">
         <LinkIcon className="size-3.5" />
-        Link
+        {t('common.link')}
       </span>
       <input
         type="text"
         value={roomLink}
         readOnly
-        aria-label="Link da sala"
+        aria-label={t('game.roomLink')}
         className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-zinc-200 outline-none"
       />
       <button
         type="button"
-        aria-label="Copiar link da sala"
+        aria-label={t('game.copyRoomLink')}
         className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200"
         onClick={copyRoomLink}
       >
@@ -1125,6 +1142,8 @@ function LobbyAuthGate({
   open,
   profileCardRef,
 }) {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open}>
       <DialogContent
@@ -1134,9 +1153,9 @@ function LobbyAuthGate({
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Entrar na sala</DialogTitle>
+          <DialogTitle>{t('game.enterRoom')}</DialogTitle>
           <DialogDescription>
-            Confirme seu nick e avatar antes de entrar na lobby.
+            {t('game.confirmProfile')}
           </DialogDescription>
         </DialogHeader>
 
@@ -1165,7 +1184,7 @@ function LobbyAuthGate({
             ) : (
               <LogIn className="size-4" />
             )}
-            {isConfirming ? 'Entrando...' : 'Entrar na sala'}
+            {isConfirming ? t('game.enteringRoom') : t('game.enterRoom')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1176,7 +1195,9 @@ function LobbyAuthGate({
 export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
+  const { t } = useTranslation();
   const gamePreferencesRef = useRef(getGamePreferences());
+  const translateRef = useRef(t);
   const localPlayerIdsRef = useRef([]);
   const playerDeckCountRef = useRef(0);
   const pileElevationTimeoutRef = useRef(null);
@@ -1260,6 +1281,10 @@ export function Game() {
   }, [currentPlayerId, currentPlayer?.id, resolvedCurrentPlayerId]);
 
   localPlayerIdsRef.current = localPlayerIds;
+
+  useEffect(() => {
+    translateRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     playerDeckCountRef.current = playerDeck.length;
@@ -1391,7 +1416,7 @@ export function Game() {
       const token = savedProfile?.token || getAuthToken();
 
       if (!token) {
-        setAuthGateError('Salve seu guest antes de entrar na sala.');
+        setAuthGateError(t('game.authSaveGuest'));
         return;
       }
 
@@ -1411,7 +1436,7 @@ export function Game() {
       });
       setJoinAttempt((attempt) => attempt + 1);
     } catch (error) {
-      setAuthGateError(error.message || 'Nao foi possivel confirmar o perfil.');
+      setAuthGateError(error.message || t('game.confirmProfileError'));
     } finally {
       setIsProfileConfirming(false);
     }
@@ -2019,7 +2044,7 @@ export function Game() {
             if (isCurrent) {
               setHasGameSocket(false);
               setIsReadySending(false);
-              setJoinError('Erro na conexao em tempo real da sala.');
+              setJoinError(translateRef.current('game.socketError'));
             }
           },
           onMessage: handleServerMessage,
@@ -2036,10 +2061,12 @@ export function Game() {
         if (isCurrent) {
           if (isMissingAuthTokenError(error) || !getAuthToken()) {
             setAuthGateOpen(true);
-            setAuthGateError('Cadastre seu guest antes de entrar na sala.');
+            setAuthGateError(translateRef.current('game.missingAuth'));
             setJoinError('');
           } else {
-            setJoinError(error.message || 'Nao foi possivel entrar na sala.');
+            setJoinError(
+              error.message || translateRef.current('game.enterRoomError'),
+            );
           }
         }
       });
@@ -2084,7 +2111,7 @@ export function Game() {
       setPlayerReady(socketRef.current, nextReady);
     } catch (error) {
       setIsReadySending(false);
-      setJoinError(error.message || 'Nao foi possivel marcar ready.');
+      setJoinError(error.message || t('game.readyError'));
     }
   };
 
@@ -2113,23 +2140,23 @@ export function Game() {
     try {
       putBid(socketRef.current, bid);
     } catch (error) {
-      setJoinError(error.message || 'Nao foi possivel enviar o bid.');
+      setJoinError(error.message || t('game.bidError'));
     }
   };
 
   const handlePlayCard = (card) => {
     if (!socketRef.current) {
-      setJoinError('Conexao da partida ainda nao esta pronta.');
+      setJoinError(t('game.connectionNotReady'));
       return;
     }
 
     if (gameStage !== 'dealing') {
-      setJoinError('Aguarde a fase de jogada para jogar uma carta.');
+      setJoinError(t('game.waitDeal'));
       return;
     }
 
     if (!isCurrentPlayerTurn) {
-      setJoinError('Aguarde sua vez para jogar.');
+      setJoinError(t('game.waitTurn'));
       return;
     }
 
@@ -2162,7 +2189,7 @@ export function Game() {
         };
       });
     } catch (error) {
-      setJoinError(error.message || 'Nao foi possivel jogar a carta.');
+      setJoinError(error.message || t('game.playCardError'));
     }
   };
 
@@ -2188,7 +2215,7 @@ export function Game() {
 
   return (
     <main
-      aria-label="Oh Hell game table"
+      aria-label={t('game.tableAria')}
       className="relative min-h-screen overflow-hidden bg-black"
     >
       <div

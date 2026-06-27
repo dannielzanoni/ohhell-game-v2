@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
 import { getLobbies } from '@/services/lobbyService.js';
@@ -10,6 +11,7 @@ function getLobbyId(lobby) {
 
 export function Rooms() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [lobbies, setLobbies] = useState([]);
@@ -22,7 +24,7 @@ export function Rooms() {
       const response = await getLobbies();
       setLobbies(Array.isArray(response) ? response : []);
     } catch (requestError) {
-      setError(requestError.message || 'Nao foi possivel carregar as salas.');
+      setError(requestError.message || t('pages.rooms.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -38,10 +40,10 @@ export function Rooms() {
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Live tables
+              {t('pages.rooms.eyebrow')}
             </p>
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-              Rooms
+              {t('pages.rooms.title')}
             </h1>
           </div>
 
@@ -54,12 +56,12 @@ export function Rooms() {
               onClick={() => void loadRooms()}
             >
               <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Atualizar
+              {t('common.refresh')}
             </Button>
             <Button asChild className="h-10 cursor-pointer gap-2">
               <Link to="/create-game">
                 <Plus className="size-4" />
-                Criar
+                {t('pages.rooms.create')}
               </Link>
             </Button>
           </div>
@@ -74,9 +76,9 @@ export function Rooms() {
 
         <div className="rounded-lg border border-border bg-card shadow-sm">
           <div className="hidden grid-cols-[1fr_8rem_8rem] border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid">
-            <span>Sala</span>
-            <span className="text-center">Players</span>
-            <span className="text-right">Entrar</span>
+            <span>{t('pages.rooms.room')}</span>
+            <span className="text-center">{t('pages.rooms.players')}</span>
+            <span className="text-right">{t('pages.rooms.enter')}</span>
           </div>
 
           {isLoading ? (
@@ -109,7 +111,7 @@ export function Rooms() {
                             {lobbyId}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            BR · Waiting
+                            {t('pages.rooms.regionWaiting')}
                           </p>
                         </div>
                       </div>
@@ -126,7 +128,7 @@ export function Rooms() {
                       onClick={() => navigate(`/game/${lobbyId}`)}
                     >
                       <DoorOpen className="size-4" />
-                      Join
+                      {t('common.join')}
                     </Button>
                   </article>
                 );
@@ -136,9 +138,11 @@ export function Rooms() {
             <div className="grid min-h-52 place-items-center px-4 py-10 text-center">
               <div>
                 <DoorOpen className="mx-auto size-10 text-muted-foreground" />
-                <p className="mt-3 text-sm font-semibold">Nenhuma sala aberta</p>
+                <p className="mt-3 text-sm font-semibold">
+                  {t('pages.rooms.emptyTitle')}
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Crie uma nova mesa para convidar seus amigos.
+                  {t('pages.rooms.emptyDescription')}
                 </p>
               </div>
             </div>

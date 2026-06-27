@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import card1Ouro from '@/assets/cards/spanish/1ouro.jpg';
 import card2Espada from '@/assets/cards/spanish/2espada.jpg';
 import card3Paus from '@/assets/cards/spanish/3paus.jpg';
@@ -31,6 +32,8 @@ const cardGroups = [
 ];
 
 export function Home() {
+  const { t } = useTranslation();
+
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:h-full lg:max-w-7xl lg:gap-5">
@@ -70,7 +73,7 @@ export function Home() {
               </div>
             </div>
             <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg md:leading-8 lg:mt-3 lg:text-base lg:leading-6">
-              Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!
+              {t('pages.home.tagline')}
             </p>
 
             <section className="mt-4 rounded-lg border border-border bg-background/55 p-4 shadow-lg shadow-black/10 backdrop-blur lg:mt-4 lg:p-3">
@@ -107,6 +110,10 @@ export function Home() {
           <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
             {pageLinks.map((page) => {
               const Icon = page.icon;
+              const label = page.labelKey ? t(page.labelKey) : page.label;
+              const description = page.descriptionKey
+                ? t(page.descriptionKey)
+                : page.description;
               const content = (
                 <>
                   <span className="flex items-center gap-3">
@@ -124,11 +131,11 @@ export function Home() {
                       )}
                     </span>
                     <span className="text-xl font-bold text-foreground lg:text-base">
-                      {page.label}
+                      {label}
                     </span>
                   </span>
                   <span className="mt-4 block text-sm leading-6 text-muted-foreground lg:mt-3 lg:text-xs lg:leading-5">
-                    {page.description}
+                    {description}
                   </span>
                 </>
               );

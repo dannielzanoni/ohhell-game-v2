@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Home, Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import {
@@ -21,6 +22,7 @@ const lifeOptions = [1, 2, 3, 4, 5].map((life) => ({
 
 export function CreateGame() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [lives, setLives] = useState('5');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -41,7 +43,7 @@ export function CreateGame() {
         state: { lifes: selectedLives },
       });
     } catch (error) {
-      setCreateError(error.message || 'Nao foi possivel criar a sala.');
+      setCreateError(error.message || t('pages.createGame.createError'));
     } finally {
       setIsCreating(false);
     }
@@ -66,36 +68,38 @@ export function CreateGame() {
       <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-6 px-6 py-8">
         <div className="rounded-lg border border-border bg-card/85 p-8 shadow-2xl shadow-black/20 backdrop-blur md:p-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            Live table
+            {t('pages.createGame.liveTable')}
           </p>
           <h1 className="mt-4 text-4xl font-black tracking-tight md:text-6xl">
             Oh Hell Game
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-            Configure a partida antes de entrar na mesa.
+            {t('pages.createGame.configureBefore')}
           </p>
         </div>
 
         <section className="mx-auto w-full max-w-md min-w-0 rounded-lg border border-border bg-card/85 p-5 shadow-lg shadow-black/10 backdrop-blur md:p-6">
           <div>
-            <h2 className="text-2xl font-bold">Game Configurations</h2>
+            <h2 className="text-2xl font-bold">
+              {t('pages.createGame.configurations')}
+            </h2>
           </div>
 
           <div className="mt-6 grid gap-5">
             <div className="block min-w-0">
               <span className="text-sm font-semibold text-foreground">
-                Numero de Vidas
+                {t('pages.createGame.livesNumber')}
               </span>
               <Combobox
                 data={lifeOptions}
-                type="vida"
+                type={t('pages.createGame.lifeType')}
                 value={lives}
                 onValueChange={setLives}
               >
                 <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
                 <ComboboxContent className="rounded-xl border-border bg-popover">
                   <ComboboxList>
-                    <ComboboxEmpty>Nenhuma opcao encontrada.</ComboboxEmpty>
+                    <ComboboxEmpty>{t('pages.createGame.noOptions')}</ComboboxEmpty>
                     <ComboboxGroup>
                       {lifeOptions.map((option) => (
                         <ComboboxItem
@@ -115,13 +119,13 @@ export function CreateGame() {
             <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  Sala publica
+                  {t('pages.createGame.publicRoom')}
                 </p>
               </div>
               <button
                 type="button"
                 disabled
-                aria-label="Ativar sala publica"
+                aria-label={t('pages.createGame.enablePublicRoom')}
                 className="relative h-7 w-12 shrink-0 cursor-not-allowed rounded-full bg-muted opacity-60"
               >
                 <span className="absolute left-1 top-1 size-5 rounded-full bg-muted-foreground/70" />
@@ -141,7 +145,7 @@ export function CreateGame() {
                   ) : (
                     <Play className="size-4" />
                   )}
-                  {isCreating ? 'Creating...' : 'Play'}
+                  {isCreating ? t('pages.createGame.creating') : t('common.play')}
                 </span>
               </InteractiveHoverButton>
 
@@ -150,7 +154,7 @@ export function CreateGame() {
                 className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Home className="size-4" />
-                Home
+                {t('common.home')}
               </Link>
             </div>
 
