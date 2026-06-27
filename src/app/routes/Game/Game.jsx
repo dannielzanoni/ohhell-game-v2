@@ -38,6 +38,7 @@ const MAX_DISPLAYED_LIFES = 5;
 const MAX_VISIBLE_SEAT_CARDS = 6;
 const CURRENT_PLAYER_SEAT_LIFT = 2;
 const ROUND_END_DELAY_MS = 1000;
+const PILE_WEAK_CARD_DELAY_MS = 1000;
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
   import: 'default',
@@ -85,6 +86,24 @@ const suitLabels = {
   Cups: 'copas',
   Golds: 'ouro',
   Swords: 'espada',
+};
+const rankStrength = {
+  Four: 0,
+  Five: 1,
+  Six: 2,
+  Seven: 3,
+  Ten: 4,
+  Eleven: 5,
+  Twelve: 6,
+  One: 7,
+  Two: 8,
+  Three: 9,
+};
+const suitStrength = {
+  Golds: 0,
+  Swords: 1,
+  Cups: 2,
+  Clubs: 3,
 };
 const nextRank = {
   Eleven: 'Twelve',
@@ -154,6 +173,55 @@ function getCardLabel(card) {
   const suit = suitLabels[card.suit] || card.suit;
 
   return `${rank} de ${suit}`;
+}
+
+function getCardStrength(card, upcard) {
+  if (!card) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const rankValue = rankStrength[card.rank] ?? -1;
+  const suitValue = suitStrength[card.suit] ?? -1;
+  const baseValue = rankValue * 10 + suitValue;
+
+  return nextRank[upcard?.rank] === card.rank ? baseValue + 100 : baseValue;
+}
+
+function getTurnKey(turn) {
+  return `${turn?.player_id || ''}:${getCardKey(turn?.card)}`;
+}
+
+function getStrongestTurn(pile, upcard) {
+  return (pile || []).reduce((strongestTurn, turn) => {
+    if (!strongestTurn) {
+      return turn;
+    }
+
+    return getCardStrength(turn.card, upcard) >
+      getCardStrength(strongestTurn.card, upcard)
+      ? turn
+      : strongestTurn;
+  }, null);
+}
+
+function getAddedTurn(previousPile, nextPile) {
+  const previousCounts = (previousPile || []).reduce((counts, turn) => {
+    const key = getTurnKey(turn);
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {});
+
+  return (nextPile || []).find((turn) => {
+    const key = getTurnKey(turn);
+    const remainingCount = previousCounts[key] || 0;
+
+    if (remainingCount) {
+      previousCounts[key] = remainingCount - 1;
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function playGameSound(soundSrc, volume) {
@@ -747,12 +815,36 @@ function PlayerSeat({
   );
 }
 
-function TableCenter({ deckType, pile, playersById, upcard }) {
+function TableCenter({
+  deckType,
+  elevatedPileCardKey,
+  pile,
+  playersById,
+  upcard,
+}) {
   if (!upcard && pile.length === 0) {
     return null;
   }
 
   const deckBackCards = Array.from({ length: 4 });
+  const visualPile = [...pile]
+    .map((turn, index) => ({
+      index,
+      isElevated: elevatedPileCardKey === getTurnKey(turn),
+      strength: getCardStrength(turn.card, upcard),
+      turn,
+    }))
+    .sort((first, second) => {
+      if (first.isElevated !== second.isElevated) {
+        return first.isElevated ? 1 : -1;
+      }
+
+      if (first.strength !== second.strength) {
+        return first.strength - second.strength;
+      }
+
+      return first.index - second.index;
+    });
 
   return (
     <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 rounded-3xl border border-white/10 bg-black/35 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-sm sm:gap-8">
@@ -791,22 +883,22 @@ function TableCenter({ deckType, pile, playersById, upcard }) {
 
       <div className="grid min-w-28 justify-items-center gap-2">
         <div className="relative h-[7.7rem] w-[8.8rem] translate-y-[20%] sm:h-[9.9rem] sm:w-[12.1rem]">
-          {pile.length ? (
-            pile.map((turn, index) => {
+          {visualPile.length ? (
+            visualPile.map(({ isElevated, turn }, index) => {
               const playerName =
                 playersById[turn.player_id]?.nickname || turn.player_id;
 
               return (
                 <img
-                  key={`${turn.player_id}-${getCardKey(turn.card)}-${index}`}
+                  key={getTurnKey(turn)}
                   src={getCardImageSrc(turn.card, deckType)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
-                  className="absolute left-1/2 top-1/2 h-[6.6rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 sm:h-[8.8rem] sm:w-[5.94rem]"
+                  className="absolute left-1/2 top-1/2 h-[6.6rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 transition-transform duration-500 ease-out sm:h-[8.8rem] sm:w-[5.94rem]"
                   draggable="false"
                   style={{
                     transform: `translate(-50%, -50%) translateX(${index * 22}px) rotate(${index * 5 - 8}deg)`,
-                    zIndex: index + 1,
+                    zIndex: isElevated ? visualPile.length + 10 : index + 1,
                   }}
                 />
               );
@@ -972,12 +1064,15 @@ export function Game() {
   const location = useLocation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const localPlayerIdsRef = useRef([]);
+  const pileElevationTimeoutRef = useRef(null);
+  const pileRef = useRef([]);
   const queuedRoundEndMessagesRef = useRef([]);
   const profileCardRef = useRef(null);
   const roundEndDelayTimeoutRef = useRef(null);
   const roundEndDelayActiveRef = useRef(false);
   const turnPromptSoundRef = useRef('');
   const socketRef = useRef(null);
+  const upcardRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
   const [gamePreferences, setGamePreferencesState] = useState(
@@ -1014,6 +1109,7 @@ export function Game() {
   const [hasGameSocket, setHasGameSocket] = useState(false);
   const [isReadySending, setIsReadySending] = useState(false);
   const [matchPhase, setMatchPhase] = useState('waiting');
+  const [elevatedPileCardKey, setElevatedPileCardKey] = useState('');
   const [pile, setPile] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
@@ -1090,6 +1186,31 @@ export function Game() {
     playConfiguredSound(type === 'bid' ? bidTurnSound : playerTurnSound);
   };
 
+  const clearPileElevation = useCallback(() => {
+    if (pileElevationTimeoutRef.current) {
+      window.clearTimeout(pileElevationTimeoutRef.current);
+    }
+
+    pileElevationTimeoutRef.current = null;
+    setElevatedPileCardKey('');
+  }, []);
+
+  const elevatePileCard = useCallback(
+    (turn) => {
+      clearPileElevation();
+
+      const turnKey = getTurnKey(turn);
+      setElevatedPileCardKey(turnKey);
+      pileElevationTimeoutRef.current = window.setTimeout(() => {
+        pileElevationTimeoutRef.current = null;
+        setElevatedPileCardKey((currentKey) =>
+          currentKey === turnKey ? '' : currentKey,
+        );
+      }, PILE_WEAK_CARD_DELAY_MS);
+    },
+    [clearPileElevation],
+  );
+
   useEffect(() => {
     return subscribeToGamePreferences((preferences) => {
       gamePreferencesRef.current = preferences;
@@ -1163,12 +1284,15 @@ export function Game() {
     setHasGameSocket(false);
     setIsReadySending(false);
     setMatchPhase('waiting');
+    clearPileElevation();
+    pileRef.current = [];
     setPile([]);
     setPlayerDeck([]);
     setPlayedCardAnimation(null);
     setPossibleBids([]);
     setRoundCardCount(0);
     setTurnPlayerId(null);
+    upcardRef.current = null;
     setUpcard(null);
 
     if (!lobbyId) {
@@ -1198,6 +1322,16 @@ export function Game() {
     };
 
     clearRoundEndDelay();
+
+    const updatePile = (nextPile) => {
+      pileRef.current = nextPile;
+      setPile(nextPile);
+    };
+
+    const updateUpcard = (nextUpcard) => {
+      upcardRef.current = nextUpcard;
+      setUpcard(nextUpcard);
+    };
 
     const applyStatusMap = (statusMap, gameInfo) => {
       setPlayersById((previousPlayers) => {
@@ -1235,7 +1369,7 @@ export function Game() {
 
       setIsReadySending(false);
       setMatchPhase('playing');
-      setUpcard(gameInfo.upcard || null);
+      updateUpcard(gameInfo.upcard || null);
       setTurnPlayerId(gameInfo.current_player || null);
       setGameStage(gameInfo.stage?.type === 'Bidding' ? 'bidding' : 'dealing');
 
@@ -1271,7 +1405,8 @@ export function Game() {
 
       roundEndDelayTimeoutRef.current = null;
       roundEndDelayActiveRef.current = false;
-      setPile([]);
+      clearPileElevation();
+      updatePile([]);
       setRoundCardCount((currentCount) => Math.max(0, currentCount - 1));
 
       const queuedMessages = queuedRoundEndMessagesRef.current;
@@ -1292,10 +1427,14 @@ export function Game() {
         window.clearTimeout(roundEndDelayTimeoutRef.current);
       }
 
+      const delayMs = pileElevationTimeoutRef.current
+        ? PILE_WEAK_CARD_DELAY_MS + ROUND_END_DELAY_MS
+        : ROUND_END_DELAY_MS;
+
       roundEndDelayActiveRef.current = true;
       roundEndDelayTimeoutRef.current = window.setTimeout(
         completeRoundEndDelay,
-        ROUND_END_DELAY_MS,
+        delayMs,
       );
     };
 
@@ -1305,13 +1444,14 @@ export function Game() {
           if (message.data?.type === 'Waiting') {
             setGameStage('waiting');
             setMatchPhase('waiting');
-            setPile([]);
+            clearPileElevation();
+            updatePile([]);
             setPlayerDeck([]);
             setPlayedCardAnimation(null);
             setPossibleBids([]);
             setRoundCardCount(0);
             setTurnPlayerId(null);
-            setUpcard(null);
+            updateUpcard(null);
           }
 
           const statusMap = getSnapshotStatusMap(message.data);
@@ -1473,7 +1613,29 @@ export function Game() {
           setGameStage('dealing');
           setMatchPhase('playing');
           setPossibleBids([]);
-          setPile(message.data?.pile || []);
+          {
+            const previousPile = pileRef.current;
+            const nextPile = message.data?.pile || [];
+            const addedTurn = getAddedTurn(previousPile, nextPile);
+            const currentUpcard = upcardRef.current;
+            const strongestPreviousTurn = getStrongestTurn(
+              previousPile,
+              currentUpcard,
+            );
+
+            updatePile(nextPile);
+
+            if (
+              addedTurn &&
+              strongestPreviousTurn &&
+              getCardStrength(addedTurn.card, currentUpcard) <=
+                getCardStrength(strongestPreviousTurn.card, currentUpcard)
+            ) {
+              elevatePileCard(addedTurn);
+            } else {
+              clearPileElevation();
+            }
+          }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
               (nextPlayers, [playerId, player]) => {
@@ -1501,13 +1663,14 @@ export function Game() {
           setIsReadySending(false);
           setGameStage('bidding');
           setMatchPhase('playing');
-          setPile([]);
+          clearPileElevation();
+          updatePile([]);
           setPlayerDeck([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           setRoundCardCount(0);
           setTurnPlayerId(null);
-          setUpcard(message.data.upcard);
+          updateUpcard(message.data.upcard);
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
               (nextPlayers, [playerId, player]) => {
@@ -1528,7 +1691,8 @@ export function Game() {
           clearTurnPromptSound();
           setGameStage('dealing');
           setMatchPhase('playing');
-          setPile([]);
+          clearPileElevation();
+          updatePile([]);
           setPossibleBids([]);
           setRoundCardCount(0);
           setPlayersById((previousPlayers) => {
@@ -1553,13 +1717,14 @@ export function Game() {
           setIsReadySending(false);
           setGameStage('ended');
           setMatchPhase('ended');
-          setPile([]);
+          clearPileElevation();
+          updatePile([]);
           setPlayerDeck([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           setRoundCardCount(0);
           setTurnPlayerId(null);
-          setUpcard(null);
+          updateUpcard(null);
           setPlayersById((previousPlayers) => {
             const nextPlayers = { ...previousPlayers };
 
@@ -1598,6 +1763,22 @@ export function Game() {
           ...queuedRoundEndMessagesRef.current,
           message,
         ];
+        return;
+      }
+
+      if (
+        (message.type === 'SetEnded' || message.type === 'GameEnded') &&
+        pileRef.current.length > 0
+      ) {
+        clearTurnPromptSound();
+        setIsReadySending(false);
+        setPossibleBids([]);
+        setTurnPlayerId(null);
+        queuedRoundEndMessagesRef.current = [
+          ...queuedRoundEndMessagesRef.current,
+          message,
+        ];
+        startRoundEndDelay();
         return;
       }
 
@@ -1669,6 +1850,10 @@ export function Game() {
     return () => {
       isCurrent = false;
       clearRoundEndDelay();
+      if (pileElevationTimeoutRef.current) {
+        window.clearTimeout(pileElevationTimeoutRef.current);
+        pileElevationTimeoutRef.current = null;
+      }
       setHasGameSocket(false);
       setIsReadySending(false);
 
@@ -1680,7 +1865,13 @@ export function Game() {
         socketRef.current = null;
       }
     };
-  }, [joinAttempt, lobbyId, location.state?.lifes]);
+  }, [
+    clearPileElevation,
+    elevatePileCard,
+    joinAttempt,
+    lobbyId,
+    location.state?.lifes,
+  ]);
 
   const toggleReady = () => {
     if (!canToggleReady || !socketRef.current) {
@@ -1782,6 +1973,7 @@ export function Game() {
 
       <TableCenter
         deckType={gamePreferences.deckType}
+        elevatedPileCardKey={elevatedPileCardKey}
         pile={pile}
         playersById={playersById}
         upcard={upcard}
