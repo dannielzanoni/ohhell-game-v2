@@ -827,6 +827,10 @@ function TableCenter({
   }
 
   const deckBackCards = Array.from({ length: 4 });
+  const pileCardSizeClass =
+    deckType === deckTypes.FRENCH
+      ? 'h-[8.35rem] w-[5.75rem] sm:h-[10.16rem] sm:w-[7rem]'
+      : 'h-[8.35rem] w-[5.56rem] sm:h-[10.16rem] sm:w-[6.76rem]';
   const visualPile = [...pile]
     .map((turn, index) => ({
       index,
@@ -894,7 +898,7 @@ function TableCenter({
                   src={getCardImageSrc(turn.card, deckType)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
-                  className="absolute left-1/2 top-1/2 h-[6.6rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black object-cover shadow-xl shadow-black/60 transition-transform duration-500 ease-out sm:h-[8.8rem] sm:w-[5.94rem]"
+                  className={`absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black bg-white object-contain shadow-xl shadow-black/60 transition-transform duration-500 ease-out`}
                   draggable="false"
                   style={{
                     transform: `translate(-50%, -50%) translateX(${index * 22}px) rotate(${index * 5 - 8}deg)`,
@@ -969,8 +973,8 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
         ? 'ml-[-3.1rem] sm:ml-[-3.52rem]'
         : 'ml-[-2.5rem] sm:ml-[-1.38rem]';
   const cardSizeClass = isFrenchDeck
-    ? 'h-[8.38rem] w-[5.67rem] sm:h-[9.8rem] sm:w-[6.53rem]'
-    : 'h-[9.32rem] w-[6.29rem] sm:h-[10.89rem] sm:w-[7.26rem]';
+    ? 'h-[9.22rem] w-[6.35rem] sm:h-[9.8rem] sm:w-[6.75rem]'
+    : 'h-[10.25rem] w-[6.82rem] sm:h-[10.89rem] sm:w-[7.26rem]';
 
   return (
     <div className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 translate-y-[10%] items-end justify-start overflow-x-auto px-2 pb-3 sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:justify-center sm:overflow-visible sm:px-0">
@@ -981,9 +985,9 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
             type="button"
             disabled={!canPlayCards}
             title={getCardLabel(card)}
-            className={`shrink-0 scale-110 ${index === 0 ? '' : overlapClass} ${
+            className={`shrink-0 sm:scale-110 ${index === 0 ? '' : overlapClass} ${
               canPlayCards
-                ? 'cursor-pointer hover:-translate-y-6 hover:scale-125'
+                ? 'cursor-pointer active:-translate-y-3 sm:hover:-translate-y-6 sm:hover:scale-125'
                 : 'cursor-not-allowed opacity-98'
             } transition duration-200`}
             onClick={() => onPlayCard(card)}
@@ -991,7 +995,7 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
             <img
               src={getCardImageSrc(card, deckType)}
               alt={getCardLabel(card)}
-              className={`${cardSizeClass} rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/60`}
+              className={`${cardSizeClass} rounded-lg border-2 border-black bg-white object-contain shadow-2xl shadow-black/60`}
               draggable="false"
             />
           </button>
