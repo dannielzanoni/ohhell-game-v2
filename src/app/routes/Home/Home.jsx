@@ -107,13 +107,8 @@ export function Home() {
           <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
             {pageLinks.map((page) => {
               const Icon = page.icon;
-
-              return (
-                <Link
-                  key={page.path}
-                  to={page.path}
-                  className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
-                >
+              const content = (
+                <>
                   <span className="flex items-center gap-3">
                     <span className="grid size-11 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground transition group-hover:bg-primary group-hover:text-primary-foreground lg:size-9">
                       {Icon ? (
@@ -135,6 +130,30 @@ export function Home() {
                   <span className="mt-4 block text-sm leading-6 text-muted-foreground lg:mt-3 lg:text-xs lg:leading-5">
                     {page.description}
                   </span>
+                </>
+              );
+
+              if (page.externalUrl) {
+                return (
+                  <a
+                    key={page.path}
+                    href={page.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
+                  >
+                    {content}
+                  </a>
+                );
+              }
+
+              return (
+                <Link
+                  key={page.path}
+                  to={page.path}
+                  className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
+                >
+                  {content}
                 </Link>
               );
             })}

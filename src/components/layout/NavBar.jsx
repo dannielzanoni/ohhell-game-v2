@@ -104,6 +104,40 @@ export function NavBar({ isCollapsed, onToggle }) {
       <nav className="flex flex-1 flex-col gap-2 px-3 py-5">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const content = (
+            <>
+              {Icon ? (
+                <Icon className="size-4 shrink-0" />
+              ) : item.primeIcon ? (
+                <i className={cn(item.primeIcon, 'shrink-0 text-base')} />
+              ) : (
+                <img
+                  src={item.iconSrc}
+                  alt=""
+                  className="size-4 shrink-0 object-contain"
+                />
+              )}
+              {!isCollapsed && <span>{item.label}</span>}
+            </>
+          );
+
+          if (item.externalUrl) {
+            return (
+              <a
+                key={item.path}
+                href={item.externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                title={isCollapsed ? item.label : undefined}
+                className={cn(
+                  'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  isCollapsed && 'justify-center px-0',
+                )}
+              >
+                {content}
+              </a>
+            );
+          }
 
           return (
             <NavLink
@@ -119,18 +153,7 @@ export function NavBar({ isCollapsed, onToggle }) {
                 )
               }
             >
-              {Icon ? (
-                <Icon className="size-4 shrink-0" />
-              ) : item.primeIcon ? (
-                <i className={cn(item.primeIcon, 'shrink-0 text-base')} />
-              ) : (
-                <img
-                  src={item.iconSrc}
-                  alt=""
-                  className="size-4 shrink-0 object-contain"
-                />
-              )}
-              {!isCollapsed && <span>{item.label}</span>}
+              {content}
             </NavLink>
           );
         })}

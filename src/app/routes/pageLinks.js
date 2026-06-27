@@ -28,7 +28,8 @@ export const pageLinks = [
   {
     label: 'Github',
     path: '/github',
-    description: 'Links e informacoes do repositorio.',
+    description: 'Repositório do projeto Oh Hell Game v2',
+    externalUrl: 'https://github.com/dannielzanoni/ohhell-game-v2',
     primeIcon: 'pi pi-github',
   },
 ];

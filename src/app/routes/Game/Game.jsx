@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LogIn, UserRound } from 'lucide-react';
+import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
 import cardBack from '@/assets/cards/back_card3.png';
 import heartIcon from '@/assets/icons/heart.png';
@@ -257,6 +257,14 @@ function removeCardFromDeck(deck, card) {
 
     return true;
   });
+}
+
+function getRandomItem(items) {
+  if (!items?.length) {
+    return null;
+  }
+
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 function resolveAvatarSrc(picture) {
@@ -851,7 +859,7 @@ function TableCenter({
     });
 
   return (
-    <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 rounded-3xl border border-white/10 bg-black/35 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-sm sm:gap-8">
+    <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 p-4 text-white sm:gap-8">
       {upcard ? (
         <div className="grid justify-items-center gap-1">
           <div
@@ -907,11 +915,7 @@ function TableCenter({
                 />
               );
             })
-          ) : (
-            <div className="grid h-full place-items-center rounded-2xl border border-dashed border-white/15 bg-black/35 px-4 text-center text-xs text-zinc-300">
-             
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -935,6 +939,112 @@ function BidControls({ onBid, possibleBids }) {
           {bid}
         </button>
       ))}
+    </div>
+  );
+}
+
+function ActionTimer({ onExpire, timer }) {
+  const [now, setNow] = useState(() => Date.now());
+  const expiredTimerIdRef = useRef('');
+
+  useEffect(() => {
+    if (!timer) {
+      return undefined;
+    }
+
+    setNow(Date.now());
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 200);
+
+    return () => window.clearInterval(interval);
+  }, [timer]);
+
+  useEffect(() => {
+    expiredTimerIdRef.current = '';
+  }, [timer?.id]);
+
+  useEffect(() => {
+    if (!timer) {
+      return;
+    }
+
+    const remainingMs = timer.durationMs - Math.max(0, now - timer.startedAt);
+
+    if (remainingMs > 0 || expiredTimerIdRef.current === timer.id) {
+      return;
+    }
+
+    expiredTimerIdRef.current = timer.id;
+    onExpire?.(timer);
+  }, [now, onExpire, timer]);
+
+  if (!timer) {
+    return null;
+  }
+
+  const elapsedMs = Math.max(0, now - timer.startedAt);
+  const remainingMs = Math.max(0, timer.durationMs - elapsedMs);
+  const progress = timer.durationMs
+    ? Math.max(0, Math.min(100, (remainingMs / timer.durationMs) * 100))
+    : 0;
+  const seconds = Math.ceil(remainingMs / 1000);
+  const label = timer.type === 'bid' ? 'Bid' : timer.type === 'cards' ? 'Cartas' : 'Jogada';
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-4 z-50 w-[min(24rem,calc(100vw-5rem))] -translate-x-1/2 rounded-full border border-white/15 bg-black/80 px-3 py-2 text-white shadow-2xl shadow-black/50 backdrop-blur"
+      aria-live="polite"
+    >
+      <div className="mb-1 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-wide">
+        <span>{label}</span>
+        <span>{seconds}s</span>
+      </div>
+      <div className="relative h-2 overflow-hidden rounded-full bg-white/15">
+        <span
+          className="absolute bottom-0 right-0 top-0 rounded-full bg-amber-300 transition-[width] duration-200 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function RoomLinkCopy({ lobbyId }) {
+  const [wasCopied, setWasCopied] = useState(false);
+  const roomLink = `${window.location.origin}/game/${lobbyId}`;
+
+  const copyRoomLink = async () => {
+    try {
+      await navigator.clipboard.writeText(roomLink);
+      setWasCopied(true);
+      window.setTimeout(() => setWasCopied(false), 1600);
+    } catch {
+      setWasCopied(false);
+    }
+  };
+
+  return (
+    <div className="absolute left-1/2 top-4 z-40 flex w-[min(28rem,calc(100vw-5rem))] -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-black/80 p-2 text-white shadow-2xl shadow-black/50 backdrop-blur">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wide">
+        <LinkIcon className="size-3.5" />
+        Link
+      </span>
+      <input
+        type="text"
+        value={roomLink}
+        readOnly
+        aria-label="Link da sala"
+        className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-zinc-200 outline-none"
+      />
+      <button
+        type="button"
+        aria-label="Copiar link da sala"
+        className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200"
+        onClick={copyRoomLink}
+      >
+        {wasCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+      </button>
     </div>
   );
 }
@@ -1068,9 +1178,11 @@ export function Game() {
   const location = useLocation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const localPlayerIdsRef = useRef([]);
+  const playerDeckCountRef = useRef(0);
   const pileElevationTimeoutRef = useRef(null);
   const pileRef = useRef([]);
   const queuedRoundEndMessagesRef = useRef([]);
+  const roundCardCountRef = useRef(0);
   const profileCardRef = useRef(null);
   const roundEndDelayTimeoutRef = useRef(null);
   const roundEndDelayActiveRef = useRef(false);
@@ -1079,6 +1191,7 @@ export function Game() {
   const upcardRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
+  const [actionTimer, setActionTimer] = useState(null);
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
   );
@@ -1148,6 +1261,14 @@ export function Game() {
 
   localPlayerIdsRef.current = localPlayerIds;
 
+  useEffect(() => {
+    playerDeckCountRef.current = playerDeck.length;
+  }, [playerDeck.length]);
+
+  useEffect(() => {
+    roundCardCountRef.current = roundCardCount;
+  }, [roundCardCount]);
+
   const playedCountsByPlayer = useMemo(
     () => getPlayedCountsByPlayer(pile),
     [pile],
@@ -1189,6 +1310,26 @@ export function Game() {
     turnPromptSoundRef.current = soundKey;
     playConfiguredSound(type === 'bid' ? bidTurnSound : playerTurnSound);
   };
+
+  const clearActionTimer = useCallback(() => {
+    setActionTimer(null);
+  }, []);
+
+  const startActionTimer = useCallback((type, cardCount) => {
+    const normalizedCardCount = Math.max(
+      0,
+      Math.trunc(Number(cardCount) || 0),
+    );
+    const durationMs = (7 + normalizedCardCount) * 1000;
+
+    setActionTimer({
+      cardCount: normalizedCardCount,
+      durationMs,
+      id: `${type}-${Date.now()}`,
+      startedAt: Date.now(),
+      type,
+    });
+  }, []);
 
   const clearPileElevation = useCallback(() => {
     if (pileElevationTimeoutRef.current) {
@@ -1288,8 +1429,11 @@ export function Game() {
     setHasGameSocket(false);
     setIsReadySending(false);
     setMatchPhase('waiting');
+    clearActionTimer();
     clearPileElevation();
+    playerDeckCountRef.current = 0;
     pileRef.current = [];
+    roundCardCountRef.current = 0;
     setPile([]);
     setPlayerDeck([]);
     setPlayedCardAnimation(null);
@@ -1332,9 +1476,28 @@ export function Game() {
       setPile(nextPile);
     };
 
+    const updatePlayerDeck = (nextDeck) => {
+      playerDeckCountRef.current = nextDeck.length;
+      setPlayerDeck(nextDeck);
+    };
+
+    const updateRoundCardCount = (nextCount) => {
+      const normalizedCount = Math.max(0, Number(nextCount) || 0);
+      roundCardCountRef.current = normalizedCount;
+      setRoundCardCount(normalizedCount);
+    };
+
     const updateUpcard = (nextUpcard) => {
       upcardRef.current = nextUpcard;
       setUpcard(nextUpcard);
+    };
+
+    const getActionCardCount = (fallbackCount = 0) => {
+      return Math.max(
+        playerDeckCountRef.current,
+        roundCardCountRef.current,
+        Number(fallbackCount) || 0,
+      );
     };
 
     const applyStatusMap = (statusMap, gameInfo) => {
@@ -1382,8 +1545,8 @@ export function Game() {
       }
 
       if (Array.isArray(gameInfo.deck)) {
-        setPlayerDeck(gameInfo.deck);
-        setRoundCardCount(gameInfo.deck.length);
+        updatePlayerDeck(gameInfo.deck);
+        updateRoundCardCount(gameInfo.deck.length);
       }
 
       if (
@@ -1391,13 +1554,21 @@ export function Game() {
         localPlayerIds.includes(gameInfo.current_player)
       ) {
         setPossibleBids(gameInfo.stage.data?.possible_bids || []);
+        startActionTimer(
+          'bid',
+          getActionCardCount(
+            Math.max(...(gameInfo.stage.data?.possible_bids || [0])),
+          ),
+        );
         playTurnPromptSound('bid', gameInfo.current_player);
       } else if (
         gameInfo.stage?.type === 'Dealing' &&
         localPlayerIds.includes(gameInfo.current_player)
       ) {
+        startActionTimer('play', getActionCardCount());
         playTurnPromptSound('play', gameInfo.current_player);
       } else {
+        clearActionTimer();
         setPossibleBids([]);
       }
     };
@@ -1411,7 +1582,11 @@ export function Game() {
       roundEndDelayActiveRef.current = false;
       clearPileElevation();
       updatePile([]);
-      setRoundCardCount((currentCount) => Math.max(0, currentCount - 1));
+      setRoundCardCount((currentCount) => {
+        const nextCount = Math.max(0, currentCount - 1);
+        roundCardCountRef.current = nextCount;
+        return nextCount;
+      });
 
       const queuedMessages = queuedRoundEndMessagesRef.current;
       queuedRoundEndMessagesRef.current = [];
@@ -1450,10 +1625,10 @@ export function Game() {
             setMatchPhase('waiting');
             clearPileElevation();
             updatePile([]);
-            setPlayerDeck([]);
+            updatePlayerDeck([]);
             setPlayedCardAnimation(null);
             setPossibleBids([]);
-            setRoundCardCount(0);
+            updateRoundCardCount(0);
             setTurnPlayerId(null);
             updateUpcard(null);
           }
@@ -1515,6 +1690,7 @@ export function Game() {
           break;
         case 'PlayerBidded':
           clearTurnPromptSound();
+          clearActionTimer();
           setGameStage('bidding');
           setMatchPhase('playing');
           setPossibleBids([]);
@@ -1536,6 +1712,7 @@ export function Game() {
           break;
         case 'RoundEnded':
           clearTurnPromptSound();
+          clearActionTimer();
           setGameStage('dealing');
           setMatchPhase('playing');
           setPossibleBids([]);
@@ -1564,8 +1741,13 @@ export function Game() {
           setTurnPlayerId(message.data.player_id);
           if (isLocalPlayerId(message.data.player_id)) {
             setPossibleBids(message.data.possible_bids || []);
+            startActionTimer(
+              'bid',
+              getActionCardCount(Math.max(...(message.data.possible_bids || [0]))),
+            );
             playTurnPromptSound('bid', message.data.player_id);
           } else {
+            clearActionTimer();
             setPossibleBids([]);
           }
           setPlayersById((previousPlayers) => {
@@ -1585,8 +1767,9 @@ export function Game() {
         case 'PlayerDeck':
           setIsReadySending(false);
           setMatchPhase('playing');
-          setPlayerDeck(message.data || []);
-          setRoundCardCount((message.data || []).length);
+          updatePlayerDeck(message.data || []);
+          updateRoundCardCount((message.data || []).length);
+          startActionTimer('cards', (message.data || []).length);
           break;
         case 'PlayerTurn':
           setIsReadySending(false);
@@ -1595,7 +1778,10 @@ export function Game() {
           setPossibleBids([]);
           setTurnPlayerId(message.data.player_id);
           if (isLocalPlayerId(message.data.player_id)) {
+            startActionTimer('play', getActionCardCount());
             playTurnPromptSound('play', message.data.player_id);
+          } else {
+            clearActionTimer();
           }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
@@ -1613,6 +1799,7 @@ export function Game() {
           break;
         case 'TurnPlayed':
           clearTurnPromptSound();
+          clearActionTimer();
           setIsReadySending(false);
           setGameStage('dealing');
           setMatchPhase('playing');
@@ -1656,23 +1843,26 @@ export function Game() {
 
           (message.data?.pile || []).forEach((turn) => {
             if (isLocalPlayerId(turn.player_id)) {
-              setPlayerDeck((currentDeck) =>
-                removeCardFromDeck(currentDeck, turn.card),
-              );
+              setPlayerDeck((currentDeck) => {
+                const nextDeck = removeCardFromDeck(currentDeck, turn.card);
+                playerDeckCountRef.current = nextDeck.length;
+                return nextDeck;
+              });
             }
           });
           break;
         case 'SetStart':
           clearTurnPromptSound();
+          clearActionTimer();
           setIsReadySending(false);
           setGameStage('bidding');
           setMatchPhase('playing');
           clearPileElevation();
           updatePile([]);
-          setPlayerDeck([]);
+          updatePlayerDeck([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
-          setRoundCardCount(0);
+          updateRoundCardCount(0);
           setTurnPlayerId(null);
           updateUpcard(message.data.upcard);
           setPlayersById((previousPlayers) => {
@@ -1693,12 +1883,13 @@ export function Game() {
           break;
         case 'SetEnded':
           clearTurnPromptSound();
+          clearActionTimer();
           setGameStage('dealing');
           setMatchPhase('playing');
           clearPileElevation();
           updatePile([]);
           setPossibleBids([]);
-          setRoundCardCount(0);
+          updateRoundCardCount(0);
           setPlayersById((previousPlayers) => {
             const nextPlayers = { ...previousPlayers };
 
@@ -1718,15 +1909,16 @@ export function Game() {
           break;
         case 'GameEnded':
           clearTurnPromptSound();
+          clearActionTimer();
           setIsReadySending(false);
           setGameStage('ended');
           setMatchPhase('ended');
           clearPileElevation();
           updatePile([]);
-          setPlayerDeck([]);
+          updatePlayerDeck([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
-          setRoundCardCount(0);
+          updateRoundCardCount(0);
           setTurnPlayerId(null);
           updateUpcard(null);
           setPlayersById((previousPlayers) => {
@@ -1775,6 +1967,7 @@ export function Game() {
         pileRef.current.length > 0
       ) {
         clearTurnPromptSound();
+        clearActionTimer();
         setIsReadySending(false);
         setPossibleBids([]);
         setTurnPlayerId(null);
@@ -1870,11 +2063,13 @@ export function Game() {
       }
     };
   }, [
+    clearActionTimer,
     clearPileElevation,
     elevatePileCard,
     joinAttempt,
     lobbyId,
     location.state?.lifes,
+    startActionTimer,
   ]);
 
   const toggleReady = () => {
@@ -1900,6 +2095,7 @@ export function Game() {
 
     setPossibleBids([]);
     clearTurnPromptSound();
+    clearActionTimer();
     setPlayersById((previousPlayers) => {
       if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
         return previousPlayers;
@@ -1940,13 +2136,18 @@ export function Game() {
     try {
       setJoinError('');
       clearTurnPromptSound();
+      clearActionTimer();
       playConfiguredSound(cardAnimationSound);
       setPlayedCardAnimation({
         card,
         id: `${Date.now()}-${getCardKey(card)}`,
       });
       playTurn(socketRef.current, card);
-      setPlayerDeck((currentDeck) => removeCardFromDeck(currentDeck, card));
+      setPlayerDeck((currentDeck) => {
+        const nextDeck = removeCardFromDeck(currentDeck, card);
+        playerDeckCountRef.current = nextDeck.length;
+        return nextDeck;
+      });
       setPlayersById((previousPlayers) => {
         if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
           return previousPlayers;
@@ -1963,6 +2164,26 @@ export function Game() {
     } catch (error) {
       setJoinError(error.message || 'Nao foi possivel jogar a carta.');
     }
+  };
+
+  const handleActionTimerExpire = () => {
+    const randomBid = getRandomItem(possibleBids);
+
+    if (randomBid !== null) {
+      sendBid(randomBid);
+      return;
+    }
+
+    if (canPlayCards) {
+      const randomCard = getRandomItem(playerDeck);
+
+      if (randomCard) {
+        handlePlayCard(randomCard);
+        return;
+      }
+    }
+
+    clearActionTimer();
   };
 
   return (
@@ -1982,6 +2203,10 @@ export function Game() {
         playersById={playersById}
         upcard={upcard}
       />
+
+      <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
+
+      {isWaitingForReady && lobbyId ? <RoomLinkCopy lobbyId={lobbyId} /> : null}
 
       {tablePlayers.map((player, index) => {
         const isCurrentPlayer = player.id === resolvedCurrentPlayerId;
