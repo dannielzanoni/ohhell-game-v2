@@ -1,4 +1,10 @@
-import { useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import { Pencil, UserRound } from 'lucide-react';
 import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -34,7 +40,10 @@ function GoogleLogo() {
   );
 }
 
-export function LoginCard({ className, onSaved }) {
+export const LoginCard = forwardRef(function LoginCard(
+  { className, onProfileStateChange, onSaved },
+  ref,
+) {
   const [hasAuthToken, setHasAuthToken] = useState(() =>
     Boolean(authService.getAuthToken()),
   );
@@ -56,7 +65,7 @@ export function LoginCard({ className, onSaved }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  const saveGuestProfile = async () => {
+  const saveGuestProfile = useCallback(async () => {
     const nextNickname = nickname.trim();
     const nextAvatarId = selectedAvatar?.id || '';
     const picture = selectedAvatar?.picture || '';
@@ -92,7 +101,7 @@ export function LoginCard({ className, onSaved }) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [nickname, onSaved, selectedAvatar]);
 
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
@@ -107,6 +116,39 @@ export function LoginCard({ className, onSaved }) {
     setSelectedAvatar(avatar);
     setSaveError('');
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      saveIfNeeded: () => {
+        if (canSaveProfile) {
+          return saveGuestProfile();
+        }
+
+        return Promise.resolve({
+          avatarId: selectedAvatarId,
+          nickname: displayNickname,
+          token: authService.getAuthToken(),
+        });
+      },
+    }),
+    [canSaveProfile, displayNickname, selectedAvatarId, saveGuestProfile],
+  );
+
+  useEffect(() => {
+    onProfileStateChange?.({
+      canSaveProfile,
+      hasAuthToken,
+      isSaving,
+      saveError,
+    });
+  }, [
+    canSaveProfile,
+    hasAuthToken,
+    isSaving,
+    onProfileStateChange,
+    saveError,
+  ]);
 
   return (
     <>
@@ -232,4 +274,4 @@ export function LoginCard({ className, onSaved }) {
       />
     </>
   );
-}
+});

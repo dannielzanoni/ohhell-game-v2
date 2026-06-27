@@ -33,7 +33,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex min-h-screen items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]"
       role="presentation"
       onMouseDown={onClose}
     >
@@ -41,11 +41,11 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
-        className="flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40"
+        className="flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 id="avatar-edit-title" className="text-xl font-bold">
+        <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+          <h2 id="avatar-edit-title" className="text-base font-bold sm:text-xl">
             Selecione seu Avatar:
           </h2>
           <Button
@@ -60,13 +60,13 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
           </Button>
         </header>
 
-        <div className="overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
           {avatarGroups.map((group) => (
-            <div key={group.title} className="not-first:mt-7">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <div key={group.title} className="not-first:mt-6 sm:not-first:mt-7">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
                 {group.title}
               </h3>
-              <div className="mt-4 grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8">
+              <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-x-2 gap-y-3 min-[380px]:grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] sm:mt-4 sm:grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] sm:gap-4">
                 {group.avatars.map((avatar) => {
                   const isSelected = selectedAvatar?.id === avatar.id;
 
@@ -76,7 +76,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                       type="button"
                       aria-label={`Selecionar avatar ${avatar.label}`}
                       className={cn(
-                        'grid cursor-pointer place-items-center rounded-full p-1 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring',
+                        'mx-auto grid size-11 min-w-0 cursor-pointer place-items-center rounded-full p-0.5 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring min-[380px]:size-12 sm:size-16 sm:p-1',
                         isSelected && 'ring-primary',
                       )}
                       onClick={() => {
@@ -84,11 +84,14 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                         onClose();
                       }}
                     >
-                      <img
-                        src={avatar.src}
-                        alt=""
-                        className="size-16 rounded-full border border-border object-cover shadow-sm"
-                      />
+                      <span className="block size-full overflow-hidden rounded-full border border-border bg-muted shadow-sm">
+                        <img
+                          src={avatar.src}
+                          alt=""
+                          className="block h-full w-full scale-110 object-cover"
+                          draggable="false"
+                        />
+                      </span>
                     </button>
                   );
                 })}
