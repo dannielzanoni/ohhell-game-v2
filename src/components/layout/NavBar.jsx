@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
 import { pageLinks } from '@/app/routes/pageLinks.js';
+import aceIcon from '@/assets/icons/ace.svg';
 import {
   LanguageNavButton,
   LanguageSettingsModal,
@@ -68,12 +69,17 @@ export function NavBar({ isCollapsed, onToggle }) {
             isCollapsed && 'justify-center',
           )}
         >
-          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sm font-black text-sidebar-primary-foreground">
-            OH
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md bg-sidebar-primary">
+            <img
+              src={aceIcon}
+              alt=""
+              className="size-full object-cover"
+              draggable="false"
+            />
           </span>
           {!isCollapsed && (
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold">Oh Hell</span>
+              <span className="block truncate text-sm font-bold">{t('common.appName')}</span>
               <span className="block truncate text-xs text-muted-foreground">
                 {t('nav.gameHub')}
               </span>
