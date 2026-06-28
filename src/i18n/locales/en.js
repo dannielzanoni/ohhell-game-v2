@@ -25,6 +25,8 @@ export const en = {
     play: 'Play',
     refresh: 'Refresh',
     settings: 'Settings',
+    appNameShort: 'Oh Hell',
+    appNameShort2: 'Game',
   },
   game: {
     authSaveGuest: 'Save your guest before entering the room.',
