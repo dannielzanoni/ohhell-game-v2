@@ -33,6 +33,8 @@ const cardGroups = [
 
 export function Home() {
   const { t } = useTranslation();
+  const mobileTitleSecondLine = t('common.appNameShort2');
+  const hasMobileTitleSecondLine = mobileTitleSecondLine.trim().length > 0;
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
@@ -47,7 +49,7 @@ export function Home() {
                 fontWeight="900"
                 className="drop-shadow-2xl"
               >
-                Oh Hell Game
+                {t('common.appName')}
               </VideoText>
             </div>
             <div className="relative mt-8 grid gap-1 md:hidden">
@@ -58,21 +60,23 @@ export function Home() {
                   fontWeight="900"
                   className="drop-shadow-2xl"
                 >
-                  Oh Hell
+                  {t('common.appNameShort')}
                 </VideoText>
               </div>
-              <div className="h-24 overflow-hidden">
-                <VideoText
-                  src={gameBg}
-                  fontSize={32}
-                  fontWeight="900"
-                  className="drop-shadow-2xl"
-                >
-                  Game
-                </VideoText>
-              </div>
+              {hasMobileTitleSecondLine ? (
+                <div className="h-24 overflow-hidden">
+                  <VideoText
+                    src={gameBg}
+                    fontSize={32}
+                    fontWeight="900"
+                    className="drop-shadow-2xl"
+                  >
+                    {mobileTitleSecondLine}
+                  </VideoText>
+                </div>
+              ) : null}
             </div>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg md:leading-8 lg:mt-3 lg:text-base lg:leading-6">
+            <p className="mt-4 w-full max-w-none text-base leading-7 text-muted-foreground md:text-lg md:leading-8 lg:mt-3 lg:text-base lg:leading-6">
               {t('pages.home.tagline')}
             </p>
 
