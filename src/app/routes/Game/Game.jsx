@@ -367,7 +367,12 @@ function getClaimsNickname(player, fallbackId) {
   }
 
   if (player?.type === 'Google') {
-    return player.data?.name || player.data?.email || fallbackId;
+    return (
+      player.data?.nickname ||
+      player.data?.name ||
+      player.data?.email ||
+      fallbackId
+    );
   }
 
   return player?.data?.nickname || player?.name || player?.id || fallbackId;
@@ -379,7 +384,7 @@ function getClaimsPicture(player) {
   }
 
   if (player?.type === 'Google') {
-    return player.data?.picture || '';
+    return player.data?.picture_override || player.data?.picture || '';
   }
 
   return player?.data?.picture || player?.picture || '';
