@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Check, Layers, Volume2 } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Volume2 } from 'lucide-react';
 import { Translate01 as TranslateIcon } from '@untitledui/icons/Translate01';
 import { useTranslation } from 'react-i18next';
 import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
+import spanish8BitCard3Paus from '@/assets/cards/spanish_8bit/3paus.png';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import {
   Dialog,
@@ -26,22 +27,63 @@ const tabs = [
 
 const deckOptions = [
   {
-    description: 'Spanish',
     image: spanishCard3Paus,
     labelKey: 'settings.spanish',
     value: deckTypes.SPANISH,
   },
   {
-    description: 'French',
+    image: spanish8BitCard3Paus,
+    labelKey: 'settings.spanish8Bit',
+    value: deckTypes.SPANISH_8BIT,
+  },
+  {
     image: frenchCard3Paus,
     labelKey: 'settings.french',
     value: deckTypes.FRENCH,
   },
 ];
 
+const deckSettingsTabs = [
+  { id: 'deckType', icon: Layers, labelKey: 'settings.deckTypeTab' },
+  { id: 'cardBack', icon: ImageIcon, labelKey: 'settings.cardBack' },
+];
+
+const cardBackImages = import.meta.glob(
+  '/src/assets/cards/back_cards/back_card*.png',
+  {
+    eager: true,
+    import: 'default',
+  },
+);
+
+function getCardBackNumber(value) {
+  if (value === 'back_card') {
+    return 1;
+  }
+
+  const [, number] = value.match(/^back_card(\d+)$/) || [];
+
+  return Number(number) || Number.MAX_SAFE_INTEGER;
+}
+
+const cardBackOptions = Object.entries(cardBackImages)
+  .map(([path, image]) => {
+    const value = path.split('/').pop().replace(/\.png$/, '');
+    const number = getCardBackNumber(value);
+
+    return {
+      image,
+      labelValues: { number },
+      sort: number,
+      value,
+    };
+  })
+  .sort((first, second) => first.sort - second.sort);
+
 export function GameSettingsModal({ onOpenChange, open }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('sounds');
+  const [activeDeckSettingsTab, setActiveDeckSettingsTab] = useState('deckType');
   const [preferences, setPreferences] = useState(getGamePreferences);
 
   useEffect(() => {
@@ -121,47 +163,120 @@ export function GameSettingsModal({ onOpenChange, open }) {
               </div>
             ) : activeTab === 'deck' ? (
               <div className="grid gap-4" role="tabpanel">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {deckOptions.map((deck) => {
-                    const isSelected = preferences.deckType === deck.value;
+                <div
+                  className="grid grid-cols-2 gap-1 rounded-lg bg-muted/60 p-1"
+                  role="tablist"
+                >
+                  {deckSettingsTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeDeckSettingsTab === tab.id;
 
                     return (
                       <button
-                        key={deck.value}
+                        key={tab.id}
                         type="button"
-                        aria-pressed={isSelected}
+                        role="tab"
+                        aria-selected={isActive}
                         className={cn(
-                          'relative grid cursor-pointer grid-cols-[5.25rem_1fr] items-center gap-3 rounded-lg border border-border bg-card p-3 text-left shadow-sm transition hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring sm:grid-cols-1 sm:p-4',
-                          isSelected && 'border-primary ring-2 ring-ring/40',
+                          'flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-xs font-bold text-muted-foreground transition sm:text-sm',
+                          isActive && 'bg-background text-foreground shadow-sm',
                         )}
-                        onClick={() => updatePreferences({ deckType: deck.value })}
+                        onClick={() => setActiveDeckSettingsTab(tab.id)}
                       >
-                        <span className="flex justify-center rounded-md bg-muted/60 py-3 sm:order-2 sm:py-4">
-                          <img
-                            src={deck.image}
-                            alt={`3 de paus ${t(deck.labelKey)}`}
-                            className="h-28 w-[4.65rem] rounded-md border border-black object-cover shadow-xl sm:h-36 sm:w-24"
-                            draggable="false"
-                          />
-                        </span>
-                        <span className="flex min-w-0 items-center justify-between gap-3 sm:order-1">
-                          <span className="text-sm font-bold">
-                            {t(deck.labelKey)}
-                          </span>
-                          <span
-                            className={cn(
-                              'grid size-6 place-items-center rounded-full border border-border text-transparent',
-                              isSelected &&
-                                'border-primary bg-primary text-primary-foreground',
-                            )}
-                          >
-                            <Check className="size-4" />
-                          </span>
-                        </span>
+                        <Icon className="size-4 shrink-0" />
+                        <span className="truncate">{t(tab.labelKey)}</span>
                       </button>
                     );
                   })}
                 </div>
+
+                {activeDeckSettingsTab === 'deckType' ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {deckOptions.map((deck) => {
+                      const isSelected = preferences.deckType === deck.value;
+
+                      return (
+                        <button
+                          key={deck.value}
+                          type="button"
+                          aria-pressed={isSelected}
+                          className={cn(
+                            'relative grid cursor-pointer grid-cols-[5.25rem_1fr] items-center gap-3 rounded-lg border border-border bg-card p-3 text-left shadow-sm transition hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring sm:grid-cols-1 sm:p-3',
+                            isSelected && 'border-primary ring-2 ring-ring/40',
+                          )}
+                          onClick={() => updatePreferences({ deckType: deck.value })}
+                        >
+                          <span className="flex justify-center rounded-md bg-muted/60 py-3 sm:order-2 sm:py-3">
+                            <img
+                              src={deck.image}
+                              alt={`3 de paus ${t(deck.labelKey)}`}
+                              className="h-28 w-[4.65rem] rounded-md border border-black object-cover shadow-xl sm:h-32 sm:w-[5.35rem]"
+                              draggable="false"
+                            />
+                          </span>
+                          <span className="flex min-w-0 items-center justify-between gap-3 sm:order-1">
+                            <span className="text-sm font-bold">
+                              {t(deck.labelKey)}
+                            </span>
+                            <span
+                              className={cn(
+                                'grid size-6 shrink-0 place-items-center rounded-full border border-border text-transparent',
+                                isSelected &&
+                                  'border-primary bg-primary text-primary-foreground',
+                              )}
+                            >
+                              <Check className="size-4" />
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {cardBackOptions.map((cardBack) => {
+                      const isSelected = preferences.cardBack === cardBack.value;
+
+                      return (
+                        <button
+                          key={cardBack.value}
+                          type="button"
+                          aria-pressed={isSelected}
+                          className={cn(
+                            'relative grid cursor-pointer gap-2 rounded-lg border border-border bg-card p-2 text-left shadow-sm transition hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring',
+                            isSelected && 'border-primary ring-2 ring-ring/40',
+                          )}
+                          onClick={() =>
+                            updatePreferences({ cardBack: cardBack.value })
+                          }
+                        >
+                          <span className="flex h-28 items-center justify-center rounded-md bg-muted/60 p-2 sm:h-32">
+                            <img
+                              src={cardBack.image}
+                              alt={t('settings.cardBackOption', cardBack.labelValues)}
+                              className="h-full w-auto rounded-md border border-black object-cover shadow-xl"
+                              draggable="false"
+                            />
+                          </span>
+                          <span className="flex min-w-0 items-center justify-between gap-2">
+                            <span className="truncate text-xs font-bold">
+                              {t('settings.cardBackOption', cardBack.labelValues)}
+                            </span>
+                            <span
+                              className={cn(
+                                'grid size-5 shrink-0 place-items-center rounded-full border border-border text-transparent',
+                                isSelected &&
+                                  'border-primary bg-primary text-primary-foreground',
+                              )}
+                            >
+                              <Check className="size-3.5" />
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
               <div role="tabpanel">

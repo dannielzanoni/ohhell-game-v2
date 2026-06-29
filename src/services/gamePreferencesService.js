@@ -4,9 +4,11 @@ export const GAME_PREFERENCES_CHANGED_EVENT = 'ohhell-game-preferences-changed';
 export const deckTypes = {
   FRENCH: 'french',
   SPANISH: 'spanish',
+  SPANISH_8BIT: 'spanish_8bit',
 };
 
 export const defaultGamePreferences = {
+  cardBack: 'back_card',
   deckType: deckTypes.SPANISH,
   volume: 70,
 };
@@ -21,6 +23,12 @@ function normalizeDeckType(deckType) {
     : defaultGamePreferences.deckType;
 }
 
+function normalizeCardBack(cardBack) {
+  return typeof cardBack === 'string' && /^back_card\d*$/.test(cardBack)
+    ? cardBack
+    : defaultGamePreferences.cardBack;
+}
+
 function normalizeVolume(volume) {
   const parsedVolume = Number(volume);
 
@@ -33,6 +41,7 @@ function normalizeVolume(volume) {
 
 export function normalizeGamePreferences(preferences = {}) {
   return {
+    cardBack: normalizeCardBack(preferences.cardBack),
     deckType: normalizeDeckType(preferences.deckType),
     volume: normalizeVolume(preferences.volume),
   };

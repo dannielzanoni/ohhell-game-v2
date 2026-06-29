@@ -158,7 +158,10 @@ export const pt = {
     },
   },
   settings: {
+    cardBack: 'Verso da carta',
+    cardBackOption: 'Verso {{number}}',
     deck: 'Tipo de baralho',
+    deckTypeTab: 'Tipo de baralho',
     english: 'Inglês',
     french: 'Francês',
     generalVolume: 'Volume geral',
@@ -167,6 +170,7 @@ export const pt = {
     portuguese: 'Português',
     sounds: 'Sons',
     spanish: 'Espanhol',
+    spanish8Bit: 'Espanhol 8-bit',
     title: 'Configurações',
   },
 };
