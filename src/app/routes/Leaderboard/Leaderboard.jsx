@@ -45,7 +45,12 @@ function getPlayerName(player, fallback) {
   }
 
   if (player?.type === 'Google') {
-    return player.data?.name || player.data?.email || fallback;
+    return (
+      player.data?.nickname ||
+      player.data?.name ||
+      player.data?.email ||
+      fallback
+    );
   }
 
   return player?.data?.nickname || player?.name || fallback;
@@ -57,7 +62,7 @@ function getPlayerPicture(player) {
   }
 
   if (player?.type === 'Google') {
-    return resolveAvatarSrc(player.data?.picture);
+    return resolveAvatarSrc(player.data?.picture_override || player.data?.picture);
   }
 
   return resolveAvatarSrc(player?.data?.picture || player?.picture);

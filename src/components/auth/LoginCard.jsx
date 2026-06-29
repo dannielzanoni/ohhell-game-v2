@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useRef,
   useState,
 } from 'react';
 import { Pencil, UserRound } from 'lucide-react';
@@ -10,8 +11,46 @@ import { useTranslation } from 'react-i18next';
 import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
+import { environment } from '@/config/environment.js';
 import { cn } from '@/lib/utils.js';
 import { authService } from '@/services/authService.js';
+
+const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
+
+function loadGoogleIdentityScript() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.reject(new Error('Google Identity Services is unavailable.'));
+  }
+
+  if (window.google?.accounts?.id) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(
+      `script[src="${GOOGLE_IDENTITY_SCRIPT_SRC}"]`,
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener(
+        'error',
+        () => reject(new Error('Failed to load Google Identity Services.')),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = GOOGLE_IDENTITY_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () =>
+      reject(new Error('Failed to load Google Identity Services.'));
+    document.head.appendChild(script);
+  });
+}
 
 function GoogleLogo() {
   return (
@@ -41,31 +80,97 @@ function GoogleLogo() {
   );
 }
 
+function getSavedAvatar() {
+  const savedAvatarId = localStorage.getItem('ohhell_guest_avatar_id');
+
+  return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
+}
+
+function resolveAvatarFromPicture(picture) {
+  if (!picture) {
+    return null;
+  }
+
+  const avatar = avatars.find((item) => {
+    return item.picture === picture || item.id === picture || item.src === picture;
+  });
+
+  return avatar || { id: '', picture, src: picture };
+}
+
+function getInitialProfile() {
+  const profile = authService.getCurrentProfile();
+
+  return {
+    avatar: resolveAvatarFromPicture(profile.picture) || getSavedAvatar(),
+    isGoogle: profile.isGoogle,
+    nickname:
+      profile.nickname || localStorage.getItem('ohhell_guest_nickname') || '',
+  };
+}
+
 export const LoginCard = forwardRef(function LoginCard(
   { className, onProfileStateChange, onSaved },
   ref,
 ) {
   const { t } = useTranslation();
+  const googleButtonRef = useRef(null);
+  const initialProfileRef = useRef(null);
+
+  if (!initialProfileRef.current) {
+    initialProfileRef.current = getInitialProfile();
+  }
+
   const [hasAuthToken, setHasAuthToken] = useState(() =>
     Boolean(authService.getAuthToken()),
   );
+  const [isGoogleAuth, setIsGoogleAuth] = useState(
+    () => initialProfileRef.current.isGoogle,
+  );
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(() => {
-    const savedAvatarId = localStorage.getItem('ohhell_guest_avatar_id');
-
-    return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
-  });
+  const [selectedAvatar, setSelectedAvatar] = useState(
+    () => initialProfileRef.current.avatar,
+  );
   const [savedAvatarId, setSavedAvatarId] = useState(() => {
-    return localStorage.getItem('ohhell_guest_avatar_id') || '';
+    return initialProfileRef.current.avatar?.id || '';
   });
   const [nickname, setNickname] = useState(() => {
-    return localStorage.getItem('ohhell_guest_nickname') || '';
+    return initialProfileRef.current.nickname;
   });
   const [savedNickname, setSavedNickname] = useState(() => {
-    return localStorage.getItem('ohhell_guest_nickname') || '';
+    return initialProfileRef.current.nickname;
   });
+  const [googleError, setGoogleError] = useState('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  const syncProfileFromAuth = useCallback(() => {
+    const profile = authService.getCurrentProfile();
+    const profileAvatar = resolveAvatarFromPicture(profile.picture);
+    const nextNickname = profile.nickname || '';
+    const nextAvatarId = profileAvatar?.id || '';
+
+    if (nextNickname) {
+      setNickname(nextNickname);
+      setSavedNickname(nextNickname);
+    }
+
+    if (profileAvatar) {
+      setSelectedAvatar(profileAvatar);
+      setSavedAvatarId(nextAvatarId);
+    }
+
+    setHasAuthToken(Boolean(authService.getAuthToken()));
+    setIsGoogleAuth(profile.isGoogle);
+
+    return {
+      avatar: profileAvatar,
+      nickname: nextNickname || 'Guest',
+      token: authService.getAuthToken(),
+    };
+  }, []);
 
   const saveGuestProfile = useCallback(async () => {
     const nextNickname = nickname.trim();
@@ -93,6 +198,7 @@ export const LoginCard = forwardRef(function LoginCard(
       setSavedNickname(nextNickname);
       setSavedAvatarId(nextAvatarId);
       setHasAuthToken(Boolean(authService.getAuthToken()));
+      setIsGoogleAuth(authService.isGoogleAuthenticated());
       onSaved?.({
         avatarId: nextAvatarId,
         nickname: nextNickname || 'Guest',
@@ -105,6 +211,35 @@ export const LoginCard = forwardRef(function LoginCard(
     }
   }, [nickname, onSaved, selectedAvatar, t]);
 
+  const handleGoogleCredential = useCallback(
+    async (response) => {
+      if (!response?.credential) {
+        return;
+      }
+
+      setIsGoogleSubmitting(true);
+      setGoogleError('');
+
+      try {
+        const loginResponse = await authService.loginWithGoogle(
+          response.credential,
+        );
+        const profile = syncProfileFromAuth();
+
+        onSaved?.({
+          avatarId: profile.avatar?.id || '',
+          nickname: profile.nickname,
+          token: loginResponse?.token || profile.token,
+        });
+      } catch (error) {
+        setGoogleError(error.message || t('auth.googleLoginError'));
+      } finally {
+        setIsGoogleSubmitting(false);
+      }
+    },
+    [onSaved, syncProfileFromAuth, t],
+  );
+
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
   const canSaveProfile =
@@ -113,6 +248,7 @@ export const LoginCard = forwardRef(function LoginCard(
     selectedAvatarId !== savedAvatarId;
   const displayNickname = trimmedNickname || savedNickname || 'Guest';
   const shouldAnimateNickname = Boolean(savedNickname) && !canSaveProfile;
+  const canRenderGoogleLogin = Boolean(environment.googleClientId) && !isGoogleAuth;
   const selectAvatar = (avatar) => {
     localStorage.setItem('ohhell_guest_avatar_id', avatar.id);
     setSelectedAvatar(avatar);
@@ -151,6 +287,55 @@ export const LoginCard = forwardRef(function LoginCard(
     onProfileStateChange,
     saveError,
   ]);
+
+  useEffect(() => {
+    if (!canRenderGoogleLogin) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    setIsGoogleLoading(true);
+    setGoogleError('');
+
+    loadGoogleIdentityScript()
+      .then(() => {
+        if (
+          !isMounted ||
+          !googleButtonRef.current ||
+          !window.google?.accounts?.id
+        ) {
+          return;
+        }
+
+        googleButtonRef.current.replaceChildren();
+        window.google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: handleGoogleCredential,
+        });
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          shape: 'pill',
+          size: 'large',
+          text: 'continue_with',
+          theme: 'outline',
+          width: 260,
+        });
+      })
+      .catch(() => {
+        if (isMounted) {
+          setGoogleError(t('auth.googleUnavailable'));
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsGoogleLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canRenderGoogleLogin, handleGoogleCredential, t]);
 
   return (
     <>
@@ -252,22 +437,55 @@ export const LoginCard = forwardRef(function LoginCard(
           <p className="mt-3 text-sm text-destructive">{saveError}</p>
         ) : null}
 
-        <div className="my-6 flex items-center gap-3">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t('auth.or')}
-          </span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        {canRenderGoogleLogin ? (
+          <>
+            <div className="my-6 flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('auth.or')}
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 w-full cursor-pointer gap-3"
-        >
-          <GoogleLogo />
-          {t('auth.loginGoogle')}
-        </Button>
+            <div className="grid justify-items-center gap-2">
+              <div
+                ref={googleButtonRef}
+                className={cn(
+                  'min-h-11 w-full overflow-hidden [&>div]:mx-auto',
+                  (isGoogleLoading || isGoogleSubmitting) && 'hidden',
+                )}
+              />
+
+              {isGoogleLoading || isGoogleSubmitting ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  className="h-11 w-full gap-3"
+                >
+                  {isGoogleSubmitting ? (
+                    <i className="pi pi-spin pi-spinner text-base" />
+                  ) : (
+                    <GoogleLogo />
+                  )}
+                  {t('auth.loginGoogle')}
+                </Button>
+              ) : null}
+
+              {hasAuthToken && !isGoogleAuth ? (
+                <p className="text-center text-xs leading-5 text-muted-foreground">
+                  {t('auth.googleKeepsGuest')}
+                </p>
+              ) : null}
+
+              {googleError ? (
+                <p className="text-center text-sm text-destructive">
+                  {googleError}
+                </p>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </section>
 
       <AvatarEditModal
