@@ -158,7 +158,10 @@ export const en = {
     },
   },
   settings: {
+    cardBack: 'Card back',
+    cardBackOption: 'Back {{number}}',
     deck: 'Type of deck',
+    deckTypeTab: 'Type of deck',
     english: 'English',
     french: 'French',
     generalVolume: 'General volume',
@@ -167,6 +170,7 @@ export const en = {
     portuguese: 'Portuguese',
     sounds: 'Sounds',
     spanish: 'Spanish',
+    spanish8Bit: 'Spanish 8-bit',
     title: 'Settings',
   },
 };

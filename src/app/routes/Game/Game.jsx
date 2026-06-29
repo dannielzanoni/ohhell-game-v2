@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router-dom';
-import cardBack from '@/assets/cards/back_card3.png';
 import heartIcon from '@/assets/icons/heart.png';
 import bidTurnSound from '@/assets/sounds/bid.mp3';
 import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
@@ -44,10 +43,22 @@ const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
   import: 'default',
 });
+const spanish8BitCardImages = import.meta.glob(
+  '/src/assets/cards/spanish_8bit/*.png',
+  {
+    eager: true,
+    import: 'default',
+  },
+);
 const frenchCardImages = import.meta.glob('/src/assets/cards/french/*.png', {
   eager: true,
   import: 'default',
 });
+const cardBackImages = import.meta.glob('/src/assets/cards/back_cards/back_card*.png', {
+  eager: true,
+  import: 'default',
+});
+const defaultCardBack = cardBackImages['/src/assets/cards/back_cards/back_card.png'];
 const rankToAsset = {
   Eight: '8',
   Eleven: '11',
@@ -155,14 +166,37 @@ function getCardKey(card) {
   return rank && suit ? `${rank}${suit}` : '';
 }
 
-function getCardImageSrc(card, deckType = deckTypes.SPANISH) {
+function getCardBackSrc(cardBack) {
+  if (!cardBack) {
+    return defaultCardBack;
+  }
+
+  return (
+    cardBackImages[`/src/assets/cards/back_cards/${cardBack}.png`] ||
+    defaultCardBack
+  );
+}
+
+function getCardImageSrc(
+  card,
+  deckType = deckTypes.SPANISH,
+  fallbackSrc = defaultCardBack,
+) {
   const key = getCardKey(card);
 
   if (deckType === deckTypes.FRENCH) {
-    return frenchCardImages[`/src/assets/cards/french/${key}.png`] || cardBack;
+    return frenchCardImages[`/src/assets/cards/french/${key}.png`] || fallbackSrc;
   }
 
-  return spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] || cardBack;
+  if (deckType === deckTypes.SPANISH_8BIT) {
+    return (
+      spanish8BitCardImages[`/src/assets/cards/spanish_8bit/${key}.png`] ||
+      spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] ||
+      fallbackSrc
+    );
+  }
+
+  return spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] || fallbackSrc;
 }
 
 function getCardLabel(card) {
@@ -660,7 +694,7 @@ function ReadyStatusBadge({ isReady }) {
   );
 }
 
-function SeatCardBacks({ count }) {
+function SeatCardBacks({ cardBackSrc, count }) {
   const cardCount = Math.max(0, Number(count) || 0);
 
   if (!cardCount) {
@@ -674,7 +708,7 @@ function SeatCardBacks({ count }) {
       {Array.from({ length: visibleCards }).map((_, cardIndex) => (
         <img
           key={cardIndex}
-          src={cardBack}
+          src={cardBackSrc}
           alt=""
           className="-ml-6 h-19 w-[3.2rem] rounded-md border-2 border-black object-cover shadow-lg shadow-black/35 first:ml-0"
           draggable="false"
@@ -760,6 +794,7 @@ function LifeHearts({ lifes }) {
 
 function PlayerSeat({
   avatarSrc,
+  cardBackSrc,
   bid = null,
   cardCount = 0,
   isCurrent = false,
@@ -782,7 +817,7 @@ function PlayerSeat({
       className={`absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} sm:w-[21.6rem]`}
       style={position}
     >
-      <SeatCardBacks count={cardCount} />
+      <SeatCardBacks cardBackSrc={cardBackSrc} count={cardCount} />
 
       <div className="relative z-10 flex items-center">
         <div
@@ -832,6 +867,7 @@ function PlayerSeat({
 }
 
 function TableCenter({
+  cardBackSrc,
   deckType,
   elevatedPileCardKey,
   pile,
@@ -879,7 +915,7 @@ function TableCenter({
             {deckBackCards.map((_, index) => (
               <img
                 key={`deck-back-${index}`}
-                src={cardBack}
+                src={cardBackSrc}
                 alt=""
                 aria-hidden="true"
                 className="absolute left-0 top-0 h-[7.99rem] w-[5.32rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[10.65rem] sm:w-[7.18rem]"
@@ -891,7 +927,7 @@ function TableCenter({
               />
             ))}
             <img
-              src={getCardImageSrc(upcard, deckType)}
+              src={getCardImageSrc(upcard, deckType, cardBackSrc)}
               alt={getCardLabel(upcard)}
               className="absolute left-0 top-0 h-[7.99rem] w-[5.32rem] rounded-lg border-2 border-black object-cover shadow-xl shadow-black/50 sm:h-[10.65rem] sm:w-[11.58rem]"
               draggable="false"
@@ -913,7 +949,7 @@ function TableCenter({
               return (
                 <img
                   key={getTurnKey(turn)}
-                  src={getCardImageSrc(turn.card, deckType)}
+                  src={getCardImageSrc(turn.card, deckType, cardBackSrc)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
                   className={`absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black bg-white object-contain shadow-xl shadow-black/60 transition-transform duration-500 ease-out`}
@@ -1066,14 +1102,14 @@ function RoomLinkCopy({ lobbyId }) {
   );
 }
 
-function PlayedCardAnimation({ card, deckType, onAnimationEnd }) {
+function PlayedCardAnimation({ card, cardBackSrc, deckType, onAnimationEnd }) {
   if (!card) {
     return null;
   }
 
   return (
     <img
-      src={getCardImageSrc(card, deckType)}
+      src={getCardImageSrc(card, deckType, cardBackSrc)}
       alt=""
       className="ohhell-card-play-animation absolute bottom-8 left-1/2 z-50 h-[8.47rem] w-[5.72rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/70 sm:h-[10.89rem] sm:w-[7.26rem]"
       draggable="false"
@@ -1082,7 +1118,7 @@ function PlayedCardAnimation({ card, deckType, onAnimationEnd }) {
   );
 }
 
-function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
+function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
   if (!cards.length) {
     return null;
   }
@@ -1120,7 +1156,7 @@ function PlayerHand({ canPlayCards, cards, deckType, onPlayCard }) {
             onClick={() => onPlayCard(card)}
           >
             <img
-              src={getCardImageSrc(card, deckType)}
+              src={getCardImageSrc(card, deckType, cardBackSrc)}
               alt={getCardLabel(card)}
               className={`${cardSizeClass} rounded-lg border-2 border-black bg-white object-contain shadow-2xl shadow-black/60`}
               draggable="false"
@@ -1255,6 +1291,11 @@ export function Game() {
   const [roundCardCount, setRoundCardCount] = useState(0);
   const [turnPlayerId, setTurnPlayerId] = useState(null);
   const [upcard, setUpcard] = useState(null);
+
+  const selectedCardBackSrc = useMemo(
+    () => getCardBackSrc(gamePreferences.cardBack),
+    [gamePreferences.cardBack],
+  );
 
   const resolvedCurrentPlayerId = useMemo(() => {
     return resolveCurrentPlayerId(playersById, currentPlayerId);
@@ -2224,6 +2265,7 @@ export function Game() {
       />
 
       <TableCenter
+        cardBackSrc={selectedCardBackSrc}
         deckType={gamePreferences.deckType}
         elevatedPileCardKey={elevatedPileCardKey}
         pile={pile}
@@ -2249,6 +2291,7 @@ export function Game() {
           <PlayerSeat
             key={player.id}
             avatarSrc={player.avatarSrc}
+            cardBackSrc={selectedCardBackSrc}
             bid={player.bid}
             cardCount={cardCount}
             isCurrent={isCurrentPlayer}
@@ -2283,6 +2326,7 @@ export function Game() {
       <BidControls onBid={sendBid} possibleBids={possibleBids} />
       <PlayerHand
         canPlayCards={canPlayCards}
+        cardBackSrc={selectedCardBackSrc}
         cards={playerDeck}
         deckType={gamePreferences.deckType}
         onPlayCard={handlePlayCard}
@@ -2290,6 +2334,7 @@ export function Game() {
       <PlayedCardAnimation
         key={playedCardAnimation?.id}
         card={playedCardAnimation?.card}
+        cardBackSrc={selectedCardBackSrc}
         deckType={gamePreferences.deckType}
         onAnimationEnd={() => setPlayedCardAnimation(null)}
       />
