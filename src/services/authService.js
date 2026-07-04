@@ -37,7 +37,12 @@ function decodeAuthTokenPayload(token) {
       '=',
     );
 
-    return JSON.parse(atob(padded));
+    const decodedPayload = atob(padded);
+    const payloadBytes = Uint8Array.from(decodedPayload, (character) =>
+      character.charCodeAt(0),
+    );
+
+    return JSON.parse(new TextDecoder().decode(payloadBytes));
   } catch {
     return null;
   }
