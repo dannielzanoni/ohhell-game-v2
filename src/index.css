@@ -186,3 +186,187 @@ select {
   animation: ohhell-card-to-pile 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   pointer-events: none;
 }
+
+@keyframes ohhell-game-ended-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ohhell-winner-card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.88);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ohhell-winner-shine {
+  0%, 100% {
+    opacity: 0;
+    transform: translateX(0) rotate(22deg);
+  }
+
+  45% {
+    opacity: 0.75;
+  }
+
+  70% {
+    opacity: 0;
+    transform: translateX(18rem) rotate(22deg);
+  }
+}
+
+@keyframes ohhell-winner-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.58);
+  }
+
+  50% {
+    transform: translateY(-0.35rem) scale(1.04);
+    box-shadow: 0 0 0 0.75rem rgba(252, 211, 77, 0);
+  }
+}
+
+@keyframes ohhell-no-winners-drift {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-0.4rem) rotate(2deg);
+  }
+}
+
+@keyframes ohhell-life-loss-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-0.8rem) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes ohhell-life-loss-enter-desktop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.8rem) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ohhell-life-loss-burst {
+  0% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+
+.ohhell-game-ended-overlay {
+  background: radial-gradient(circle at center, rgba(255, 232, 150, 0.24), rgba(0, 0, 0, 0.84) 62%);
+  animation: ohhell-game-ended-fade-in 0.45s ease-out both;
+}
+
+.ohhell-game-ended-card {
+  background: linear-gradient(145deg, rgba(31, 20, 8, 0.97), rgba(95, 42, 9, 0.95));
+  border-color: rgba(251, 191, 36, 0.82);
+  box-shadow: 0 0 45px rgba(245, 158, 11, 0.36), inset 0 0 35px rgba(253, 230, 138, 0.08);
+  animation: ohhell-winner-card-pop 0.7s cubic-bezier(0.18, 0.9, 0.2, 1.2) both;
+}
+
+.ohhell-game-ended-card::before,
+.ohhell-game-ended-card::after {
+  content: '';
+  position: absolute;
+  top: -35%;
+  width: 8rem;
+  height: 170%;
+  background: linear-gradient(180deg, transparent, rgba(253, 230, 138, 0.55), transparent);
+  transform: rotate(22deg);
+  animation: ohhell-winner-shine 1.8s ease-in-out infinite;
+}
+
+.ohhell-game-ended-card::before {
+  left: -5rem;
+}
+
+.ohhell-game-ended-card::after {
+  right: -7rem;
+  animation-delay: 0.55s;
+}
+
+.ohhell-game-ended-card--empty {
+  background: linear-gradient(145deg, rgba(20, 20, 24, 0.97), rgba(58, 58, 68, 0.95));
+  border-color: rgba(229, 231, 235, 0.55);
+  box-shadow: 0 0 35px rgba(229, 231, 235, 0.2), inset 0 0 35px rgba(255, 255, 255, 0.05);
+}
+
+.ohhell-winner-avatar {
+  animation: ohhell-winner-pulse 1.45s ease-in-out infinite;
+}
+
+.ohhell-no-winners-mark {
+  animation: ohhell-no-winners-drift 2.4s ease-in-out infinite;
+}
+
+.ohhell-life-loss-popup {
+  position: fixed;
+  left: 50%;
+  top: 1rem;
+  z-index: 75;
+  transform: translateX(-50%);
+  animation: ohhell-life-loss-enter 0.38s cubic-bezier(0.2, 0.9, 0.2, 1.12) both;
+}
+
+.ohhell-life-loss-burst {
+  position: absolute;
+  left: 2.8rem;
+  top: 50%;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(248, 113, 113, 0.4), rgba(248, 113, 113, 0));
+  animation: ohhell-life-loss-burst 1.25s ease-out infinite;
+}
+
+@media (min-width: 640px) {
+  .ohhell-life-loss-popup {
+    left: auto;
+    right: 1.5rem;
+    top: 1.5rem;
+    transform: none;
+    animation-name: ohhell-life-loss-enter-desktop;
+  }
+}
+
+@media (max-width: 640px) {
+  .ohhell-game-ended-card {
+    border-radius: 1.35rem;
+  }
+
+  .ohhell-game-ended-card::before,
+  .ohhell-game-ended-card::after {
+    width: 5.5rem;
+  }
+}

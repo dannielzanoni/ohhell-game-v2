@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import heartIcon from '@/assets/icons/heart.png';
 import bidTurnSound from '@/assets/sounds/bid.mp3';
 import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
@@ -39,6 +39,8 @@ const MAX_VISIBLE_SEAT_CARDS = 6;
 const CURRENT_PLAYER_SEAT_LIFT = 2;
 const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
+const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
+const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
   import: 'default',
@@ -425,6 +427,76 @@ function createFallbackPlayer(id, lifes) {
     ready: false,
     turnToPlay: false,
   };
+}
+
+function mergeLifesIntoPlayers(playersById, lifesByPlayer, defaultLifes, overrides = {}) {
+  return Object.entries(lifesByPlayer || {}).reduce(
+    (nextPlayers, [playerId, life]) => {
+      const existing =
+        nextPlayers[playerId] || createFallbackPlayer(playerId, defaultLifes);
+
+      nextPlayers[playerId] = {
+        ...existing,
+        ...overrides,
+        lifes: life,
+      };
+
+      return nextPlayers;
+    },
+    { ...playersById },
+  );
+}
+
+function createGameEndSummary(lifesByPlayer, playersById, defaultLifes) {
+  const lifeEntries = Object.entries(lifesByPlayer || {})
+    .map(([playerId, life]) => [playerId, Number(life)])
+    .filter(([, life]) => Number.isFinite(life));
+  const maxLife = lifeEntries.length
+    ? Math.max(...lifeEntries.map(([, life]) => life))
+    : 0;
+  const winnerIds =
+    maxLife > 0
+      ? lifeEntries
+          .filter(([, life]) => life === maxLife)
+          .map(([playerId]) => playerId)
+      : [];
+  const winners = winnerIds.map((playerId) => {
+    const existing =
+      playersById[playerId] || createFallbackPlayer(playerId, defaultLifes);
+
+    return {
+      ...existing,
+      lifes: lifesByPlayer[playerId],
+    };
+  });
+  const winnerNames = winners.map((player) => player.nickname || player.id);
+
+  return {
+    noWinners: winners.length === 0,
+    winnerNames: winnerNames.join(', '),
+    winners,
+  };
+}
+
+function createLifeLossHighlight(lifesByPlayer, playersById, defaultLifes) {
+  for (const [playerId, currentLifes] of Object.entries(lifesByPlayer || {})) {
+    const player = playersById[playerId] || createFallbackPlayer(playerId, defaultLifes);
+    const previousLifes = Number(player.lifes ?? currentLifes);
+    const nextLifes = Number(currentLifes);
+    const lost = previousLifes - nextLifes;
+
+    if (Number.isFinite(lost) && lost >= LIFE_LOSS_HIGHLIGHT_THRESHOLD) {
+      return {
+        lost,
+        player: {
+          ...player,
+          lifes: currentLifes,
+        },
+      };
+    }
+  }
+
+  return null;
 }
 
 function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
@@ -1123,6 +1195,121 @@ function PlayedCardAnimation({ card, cardBackSrc, deckType, onAnimationEnd }) {
   );
 }
 
+function GameEndedOverlay({ onBackToMenu, summary }) {
+  const { t } = useTranslation();
+
+  if (!summary) {
+    return null;
+  }
+
+  return (
+    <div className="ohhell-game-ended-overlay fixed inset-0 z-[80] grid place-items-center px-4 py-6 text-white">
+      <section
+        className={`ohhell-game-ended-card relative w-[min(35rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-2 px-5 py-7 text-center shadow-2xl sm:px-8 sm:py-8 ${
+          summary.noWinners ? 'ohhell-game-ended-card--empty' : ''
+        }`}
+        aria-live="polite"
+      >
+        <div className="relative z-10 mb-2 text-xs font-black uppercase tracking-[0.28em] text-amber-200">
+          {t('game.gameEnded')}
+        </div>
+
+        {summary.noWinners ? (
+          <>
+            <h1 className="relative z-10 m-0 text-[clamp(2.4rem,14vw,5.6rem)] font-black leading-none text-zinc-100 drop-shadow-2xl">
+              {t('game.noWinners')}
+            </h1>
+            <div className="ohhell-no-winners-mark relative z-10 mx-auto my-5 grid size-24 place-items-center rounded-full border-[3px] border-white/35 text-6xl font-black text-white/85 sm:size-[6.5rem]">
+              0
+            </div>
+            <p className="relative z-10 m-0 text-sm font-medium text-zinc-200/85 sm:text-base">
+              {t('game.everyoneRanOut')}
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="relative z-10 m-0 text-[clamp(2.5rem,14vw,5.6rem)] font-black leading-none text-amber-50 drop-shadow-2xl">
+              {summary.winners.length > 1 ? t('game.winners') : t('game.winner')}
+            </h1>
+            <div className="relative z-10 mt-6 flex flex-wrap justify-center gap-3">
+              {summary.winners.map((winner) => (
+                <div
+                  key={winner.id}
+                  className="ohhell-winner-avatar grid size-20 place-items-center overflow-hidden rounded-full border-[3px] border-amber-300 bg-black shadow-2xl shadow-amber-500/20 sm:size-24"
+                >
+                  {winner.avatarSrc ? (
+                    <img
+                      src={winner.avatarSrc}
+                      alt=""
+                      className="size-full object-cover"
+                      draggable="false"
+                    />
+                  ) : (
+                    <UserRound className="size-10 text-amber-100 sm:size-12" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <h2 className="relative z-10 mt-4 break-words text-[clamp(1.35rem,6vw,2.5rem)] font-black leading-tight text-amber-100">
+              {summary.winnerNames}
+            </h2>
+            <p className="relative z-10 m-0 text-sm font-medium text-amber-50/80 sm:text-base">
+              {t('game.lastPlayerStanding')}
+            </p>
+          </>
+        )}
+
+        <Button
+          type="button"
+          className="relative z-10 mt-6 h-11 rounded-full border-0 bg-amber-300 px-6 font-black text-zinc-950 shadow-lg shadow-black/35 hover:bg-amber-200"
+          onClick={onBackToMenu}
+        >
+          {t('game.backToMenu')}
+        </Button>
+      </section>
+    </div>
+  );
+}
+
+function LifeLossPopup({ highlight }) {
+  const { t } = useTranslation();
+
+  if (!highlight) {
+    return null;
+  }
+
+  const player = highlight.player || {};
+
+  return (
+    <div className="ohhell-life-loss-popup pointer-events-none flex w-[min(22rem,calc(100vw-1.5rem))] items-center gap-3 overflow-hidden rounded-3xl border border-red-300/35 bg-zinc-950/95 p-3 text-white shadow-2xl shadow-red-950/45 backdrop-blur">
+      <div className="ohhell-life-loss-burst" aria-hidden="true" />
+      <div className="relative z-10 grid size-14 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-red-200 bg-black shadow-lg shadow-red-500/25 sm:size-16">
+        {player.avatarSrc ? (
+          <img
+            src={player.avatarSrc}
+            alt=""
+            className="size-full object-cover"
+            draggable="false"
+          />
+        ) : (
+          <UserRound className="size-8 text-red-100" />
+        )}
+      </div>
+      <div className="relative z-10 min-w-0">
+        <span className="block text-[0.68rem] font-black uppercase tracking-[0.22em] text-red-200">
+          {t('game.lifeLossEvent')}
+        </span>
+        <strong className="block truncate text-base font-black leading-tight text-white sm:text-lg">
+          {player.nickname || player.id || 'Guest'}
+        </strong>
+        <small className="block text-xs font-bold text-red-100/85 sm:text-sm">
+          {t('game.lostLives', { count: highlight.lost })}
+        </small>
+      </div>
+    </div>
+  );
+}
+
 function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
   if (!cards.length) {
     return null;
@@ -1236,6 +1423,7 @@ function LobbyAuthGate({
 export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const translateRef = useRef(t);
@@ -1243,6 +1431,7 @@ export function Game() {
   const playerDeckCountRef = useRef(0);
   const pileElevationTimeoutRef = useRef(null);
   const pileRef = useRef([]);
+  const lifeLossHighlightTimeoutRef = useRef(null);
   const queuedRoundEndMessagesRef = useRef([]);
   const roundCardCountRef = useRef(0);
   const profileCardRef = useRef(null);
@@ -1283,7 +1472,10 @@ export function Game() {
       ),
     };
   });
+  const playersByIdRef = useRef(playersById);
   const [joinError, setJoinError] = useState('');
+  const [gameEndSummary, setGameEndSummary] = useState(null);
+  const [lifeLossHighlight, setLifeLossHighlight] = useState(null);
   const [gameStage, setGameStage] = useState('waiting');
   const [hasGameSocket, setHasGameSocket] = useState(false);
   const [isReadySending, setIsReadySending] = useState(false);
@@ -1327,6 +1519,10 @@ export function Game() {
   }, [currentPlayerId, currentPlayer?.id, resolvedCurrentPlayerId]);
 
   localPlayerIdsRef.current = localPlayerIds;
+
+  useEffect(() => {
+    playersByIdRef.current = playersById;
+  }, [playersById]);
 
   useEffect(() => {
     translateRef.current = t;
@@ -1385,6 +1581,41 @@ export function Game() {
   const clearActionTimer = useCallback(() => {
     setActionTimer(null);
   }, []);
+
+  const clearLifeLossHighlight = useCallback(() => {
+    if (lifeLossHighlightTimeoutRef.current) {
+      window.clearTimeout(lifeLossHighlightTimeoutRef.current);
+    }
+
+    lifeLossHighlightTimeoutRef.current = null;
+    setLifeLossHighlight(null);
+  }, []);
+
+  const showLifeLossHighlight = useCallback((lifesByPlayer, defaultLifes) => {
+    const highlight = createLifeLossHighlight(
+      lifesByPlayer,
+      playersByIdRef.current,
+      defaultLifes,
+    );
+
+    if (!highlight) {
+      return;
+    }
+
+    if (lifeLossHighlightTimeoutRef.current) {
+      window.clearTimeout(lifeLossHighlightTimeoutRef.current);
+    }
+
+    setLifeLossHighlight(highlight);
+    lifeLossHighlightTimeoutRef.current = window.setTimeout(() => {
+      lifeLossHighlightTimeoutRef.current = null;
+      setLifeLossHighlight(null);
+    }, LIFE_LOSS_HIGHLIGHT_DURATION_MS);
+  }, []);
+
+  const handleBackToMenu = useCallback(() => {
+    navigate('/create-game');
+  }, [navigate]);
 
   const startActionTimer = useCallback((type, cardCount) => {
     const normalizedCardCount = Math.max(
@@ -1497,6 +1728,8 @@ export function Game() {
     setCurrentPlayerId(nextCurrentPlayerId);
     setGameStage('waiting');
     setJoinError('');
+    setGameEndSummary(null);
+    clearLifeLossHighlight();
     setHasGameSocket(false);
     setIsReadySending(false);
     setMatchPhase('waiting');
@@ -1698,6 +1931,8 @@ export function Game() {
             updatePile([]);
             updatePlayerDeck([]);
             setPlayedCardAnimation(null);
+            setGameEndSummary(null);
+            clearLifeLossHighlight();
             setPossibleBids([]);
             updateRoundCardCount(0);
             setTurnPlayerId(null);
@@ -1928,6 +2163,7 @@ export function Game() {
           setIsReadySending(false);
           setGameStage('bidding');
           setMatchPhase('playing');
+          setGameEndSummary(null);
           clearPileElevation();
           updatePile([]);
           updatePlayerDeck([]);
@@ -1961,10 +2197,11 @@ export function Game() {
           updatePile([]);
           setPossibleBids([]);
           updateRoundCardCount(0);
+          showLifeLossHighlight(message.data?.lifes || {}, nextLifes);
           setPlayersById((previousPlayers) => {
             const nextPlayers = { ...previousPlayers };
 
-            Object.entries(message.data.lifes || {}).forEach(([playerId, life]) => {
+            Object.entries(message.data?.lifes || {}).forEach(([playerId, life]) => {
               const existing =
                 nextPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
 
@@ -1975,6 +2212,7 @@ export function Game() {
               };
             });
 
+            playersByIdRef.current = nextPlayers;
             return nextPlayers;
           });
           break;
@@ -1992,24 +2230,22 @@ export function Game() {
           updateRoundCardCount(0);
           setTurnPlayerId(null);
           updateUpcard(null);
-          setPlayersById((previousPlayers) => {
-            const nextPlayers = { ...previousPlayers };
+          clearLifeLossHighlight();
+          {
+            const finalLifes = message.data?.lifes || {};
+            const nextPlayers = mergeLifesIntoPlayers(
+              playersByIdRef.current,
+              finalLifes,
+              nextLifes,
+              { points: 0, ready: false, turnToPlay: false },
+            );
 
-            Object.entries(message.data.lifes || {}).forEach(([playerId, life]) => {
-              const existing =
-                nextPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
-
-              nextPlayers[playerId] = {
-                ...existing,
-                lifes: life,
-                points: 0,
-                ready: false,
-                turnToPlay: false,
-              };
-            });
-
-            return nextPlayers;
-          });
+            playersByIdRef.current = nextPlayers;
+            setPlayersById(nextPlayers);
+            setGameEndSummary(
+              createGameEndSummary(finalLifes, nextPlayers, nextLifes),
+            );
+          }
           break;
         case 'Error':
           setIsReadySending(false);
@@ -2120,6 +2356,7 @@ export function Game() {
     return () => {
       isCurrent = false;
       clearRoundEndDelay();
+      clearLifeLossHighlight();
       if (pileElevationTimeoutRef.current) {
         window.clearTimeout(pileElevationTimeoutRef.current);
         pileElevationTimeoutRef.current = null;
@@ -2137,11 +2374,13 @@ export function Game() {
     };
   }, [
     clearActionTimer,
+    clearLifeLossHighlight,
     clearPileElevation,
     elevatePileCard,
     joinAttempt,
     lobbyId,
     location.state?.lifes,
+    showLifeLossHighlight,
     startActionTimer,
   ]);
 
@@ -2342,6 +2581,11 @@ export function Game() {
         cardBackSrc={selectedCardBackSrc}
         deckType={gamePreferences.deckType}
         onAnimationEnd={() => setPlayedCardAnimation(null)}
+      />
+      <LifeLossPopup highlight={lifeLossHighlight} />
+      <GameEndedOverlay
+        onBackToMenu={handleBackToMenu}
+        summary={gameEndSummary}
       />
 
       {joinError ? (
