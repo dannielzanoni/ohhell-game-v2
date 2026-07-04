@@ -1,0 +1,14 @@
+# flyctl launch added from .gitignore
+**/node_modules
+**/dist
+**/dist-ssr
+**/*.local
+**/.env
+**/.env.*
+!**/.env.development
+!**/.env.production
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+fly.toml
