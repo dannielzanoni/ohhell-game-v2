@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { LivesSelector } from './LivesSelector.jsx';
+import { routePaths } from '../routeContract.js';
 
 export function CreateGameView({ controller }) {
   const { t } = useTranslation();
@@ -83,7 +84,7 @@ export function CreateGameView({ controller }) {
               </InteractiveHoverButton>
 
               <Link
-                to="/"
+                to={routePaths.home}
                 className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Home className="size-4" />
