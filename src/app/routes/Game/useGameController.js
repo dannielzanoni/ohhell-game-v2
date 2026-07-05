@@ -16,7 +16,7 @@ import { joinLobby } from '@/services/lobbyService.js';
 import { createRoomEntryGateController } from './roomEntryGateController.js';
 import { createReadyController } from './readyController.js';
 import { copyText } from '@/infrastructure/browser/clipboard.js';
-import { getRoomInviteLink } from './roomInvite.js';
+import { getRoomInviteLink, shareRoomInvite } from './roomInvite.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -63,6 +63,7 @@ export function useGameController() {
       playTurn,
       putBid,
       sendReady: (options) => readyRef.current.toggle(options),
+      shareRoomInvite,
       settleReady: () => readyRef.current.settle(),
       subscribeToGamePreferences,
     }),

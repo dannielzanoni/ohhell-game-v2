@@ -75,6 +75,8 @@ export const en = {
     reconnecting: 'Reconnecting to the match...',
     roomLink: 'Room link',
     linkCopied: 'Room link copied.',
+    shareRoomLink: 'Share room link',
+    shareRoomTitle: 'Join my Oh Hell room',
     socketError: 'Room realtime connection error.',
     tableAria: 'Oh Hell game table',
     timerBid: 'Bid',

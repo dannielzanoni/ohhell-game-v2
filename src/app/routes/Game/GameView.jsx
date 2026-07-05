@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
+import { Check, Copy, Link as LinkIcon, LogIn, Share2, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import heartIcon from '@/assets/icons/heart.png';
@@ -995,7 +995,7 @@ function ActionTimer({ onExpire, timer }) {
   );
 }
 
-export function RoomLinkCopy({ copyText, getRoomInviteLink, lobbyId }) {
+export function RoomLinkCopy({ copyText, getRoomInviteLink, lobbyId, shareRoomInvite }) {
   const { t } = useTranslation();
   const [copyStatus, setCopyStatus] = useTemporaryValue('idle');
   const roomLink = getRoomInviteLink(lobbyId);
@@ -1004,6 +1004,15 @@ export function RoomLinkCopy({ copyText, getRoomInviteLink, lobbyId }) {
     try {
       await copyText(roomLink);
       setCopyStatus('copied');
+    } catch {
+      setCopyStatus('failed');
+    }
+  };
+
+  const shareRoomLink = async () => {
+    try {
+      const result = await shareRoomInvite({ lobbyId, title: t('game.shareRoomTitle') });
+      setCopyStatus(result === 'cancelled' ? 'idle' : 'copied');
     } catch {
       setCopyStatus('failed');
     }
@@ -1025,10 +1034,18 @@ export function RoomLinkCopy({ copyText, getRoomInviteLink, lobbyId }) {
       <button
         type="button"
         aria-label={t('game.copyRoomLink')}
-        className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200"
+        className="hidden size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200 md:grid"
         onClick={copyRoomLink}
       >
         {copyStatus === 'copied' ? <Check className="size-4" /> : <Copy className="size-4" />}
+      </button>
+      <button
+        type="button"
+        aria-label={t('game.shareRoomLink')}
+        className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200 md:hidden"
+        onClick={shareRoomLink}
+      >
+        {copyStatus === 'copied' ? <Check className="size-4" /> : <Share2 className="size-4" />}
       </button>
       <span className="sr-only" role="status">
         {copyStatus === 'copied'
@@ -1295,6 +1312,7 @@ export function GameView({ controller }) {
     playTurn,
     putBid,
     sendReady,
+    shareRoomInvite,
     settleReady,
     subscribeToGamePreferences,
   } = controller;
@@ -2481,7 +2499,7 @@ export function GameView({ controller }) {
       <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
 
       {isWaitingForReady && lobbyId ? (
-        <RoomLinkCopy copyText={copyText} getRoomInviteLink={getRoomInviteLink} lobbyId={lobbyId} />
+        <RoomLinkCopy copyText={copyText} getRoomInviteLink={getRoomInviteLink} lobbyId={lobbyId} shareRoomInvite={shareRoomInvite} />
       ) : null}
 
       {tablePlayers.map((player, index) => {
