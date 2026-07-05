@@ -110,6 +110,22 @@ export function putBid(socket, bid, gameType) {
   );
 }
 
+export function usePowerCard(socket, cardId, targetPlayerId, gameType) {
+  sendGameCommand(
+    socket,
+    buildGameCommand(
+      {
+        type: 'UsePowerCard',
+        data: {
+          card_id: cardId,
+          ...(targetPlayerId ? { target_player_id: targetPlayerId } : {}),
+        },
+      },
+      gameType,
+    ),
+  );
+}
+
 export function setPlayerReady(socket, ready) {
   sendGameCommand(socket, {
     type: 'PlayerStatusChange',
@@ -125,4 +141,5 @@ export const gameSocketService = {
   putBid,
   sendGameCommand,
   setPlayerReady,
+  usePowerCard,
 };

@@ -16,15 +16,21 @@ import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button
 import { getSelectedGameType, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
-const lifeOptions = [1, 2, 3, 4, 5].map((life) => ({
+const lifeOptions = [1, 2, 3, 4, 5, 50].map((life) => ({
   label: String(life),
   value: String(life),
 }));
 
+function getDefaultLives(gameType) {
+  return gameType === gameTypes.FODINHA_POWER ? '50' : '5';
+}
+
 export function CreateGame() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [lives, setLives] = useState('5');
+  const [lives, setLives] = useState(() =>
+    getDefaultLives(getSelectedGameType() || gameTypes.FODINHA_CLASSIC),
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
 

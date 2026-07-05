@@ -61,6 +61,9 @@ export const pt = {
     lives_other: '{{count}} vidas',
     missingAuth: 'Cadastre seu guest antes de entrar na sala.',
     playCardError: 'Não foi possível jogar a carta.',
+    powerCard: 'Carta de poder',
+    powerCardTargetError: 'Nenhum alvo válido para esta carta de poder.',
+    powerCardUseError: 'Não foi possível usar a carta de poder.',
     playersReady: '{{readyCount}}/{{totalPlayers}} jogadores prontos',
     ready: 'Ready',
     readyError: 'Não foi possível marcar ready.',
@@ -83,6 +86,9 @@ export const pt = {
     eyebrow: 'Tipo de jogo',
     fodinhaClassic: 'Fodinha Clássico',
     fodinhaClassicDescription: 'As regras atuais de Fodinha/Oh Hell com vazas e bids.',
+    fodinhaPower: 'Fodinha Power',
+    fodinhaPowerDescription:
+      'Fodinha com 50 vidas, perda 10x maior e cartas de poder em Lua.',
     title: 'Escolha um jogo',
   },
   leaderboard: {

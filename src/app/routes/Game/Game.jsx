@@ -30,6 +30,7 @@ import {
   playTurn,
   putBid,
   setPlayerReady,
+  usePowerCard,
 } from '@/services/gameSocketService.js';
 import {
   deckTypes,
@@ -305,6 +306,31 @@ function removeCardFromDeck(deck, card) {
 
     return true;
   });
+}
+
+function removePowerCardFromHand(cards, cardId) {
+  let wasRemoved = false;
+
+  return cards.filter((card) => {
+    if (!wasRemoved && card.id === cardId) {
+      wasRemoved = true;
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getPowerCardTarget(card, playersById, currentPlayerId) {
+  if (!card?.requires_target) {
+    return null;
+  }
+
+  return (
+    Object.values(playersById).find((player) => {
+      return player.id !== currentPlayerId && Number(player.lifes) > 0;
+    })?.id || null
+  );
 }
 
 function getRandomItem(items) {
@@ -876,14 +902,15 @@ function BidProgress({ bid, points }) {
 
 function LifeHearts({ lifes }) {
   const { t } = useTranslation();
-  const lifeCount = Number.isFinite(Number(lifes))
-    ? Math.max(0, Math.min(MAX_DISPLAYED_LIFES, Math.trunc(Number(lifes))))
+  const totalLives = Number.isFinite(Number(lifes))
+    ? Math.max(0, Math.trunc(Number(lifes)))
     : 0;
-  const label = t('game.lives', { count: lifeCount });
+  const visibleLives = Math.min(MAX_DISPLAYED_LIFES, totalLives);
+  const label = t('game.lives', { count: totalLives });
 
   return (
     <div className="mt-1 flex items-center gap-0.5" aria-label={label}>
-      {Array.from({ length: lifeCount }).map((_, index) => (
+      {Array.from({ length: visibleLives }).map((_, index) => (
         <img
           key={index}
           src={heartIcon}
@@ -892,6 +919,11 @@ function LifeHearts({ lifes }) {
           draggable="false"
         />
       ))}
+      {totalLives > MAX_DISPLAYED_LIFES ? (
+        <span className="ml-1 text-xs font-black leading-none text-red-100 sm:text-sm">
+          x{totalLives}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1387,6 +1419,43 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
   );
 }
 
+function PowerCardHand({ canUsePowerCards, cards, onUsePowerCard }) {
+  const { t } = useTranslation();
+
+  if (!cards.length) {
+    return null;
+  }
+
+  return (
+    <div className="absolute bottom-[11.25rem] left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-2 overflow-x-auto px-2 pb-2 sm:bottom-[13.75rem] sm:max-w-[min(92vw,56rem)] sm:justify-center sm:overflow-visible sm:px-0">
+      {cards.map((card, index) => (
+        <button
+          key={`${card.id}-${index}`}
+          type="button"
+          disabled={!canUsePowerCards}
+          title={card.description || card.name}
+          className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
+            canUsePowerCards
+              ? 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
+              : 'cursor-not-allowed opacity-70'
+          }`}
+          onClick={() => onUsePowerCard(card)}
+        >
+          <span className="block text-[0.62rem] font-black uppercase tracking-[0.22em] text-violet-200">
+            {t('game.powerCard')}
+          </span>
+          <strong className="mt-1 block truncate text-sm font-black sm:text-base">
+            {card.name}
+          </strong>
+          <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
+            {card.description}
+          </small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function LobbyAuthGate({
   canContinue,
   error,
@@ -1515,6 +1584,7 @@ export function Game() {
   const [elevatedPileCardKey, setElevatedPileCardKey] = useState('');
   const [pile, setPile] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
+  const [powerCards, setPowerCards] = useState([]);
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
   const [possibleBids, setPossibleBids] = useState([]);
   const [roundCardCount, setRoundCardCount] = useState(0);
@@ -1582,6 +1652,13 @@ export function Game() {
       hasGameSocket &&
       isCurrentPlayerTurn &&
       playerDeck.length,
+  );
+  const canUsePowerCards = Boolean(
+    gameType === gameTypes.FODINHA_POWER &&
+      gameStage === 'bidding' &&
+      hasGameSocket &&
+      isCurrentPlayerTurn &&
+      powerCards.length,
   );
   const hasEnoughPlayers = totalPlayers > 1;
   const canToggleReady = Boolean(
@@ -1778,6 +1855,7 @@ export function Game() {
     roundCardCountRef.current = 0;
     setPile([]);
     setPlayerDeck([]);
+    setPowerCards([]);
     setPlayedCardAnimation(null);
     setPossibleBids([]);
     setRoundCardCount(0);
@@ -1901,6 +1979,10 @@ export function Game() {
         updateRoundCardCount(gameInfo.deck.length);
       }
 
+      if (Array.isArray(gameInfo.power_cards)) {
+        setPowerCards(gameInfo.power_cards);
+      }
+
       if (
         gameInfo.stage?.type === 'Bidding' &&
         localPlayerIds.includes(gameInfo.current_player)
@@ -1978,6 +2060,7 @@ export function Game() {
             clearPileElevation();
             updatePile([]);
             updatePlayerDeck([]);
+            setPowerCards([]);
             setPlayedCardAnimation(null);
             setGameEndSummary(null);
             clearLifeLossHighlight();
@@ -2125,6 +2208,39 @@ export function Game() {
           updateRoundCardCount((message.data || []).length);
           startActionTimer('cards', (message.data || []).length);
           break;
+        case 'PlayerPowerCards':
+          setIsReadySending(false);
+          setMatchPhase('playing');
+          setPowerCards(message.data || []);
+          break;
+        case 'PowerCardPlayed': {
+          const effectLifes = message.data?.lifes || {};
+
+          if (isLocalPlayerId(message.data?.player_id)) {
+            setPowerCards((currentCards) =>
+              removePowerCardFromHand(currentCards, message.data.card?.id),
+            );
+          }
+
+          showLifeLossHighlight(effectLifes, nextLifes);
+          setPlayersById((previousPlayers) => {
+            const nextPlayers = { ...previousPlayers };
+
+            Object.entries(effectLifes).forEach(([playerId, life]) => {
+              const existing =
+                nextPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
+
+              nextPlayers[playerId] = {
+                ...existing,
+                lifes: life,
+              };
+            });
+
+            playersByIdRef.current = nextPlayers;
+            return nextPlayers;
+          });
+          break;
+        }
         case 'PlayerTurn':
           setIsReadySending(false);
           setGameStage('dealing');
@@ -2215,6 +2331,7 @@ export function Game() {
           clearPileElevation();
           updatePile([]);
           updatePlayerDeck([]);
+          setPowerCards([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
@@ -2273,6 +2390,7 @@ export function Game() {
           clearPileElevation();
           updatePile([]);
           updatePlayerDeck([]);
+          setPowerCards([]);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
@@ -2627,6 +2745,37 @@ export function Game() {
     }
   };
 
+  const handleUsePowerCard = (card) => {
+    if (!socketRef.current) {
+      setJoinError(t('game.connectionNotReady'));
+      return;
+    }
+
+    if (!canUsePowerCards) {
+      setJoinError(t('game.waitTurn'));
+      return;
+    }
+
+    const targetPlayerId = getPowerCardTarget(
+      card,
+      playersById,
+      resolvedCurrentPlayerId,
+    );
+
+    if (card.requires_target && !targetPlayerId) {
+      setJoinError(t('game.powerCardTargetError'));
+      return;
+    }
+
+    try {
+      setJoinError('');
+      usePowerCard(socketRef.current, card.id, targetPlayerId, gameType);
+      setPowerCards((currentCards) => removePowerCardFromHand(currentCards, card.id));
+    } catch (error) {
+      setJoinError(error.message || t('game.powerCardUseError'));
+    }
+  };
+
   const handleActionTimerExpire = () => {
     const randomBid = getRandomItem(possibleBids);
 
@@ -2717,6 +2866,11 @@ export function Game() {
       })}
 
       <BidControls onBid={sendBid} possibleBids={hasGameSocket ? possibleBids : []} />
+      <PowerCardHand
+        canUsePowerCards={canUsePowerCards}
+        cards={powerCards}
+        onUsePowerCard={handleUsePowerCard}
+      />
       <PlayerHand
         canPlayCards={canPlayCards}
         cardBackSrc={selectedCardBackSrc}

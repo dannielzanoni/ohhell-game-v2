@@ -61,6 +61,9 @@ export const en = {
     lives_other: '{{count}} lives',
     missingAuth: 'Register your guest before entering the room.',
     playCardError: 'Could not play the card.',
+    powerCard: 'Power card',
+    powerCardTargetError: 'No valid target for this power card.',
+    powerCardUseError: 'Could not use the power card.',
     playersReady: '{{readyCount}}/{{totalPlayers}} players ready',
     ready: 'Ready',
     readyError: 'Could not update ready state.',
@@ -83,6 +86,9 @@ export const en = {
     eyebrow: 'Game type',
     fodinhaClassic: 'Fodinha Classic',
     fodinhaClassicDescription: 'The current Oh Hell/Fodinha trick-taking rules.',
+    fodinhaPower: 'Fodinha Power',
+    fodinhaPowerDescription:
+      'Fodinha with 50 lives, 10x life loss, and Lua-powered power cards.',
     title: 'Pick a game',
   },
   leaderboard: {
