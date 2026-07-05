@@ -177,6 +177,7 @@ export const pt = {
       players: 'Players',
       regionWaiting: 'BR - Aguardando',
       room: 'Sala',
+      state: 'Estado',
       title: 'Salas',
     },
     settings: {

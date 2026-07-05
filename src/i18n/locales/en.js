@@ -177,6 +177,7 @@ export const en = {
       players: 'Players',
       regionWaiting: 'BR - Waiting',
       room: 'Room',
+      state: 'State',
       title: 'Rooms',
     },
     settings: {

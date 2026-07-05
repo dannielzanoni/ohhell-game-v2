@@ -2,10 +2,7 @@ import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
-
-function getLobbyId(lobby) {
-  return lobby?.id || lobby?.lobby_id || '';
-}
+import { gamePath, routePaths } from '../routeContract.js';
 
 export function RoomsView({ controller }) {
   const navigate = useNavigate();
@@ -37,7 +34,7 @@ export function RoomsView({ controller }) {
               {t('common.refresh')}
             </Button>
             <Button asChild className="h-10 cursor-pointer gap-2">
-              <Link to="/create-game">
+              <Link to={routePaths.createGame}>
                 <Plus className="size-4" />
                 {t('pages.rooms.create')}
               </Link>
@@ -52,10 +49,11 @@ export function RoomsView({ controller }) {
           </div>
         ) : null}
 
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          <div className="hidden grid-cols-[1fr_8rem_8rem] border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid">
+        <div data-testid="rooms-list" className="min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="hidden grid-cols-[minmax(0,1fr)_7rem_7rem_7rem] border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid">
             <span>{t('pages.rooms.room')}</span>
             <span className="text-center">{t('pages.rooms.players')}</span>
+            <span className="text-center">{t('pages.rooms.state')}</span>
             <span className="text-right">{t('pages.rooms.enter')}</span>
           </div>
 
@@ -71,13 +69,10 @@ export function RoomsView({ controller }) {
           ) : lobbies.length ? (
             <div className="divide-y divide-border">
               {lobbies.map((lobby) => {
-                const lobbyId = getLobbyId(lobby);
-                const playerCount = Number(lobby.player_count) || 0;
-
                 return (
                   <article
-                    key={lobbyId}
-                    className="grid gap-4 p-4 md:grid-cols-[1fr_8rem_8rem] md:items-center md:px-5"
+                    key={lobby.id}
+                    className="grid min-w-0 gap-4 p-4 md:grid-cols-[minmax(0,1fr)_7rem_7rem_7rem] md:items-center md:px-5"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
@@ -86,7 +81,7 @@ export function RoomsView({ controller }) {
                         </span>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-bold text-foreground">
-                            {lobbyId}
+                            {lobby.id}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {t('pages.rooms.regionWaiting')}
@@ -97,13 +92,17 @@ export function RoomsView({ controller }) {
 
                     <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold md:mx-auto">
                       <Users className="size-4 text-muted-foreground" />
-                      {playerCount}/10
+                      {lobby.players}/{lobby.capacity}
                     </div>
+
+                    <span className="truncate text-sm font-semibold text-muted-foreground md:text-center">
+                      {lobby.state}
+                    </span>
 
                     <Button
                       type="button"
                       className="h-10 cursor-pointer gap-2 md:justify-self-end"
-                      onClick={() => navigate(`/game/${lobbyId}`)}
+                      onClick={() => navigate(gamePath(lobby.id))}
                     >
                       <DoorOpen className="size-4" />
                       {t('common.join')}
