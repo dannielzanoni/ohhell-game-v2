@@ -7,7 +7,16 @@ import { gamePath, routePaths } from '../routeContract.js';
 export function RoomsView({ controller }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { copyRoomId, error, isLoading, lobbies, refresh } = controller;
+  const {
+    copyRoomId,
+    error,
+    isInitialLoading = controller.isLoading,
+    isLoading,
+    isRefreshing = false,
+    lobbies,
+    refresh,
+    status,
+  } = controller;
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
@@ -32,6 +41,7 @@ export function RoomsView({ controller }) {
             >
               <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
               {t('common.refresh')}
+              {isRefreshing ? <span className="sr-only">{t('pages.rooms.refreshing')}</span> : null}
             </Button>
             <Button asChild className="h-10 cursor-pointer gap-2">
               <Link to={routePaths.createGame}>
@@ -57,7 +67,7 @@ export function RoomsView({ controller }) {
             <span className="text-right">{t('pages.rooms.enter')}</span>
           </div>
 
-          {isLoading ? (
+          {isInitialLoading ? (
             <div className="grid gap-3 p-4">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
@@ -123,6 +133,10 @@ export function RoomsView({ controller }) {
                   </article>
                 );
               })}
+            </div>
+          ) : status === 'error' ? (
+            <div className="grid min-h-52 place-items-center px-4 py-10 text-center text-sm text-destructive">
+              {error?.message || t('pages.rooms.loadError')}
             </div>
           ) : (
             <div className="grid min-h-52 place-items-center px-4 py-10 text-center">
