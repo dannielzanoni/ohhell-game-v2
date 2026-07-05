@@ -1285,7 +1285,8 @@ export function GameView({ controller }) {
     joinLobby,
     playTurn,
     putBid,
-    setPlayerReady,
+    sendReady,
+    settleReady,
     subscribeToGamePreferences,
   } = controller;
   const { lobbyId } = useParams();
@@ -1853,6 +1854,7 @@ export function GameView({ controller }) {
           }));
           break;
         case 'PlayerStatusChange':
+          settleReady();
           setIsReadySending(false);
 
           setPlayersById((previousPlayers) => {
@@ -2210,6 +2212,7 @@ export function GameView({ controller }) {
               return;
             }
 
+            settleReady();
             socketRef.current = null;
             socket = null;
             setHasGameSocket(false);
@@ -2222,6 +2225,7 @@ export function GameView({ controller }) {
               return;
             }
 
+            settleReady();
             setHasGameSocket(false);
             setIsReadySending(false);
           },
@@ -2294,6 +2298,7 @@ export function GameView({ controller }) {
 
     return () => {
       isCurrent = false;
+      settleReady();
       clearReconnectTimeout();
       clearRoundEndDelay();
       clearLifeLossHighlight();
@@ -2331,12 +2336,17 @@ export function GameView({ controller }) {
       return;
     }
 
-    const nextReady = !currentPlayer?.ready;
-
     try {
+      const sent = sendReady({
+        playerCount: totalPlayers,
+        ready: Boolean(currentPlayer?.ready),
+        socket: socketRef.current,
+        socketOpen: hasGameSocket,
+      });
+      if (!sent) return;
       setIsReadySending(true);
-      setPlayerReady(socketRef.current, nextReady);
     } catch (error) {
+      settleReady();
       setIsReadySending(false);
       setJoinError(error.message || t('game.readyError'));
     }
