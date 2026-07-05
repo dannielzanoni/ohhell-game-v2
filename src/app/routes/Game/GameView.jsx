@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog.jsx';
 import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
 import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
+import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import {
   lobbyLivesStorageKey,
@@ -2291,9 +2292,7 @@ export function GameView({ controller }) {
             setAuthGateError(translateRef.current('game.missingAuth'));
             setJoinError('');
           } else {
-            setJoinError(
-              error.message || translateRef.current('game.enterRoomError'),
-            );
+            setJoinError(translateRef.current(joinRoomErrorKey(error)));
           }
         }
       });
@@ -2537,7 +2536,7 @@ export function GameView({ controller }) {
       />
 
       {joinError ? (
-        <div className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-destructive/50 bg-background/90 px-4 py-3 text-center text-sm text-destructive shadow-lg backdrop-blur">
+        <div role="alert" className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-destructive/50 bg-background/90 px-4 py-3 text-center text-sm text-destructive shadow-lg backdrop-blur">
           {joinError}
         </div>
       ) : null}
