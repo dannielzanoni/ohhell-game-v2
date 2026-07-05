@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getLobbies } from '@/services/lobbyService.js';
+import { normalizeRooms } from './roomModel.js';
 
 export function useRoomsController() {
   const [error, setError] = useState(null);
@@ -12,7 +13,7 @@ export function useRoomsController() {
 
     try {
       const response = await getLobbies();
-      setLobbies(Array.isArray(response) ? response : []);
+      setLobbies(normalizeRooms(response));
     } catch (requestError) {
       setError(requestError);
     } finally {
