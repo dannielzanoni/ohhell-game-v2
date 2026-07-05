@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.jsx';
 import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
+import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import {
   lobbyLivesStorageKey,
@@ -183,7 +184,7 @@ function getSavedPlayer() {
 function getLobbyLifes(lobbyId, routeLifes) {
   const normalizedRouteLifes = Number(routeLifes);
 
-  if (Number.isFinite(normalizedRouteLifes) && normalizedRouteLifes > 0) {
+  if (isValidLives(normalizedRouteLifes)) {
     return normalizedRouteLifes;
   }
 
@@ -192,12 +193,12 @@ function getLobbyLifes(lobbyId, routeLifes) {
       storage.getItem(lobbyLivesStorageKey(lobbyId)),
     );
 
-    if (Number.isFinite(savedLifes) && savedLifes > 0) {
+    if (isValidLives(savedLifes)) {
       return savedLifes;
     }
   }
 
-  return 5;
+  return DEFAULT_LIVES;
 }
 
 function getClaimsPlayerId(player) {
