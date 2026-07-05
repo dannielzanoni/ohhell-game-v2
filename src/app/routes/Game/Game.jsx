@@ -52,6 +52,10 @@ const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
+const CLASSIC_TURN_DELAY_BASE_SECONDS = 20;
+const POWER_TURN_DELAY_BASE_SECONDS = 30;
+const TURN_DELAY_CARD_SECONDS = 2;
+const TURN_DELAY_POWER_CARD_SECONDS = 5;
 const WS_RECONNECT_DELAYS_MS = [100, 250, 500, 1000, 1500, 2500];
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
@@ -1574,8 +1578,10 @@ export function Game() {
   const { t } = useTranslation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const translateRef = useRef(t);
+  const actionTimerRef = useRef(null);
   const localPlayerIdsRef = useRef([]);
   const playerDeckCountRef = useRef(0);
+  const powerCardCountRef = useRef(0);
   const pileElevationTimeoutRef = useRef(null);
   const pileRef = useRef([]);
   const lifeLossHighlightTimeoutRef = useRef(null);
@@ -1739,6 +1745,7 @@ export function Game() {
   };
 
   const clearActionTimer = useCallback(() => {
+    actionTimerRef.current = null;
     setActionTimer(null);
   }, []);
 
@@ -1777,21 +1784,45 @@ export function Game() {
     navigate('/create-game');
   }, [navigate]);
 
-  const startActionTimer = useCallback((type, cardCount) => {
-    const normalizedCardCount = Math.max(
-      0,
-      Math.trunc(Number(cardCount) || 0),
-    );
-    const durationMs = (7 + normalizedCardCount) * 1000;
-
-    setActionTimer({
-      cardCount: normalizedCardCount,
-      durationMs,
-      id: `${type}-${Date.now()}`,
-      startedAt: Date.now(),
+  const startActionTimer = useCallback(
+    (
       type,
-    });
-  }, []);
+      cardCount,
+      actionGameType = gameTypes.FODINHA_CLASSIC,
+      powerCardCount = 0,
+    ) => {
+      const normalizedCardCount = Math.max(
+        0,
+        Math.trunc(Number(cardCount) || 0),
+      );
+      const normalizedPowerCardCount =
+        actionGameType === gameTypes.FODINHA_POWER
+          ? Math.max(0, Math.trunc(Number(powerCardCount) || 0))
+          : 0;
+      const baseSeconds =
+        actionGameType === gameTypes.FODINHA_POWER
+          ? POWER_TURN_DELAY_BASE_SECONDS
+          : CLASSIC_TURN_DELAY_BASE_SECONDS;
+      const durationMs =
+        (baseSeconds +
+          normalizedCardCount * TURN_DELAY_CARD_SECONDS +
+          normalizedPowerCardCount * TURN_DELAY_POWER_CARD_SECONDS) *
+        1000;
+
+      const nextTimer = {
+        cardCount: normalizedCardCount,
+        durationMs,
+        id: `${type}-${Date.now()}`,
+        powerCardCount: normalizedPowerCardCount,
+        startedAt: Date.now(),
+        type,
+      };
+
+      actionTimerRef.current = nextTimer;
+      setActionTimer(nextTimer);
+    },
+    [],
+  );
 
   const clearPileElevation = useCallback(() => {
     if (pileElevationTimeoutRef.current) {
@@ -1903,6 +1934,7 @@ export function Game() {
     clearPileElevation();
     playerDeckCountRef.current = 0;
     pileRef.current = [];
+    powerCardCountRef.current = 0;
     roundCardCountRef.current = 0;
     setPile([]);
     setPlayerDeck([]);
@@ -2031,7 +2063,12 @@ export function Game() {
         updateRoundCardCount(gameInfo.deck.length);
       }
 
+      const nextPowerCardCount = Array.isArray(gameInfo.power_cards)
+        ? gameInfo.power_cards.length
+        : powerCardCountRef.current;
+
       if (Array.isArray(gameInfo.power_cards)) {
+        powerCardCountRef.current = nextPowerCardCount;
         setPowerCards(gameInfo.power_cards);
       }
 
@@ -2045,13 +2082,20 @@ export function Game() {
           getActionCardCount(
             Math.max(...(gameInfo.stage.data?.possible_bids || [0])),
           ),
+          nextGameType,
+          nextPowerCardCount,
         );
         playTurnPromptSound('bid', gameInfo.current_player);
       } else if (
         gameInfo.stage?.type === 'Dealing' &&
         localPlayerIds.includes(gameInfo.current_player)
       ) {
-        startActionTimer('play', getActionCardCount());
+        startActionTimer(
+          'play',
+          getActionCardCount(),
+          nextGameType,
+          nextPowerCardCount,
+        );
         playTurnPromptSound('play', gameInfo.current_player);
       } else {
         clearActionTimer();
@@ -2112,6 +2156,7 @@ export function Game() {
             clearPileElevation();
             updatePile([]);
             updatePlayerDeck([]);
+            powerCardCountRef.current = 0;
             setPowerCards([]);
             setDraggingPowerCard(null);
             setPlayedCardAnimation(null);
@@ -2234,6 +2279,8 @@ export function Game() {
             startActionTimer(
               'bid',
               getActionCardCount(Math.max(...(message.data.possible_bids || [0]))),
+              nextGameType,
+              powerCardCountRef.current,
             );
             playTurnPromptSound('bid', message.data.player_id);
           } else {
@@ -2259,20 +2306,39 @@ export function Game() {
           setMatchPhase('playing');
           updatePlayerDeck(message.data || []);
           updateRoundCardCount((message.data || []).length);
-          startActionTimer('cards', (message.data || []).length);
+          startActionTimer(
+            'cards',
+            (message.data || []).length,
+            nextGameType,
+            powerCardCountRef.current,
+          );
           break;
         case 'PlayerPowerCards':
           setIsReadySending(false);
           setMatchPhase('playing');
+          powerCardCountRef.current = (message.data || []).length;
           setPowerCards(message.data || []);
+          if (actionTimerRef.current?.type === 'cards') {
+            startActionTimer(
+              'cards',
+              getActionCardCount(),
+              nextGameType,
+              powerCardCountRef.current,
+            );
+          }
           break;
         case 'PowerCardPlayed': {
           const effectLifes = message.data?.lifes || {};
 
           if (isLocalPlayerId(message.data?.player_id)) {
-            setPowerCards((currentCards) =>
-              removePowerCardFromHand(currentCards, message.data.card?.id),
-            );
+            setPowerCards((currentCards) => {
+              const nextCards = removePowerCardFromHand(
+                currentCards,
+                message.data.card?.id,
+              );
+              powerCardCountRef.current = nextCards.length;
+              return nextCards;
+            });
           }
 
           showLifeLossHighlight(effectLifes, nextLifes);
@@ -2301,7 +2367,12 @@ export function Game() {
           setPossibleBids([]);
           setTurnPlayerId(message.data.player_id);
           if (isLocalPlayerId(message.data.player_id)) {
-            startActionTimer('play', getActionCardCount());
+            startActionTimer(
+              'play',
+              getActionCardCount(),
+              nextGameType,
+              powerCardCountRef.current,
+            );
             playTurnPromptSound('play', message.data.player_id);
           } else {
             clearActionTimer();
@@ -2384,6 +2455,7 @@ export function Game() {
           clearPileElevation();
           updatePile([]);
           updatePlayerDeck([]);
+          powerCardCountRef.current = 0;
           setPowerCards([]);
           setDraggingPowerCard(null);
           setPlayedCardAnimation(null);
@@ -2444,6 +2516,7 @@ export function Game() {
           clearPileElevation();
           updatePile([]);
           updatePlayerDeck([]);
+          powerCardCountRef.current = 0;
           setPowerCards([]);
           setDraggingPowerCard(null);
           setPlayedCardAnimation(null);
@@ -2820,7 +2893,11 @@ export function Game() {
       setJoinError('');
       usePowerCard(socketRef.current, card.id, targetPlayerId, gameType);
       setDraggingPowerCard(null);
-      setPowerCards((currentCards) => removePowerCardFromHand(currentCards, card.id));
+      setPowerCards((currentCards) => {
+        const nextCards = removePowerCardFromHand(currentCards, card.id);
+        powerCardCountRef.current = nextCards.length;
+        return nextCards;
+      });
     } catch (error) {
       setJoinError(error.message || t('game.powerCardUseError'));
     }
