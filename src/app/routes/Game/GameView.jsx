@@ -557,20 +557,22 @@ function getSeatCardCount({
   return Math.max(0, roundCardCount - (playedCountsByPlayer[playerId] || 0));
 }
 
-function getSeatPosition(index, totalPlayers, isCurrentPlayer = false) {
+export function getDesktopSeatLayout(index, totalPlayers, isCurrentPlayer = false) {
   if (totalPlayers <= 1) {
     return {
+      density: 'comfortable',
       left: '50%',
       top: `${60 - (isCurrentPlayer ? CURRENT_PLAYER_SEAT_LIFT : 0)}%`,
     };
   }
 
   const angle = Math.PI / 2 + (index * 2 * Math.PI) / totalPlayers;
-  const left = 50 + Math.cos(angle) * 36;
+  const left = 50 + Math.cos(angle) * 43;
   const top =
-    48 + Math.sin(angle) * 28 - (isCurrentPlayer ? CURRENT_PLAYER_SEAT_LIFT : 0);
+    50 + Math.sin(angle) * 38 - (isCurrentPlayer ? 4 : 0);
 
   return {
+    density: totalPlayers >= 10 ? 'dense' : totalPlayers >= 7 ? 'compact' : 'comfortable',
     left: `${left.toFixed(2)}%`,
     top: `${top.toFixed(2)}%`,
   };
@@ -725,7 +727,7 @@ function LifeHearts({ lifes }) {
   );
 }
 
-function PlayerSeat({
+export function PlayerSeat({
   avatarSrc,
   cardBackSrc,
   bid = null,
@@ -740,15 +742,32 @@ function PlayerSeat({
   readyControls = null,
   showReadyState = false,
 }) {
+  const { t } = useTranslation();
   const scaleClass = isCurrent ? 'scale-90' : 'scale-75';
+  const density = position.density || 'comfortable';
+  const desktopDensityClass = density === 'dense'
+    ? isCurrent ? 'md:scale-[0.7]' : 'md:scale-[0.48]'
+    : density === 'compact'
+      ? isCurrent ? 'md:scale-80' : 'md:scale-[0.6]'
+      : isCurrent ? 'md:scale-90' : 'md:scale-75';
   const avatarBorderClass = isTurnToPlay
     ? 'border-violet-400 ring-4 ring-violet-500/45'
     : 'border-white/20 ring-0';
 
   return (
     <div
-      className={`absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} sm:w-[21.6rem]`}
-      style={position}
+      role="group"
+      aria-label={t('game.playerSeatAria', {
+        bid: bid ?? 0,
+        lifes: lifes ?? 0,
+        local: isCurrent ? t('game.localPlayer') : '',
+        nickname,
+        points: points ?? 0,
+        ready: t(isReady ? 'game.ready' : 'game.waiting'),
+        turn: isTurnToPlay ? t('game.yourTurn') : '',
+      })}
+      className={`absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} ${desktopDensityClass} sm:w-[21.6rem] md:w-[18rem]`}
+      style={{ left: position.left, top: position.top }}
     >
       <SeatCardBacks cardBackSrc={cardBackSrc} count={cardCount} />
 
@@ -773,7 +792,11 @@ function PlayerSeat({
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold leading-5 sm:text-base">
-              {nickname}
+              {nickname}{isCurrent ? ` · ${t('game.you')}` : ''}
+            </p>
+            <p className="mt-0.5 text-[0.65rem] font-semibold text-zinc-300">
+              {t('game.bidAndPoints', { bid: bid ?? 0, points: points ?? 0 })}
+              {isTurnToPlay ? ` · ${t('game.yourTurn')}` : ''}
             </p>
             <LifeHearts lifes={lifes} />
             <BidProgress bid={bid} points={points} />
@@ -2565,7 +2588,7 @@ export function GameView({ controller }) {
             isTurnToPlay={player.turnToPlay || player.id === turnPlayerId}
             lifes={player.lifes ?? lifes}
             nickname={player.nickname}
-            position={getSeatPosition(
+            position={getDesktopSeatLayout(
               index,
               tablePlayers.length,
               isCurrentPlayer,
