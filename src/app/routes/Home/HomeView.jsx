@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import card1Ouro from '@/assets/cards/spanish/1ouro.jpg';
 import card2Espada from '@/assets/cards/spanish/2espada.jpg';
 import card3Paus from '@/assets/cards/spanish/3paus.jpg';
@@ -7,8 +5,7 @@ import frenchCard1Ouro from '@/assets/cards/french/1ouro.png';
 import frenchCard2Espada from '@/assets/cards/french/2espada.png';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
-import { cn } from '@/lib/utils.js';
-import { pageLinks } from '../pageLinks.js';
+import { HomeShortcuts } from './HomeShortcuts.jsx';
 import { MobileHero } from './MobileHero.jsx';
 import { WebHero } from './WebHero.jsx';
 
@@ -32,8 +29,6 @@ const cardGroups = [
 ];
 
 export function HomeView() {
-  const { t } = useTranslation();
-
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:h-full lg:max-w-7xl lg:gap-5">
@@ -74,64 +69,7 @@ export function HomeView() {
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-5">
           <LoginCard className="lg:p-5" />
 
-          <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-            {pageLinks.map((page) => {
-              const Icon = page.icon;
-              const label = page.labelKey ? t(page.labelKey) : page.label;
-              const description = page.descriptionKey
-                ? t(page.descriptionKey)
-                : page.description;
-              const content = (
-                <>
-                  <span className="flex items-center gap-3">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground transition group-hover:bg-primary group-hover:text-primary-foreground lg:size-9">
-                      {Icon ? (
-                        <Icon className="size-5 lg:size-4" />
-                      ) : page.primeIcon ? (
-                        <i className={cn(page.primeIcon, 'text-lg lg:text-base')} />
-                      ) : (
-                        <img
-                          src={page.iconSrc}
-                          alt=""
-                          className="size-5 object-contain lg:size-4"
-                        />
-                      )}
-                    </span>
-                    <span className="text-xl font-bold text-foreground lg:text-base">
-                      {label}
-                    </span>
-                  </span>
-                  <span className="mt-4 block text-sm leading-6 text-muted-foreground lg:mt-3 lg:text-xs lg:leading-5">
-                    {description}
-                  </span>
-                </>
-              );
-
-              if (page.externalUrl) {
-                return (
-                  <a
-                    key={page.path}
-                    href={page.externalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
-                  >
-                    {content}
-                  </a>
-                );
-              }
-
-              return (
-                <Link
-                  key={page.path}
-                  to={page.path}
-                  className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
-                >
-                  {content}
-                </Link>
-              );
-            })}
-          </nav>
+          <HomeShortcuts />
         </div>
       </section>
     </main>

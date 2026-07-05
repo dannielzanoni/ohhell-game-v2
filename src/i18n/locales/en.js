@@ -25,6 +25,7 @@ export const en = {
     join: 'Join',
     link: 'Link',
     loading: 'Loading...',
+    opensNewWindow: 'opens in a new window',
     play: 'Play',
     refresh: 'Refresh',
     settings: 'Settings',
@@ -129,6 +130,7 @@ export const en = {
       title: 'GitHub',
     },
     home: {
+      shortcuts: 'Main shortcuts',
       tagline:
         'Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!',
     },
