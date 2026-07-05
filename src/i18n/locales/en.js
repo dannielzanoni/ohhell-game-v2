@@ -115,6 +115,7 @@ export const en = {
   },
   pages: {
     createGame: {
+      comingSoon: 'Coming soon',
       configureBefore: 'Configure the match before entering the table.',
       configurations: 'Game Configurations',
       createError: 'Could not create the room.',
@@ -127,6 +128,7 @@ export const en = {
       livesNumber: 'Number of Lives',
       noOptions: 'No options found.',
       publicRoom: 'Public room',
+      publicRoomUnavailable: 'Requires future backend support.',
     },
     github: {
       description: 'Project repository for Oh Hell Game v2',

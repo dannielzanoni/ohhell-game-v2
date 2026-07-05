@@ -46,6 +46,15 @@ function controller() {
 }
 
 describe('CreateGame cancellation', () => {
+  it('marks public rooms as unavailable instead of presenting a working control', () => {
+    renderCreate(controller());
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    const publicRoom = screen.getByRole('switch', { name: 'Public room' });
+    expect(publicRoom).toBeDisabled();
+    expect(publicRoom).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('Requires future backend support.')).toBeInTheDocument();
+  });
+
   it('uses the canonical Home destination without creating a lobby', () => {
     const state = controller();
     renderCreate(state);
