@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useId,
   useRef,
   useState,
 } from 'react';
@@ -117,6 +118,8 @@ export const LoginCard = forwardRef(function LoginCard(
   const authService = useAuthController();
   const { t } = useTranslation();
   const googleButtonRef = useRef(null);
+  const saveErrorId = useId();
+  const googleErrorId = useId();
   const initialProfileRef = useRef(null);
 
   if (!initialProfileRef.current) {
@@ -404,6 +407,8 @@ export const LoginCard = forwardRef(function LoginCard(
               maxLength={24}
               value={nickname}
               placeholder={t('auth.nickPlaceholder')}
+              aria-describedby={saveError ? saveErrorId : undefined}
+              aria-invalid={Boolean(saveError)}
               className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
               onChange={(event) => {
                 setNickname(event.target.value);
@@ -420,6 +425,7 @@ export const LoginCard = forwardRef(function LoginCard(
               variant="outline"
               size="icon"
               aria-label={t('auth.saveNick')}
+              aria-describedby={saveError ? saveErrorId : undefined}
               disabled={!canSaveProfile || isSaving}
               className="h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed"
               onClick={() => {
@@ -436,7 +442,7 @@ export const LoginCard = forwardRef(function LoginCard(
         </label>
 
         {saveError ? (
-          <p className="mt-3 text-sm text-destructive">{saveError}</p>
+          <p id={saveErrorId} role="alert" className="mt-3 text-sm text-destructive">{saveError}</p>
         ) : null}
 
         {canRenderGoogleLogin ? (
@@ -452,6 +458,7 @@ export const LoginCard = forwardRef(function LoginCard(
             <div className="grid justify-items-center gap-2">
               <div
                 ref={googleButtonRef}
+                aria-describedby={googleError ? googleErrorId : undefined}
                 className={cn(
                   'min-h-11 w-full overflow-hidden [&>div]:mx-auto',
                   (isGoogleLoading || isGoogleSubmitting) && 'hidden',
@@ -481,7 +488,7 @@ export const LoginCard = forwardRef(function LoginCard(
               ) : null}
 
               {googleError ? (
-                <p className="text-center text-sm text-destructive">
+                <p id={googleErrorId} role="alert" className="text-center text-sm text-destructive">
                   {googleError}
                 </p>
               ) : null}
