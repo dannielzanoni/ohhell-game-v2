@@ -35,6 +35,14 @@ export const en = {
     appNameShort: 'Oh Hell',
     appNameShort2: 'Game',
   },
+  cards: {
+    label: '{{rank}} of {{suit}}',
+    ranks: {
+      eight: '8', eleven: '11', five: '5', four: '4', nine: '9', one: 'ace',
+      seven: '7', six: '6', ten: '10', three: '3', twelve: '12', two: '2',
+    },
+    suits: { clubs: 'clubs', cups: 'cups', golds: 'golds', swords: 'swords' },
+  },
   game: {
     authSaveGuest: 'Save your guest before entering the room.',
     bidDone: 'Bid {{number}} done',
@@ -49,6 +57,8 @@ export const en = {
     copyRoomLink: 'Copy room link',
     copyFailed: 'Could not copy the room link.',
     deckAndJoker: 'Deck and joker card',
+    deckAndJokerSelected: '{{deck}} deck and joker card',
+    playedCardLabel: '{{player}} played {{card}}',
     enterRoom: 'Enter room',
     enterRoomError: 'Could not enter the room.',
     enteringRoom: 'Entering...',
