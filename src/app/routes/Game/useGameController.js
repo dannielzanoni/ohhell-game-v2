@@ -13,6 +13,7 @@ import {
   subscribeToGamePreferences,
 } from '@/services/gamePreferencesService.js';
 import { joinLobby } from '@/services/lobbyService.js';
+import { createRoomEntryGateController } from './roomEntryGateController.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -36,12 +37,17 @@ export { deckTypes };
 export function useGameController() {
   const sessionRef = useRef(null);
   if (!sessionRef.current) sessionRef.current = createGameSession();
+  const roomEntryGateRef = useRef(null);
+  if (!roomEntryGateRef.current) {
+    roomEntryGateRef.current = createRoomEntryGateController({ getAuthToken });
+  }
 
   useEffect(() => () => sessionRef.current?.dispose(), []);
 
   return useMemo(
     () => ({
       createGameSocket: (options) => sessionRef.current.connect(options),
+      confirmRoomEntry: (options) => roomEntryGateRef.current.confirm(options),
       getAuthToken,
       getCurrentPlayerId: decodeCurrentPlayerId,
       getGamePreferences,
