@@ -45,11 +45,17 @@ describe('LoginCard profile summary', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save nick' }));
 
     await waitFor(() => expect(authService.saveGuestProfile).toHaveBeenCalledWith({ nickname: 'Ada', picture: '' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Profile saved.');
     expect(storage.getItem(storageKeys.guestNickname)).toBe('Ada');
 
     firstRender.unmount();
     render(<LoginCard />);
     expect(screen.getByLabelText('Nick')).toHaveValue('Ada');
+  });
+
+  it('exposes the shared 24-character frontend limit', () => {
+    render(<LoginCard />);
+    expect(screen.getByLabelText('Nick')).toHaveAttribute('maxlength', '24');
   });
 
   it('keeps an authentication failure next to and linked to the save action', async () => {

@@ -12,6 +12,19 @@ const GUEST_AVATAR_STORAGE_KEY = storageKeys.guestAvatar;
 const GUEST_NICKNAME_STORAGE_KEY = storageKeys.guestNickname;
 const REFRESH_TOKEN_STORAGE_KEY = storageKeys.refreshToken;
 let pendingGuestAuthRefresh = null;
+export const MAX_GUEST_NICKNAME_LENGTH = 24;
+
+export function normalizeGuestNickname(value) {
+  const nickname = String(value ?? '').trim();
+
+  if (nickname.length > MAX_GUEST_NICKNAME_LENGTH) {
+    const error = new RangeError(`Nickname must have at most ${MAX_GUEST_NICKNAME_LENGTH} characters.`);
+    error.code = 'nickname_too_long';
+    throw error;
+  }
+
+  return nickname || 'Guest';
+}
 
 function getAuthErrorMessage(error) {
   return String(error?.message || error?.data?.error || '');
@@ -140,10 +153,10 @@ function getSavedGuestProfile(payload = {}) {
   const savedNickname = storage.getItem(GUEST_NICKNAME_STORAGE_KEY) || '';
   const savedAvatarId = storage.getItem(GUEST_AVATAR_STORAGE_KEY) || '';
   const savedAvatar = findAvatar(savedAvatarId);
-  const nickname = String(payload.nickname ?? savedNickname ?? '').trim();
+  const nickname = normalizeGuestNickname(payload.nickname ?? savedNickname);
 
   return {
-    nickname: nickname || 'Guest',
+    nickname,
     picture: payload.picture ?? savedAvatar?.picture ?? '',
   };
 }
@@ -151,7 +164,7 @@ function getSavedGuestProfile(payload = {}) {
 export async function signUp({ nickname, picture } = {}) {
   const response = await apiRequest('/auth/signup', {
     method: 'POST',
-    body: { nickname, picture },
+    body: { nickname: normalizeGuestNickname(nickname), picture },
   });
 
   return persistAuth(response);
@@ -161,7 +174,7 @@ export async function updateProfile({ nickname, picture }) {
   const response = await apiRequest('/auth/profile', {
     auth: true,
     method: 'POST',
-    body: { nickname, picture },
+    body: { nickname: normalizeGuestNickname(nickname), picture },
   });
 
   return persistAuth(response);

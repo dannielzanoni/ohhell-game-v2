@@ -151,6 +151,7 @@ export const LoginCard = forwardRef(function LoginCard(
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
 
   const syncProfileFromAuth = useCallback(() => {
     const profile = authService.getCurrentProfile();
@@ -189,6 +190,7 @@ export const LoginCard = forwardRef(function LoginCard(
 
     setIsSaving(true);
     setSaveError('');
+    setSaveSuccess('');
 
     try {
       const response = await authService.saveGuestProfile(payload);
@@ -205,6 +207,7 @@ export const LoginCard = forwardRef(function LoginCard(
       setSavedAvatarId(nextAvatarId);
       setHasAuthToken(Boolean(authService.getAuthToken()));
       setIsGoogleAuth(authService.isGoogleAuthenticated());
+      setSaveSuccess(t('auth.profileSaved'));
       onSaved?.({
         avatarId: nextAvatarId,
         nickname: nextNickname || 'Guest',
@@ -259,6 +262,7 @@ export const LoginCard = forwardRef(function LoginCard(
     storage.setItem(storageKeys.guestAvatar, avatar.id);
     setSelectedAvatar(avatar);
     setSaveError('');
+    setSaveSuccess('');
   };
 
   useImperativeHandle(
@@ -414,6 +418,7 @@ export const LoginCard = forwardRef(function LoginCard(
               onChange={(event) => {
                 setNickname(event.target.value);
                 setSaveError('');
+                setSaveSuccess('');
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && canSaveProfile && !isSaving) {
@@ -444,6 +449,9 @@ export const LoginCard = forwardRef(function LoginCard(
 
         {saveError ? (
           <p id={saveErrorId} role="alert" className="mt-3 text-sm text-destructive">{saveError}</p>
+        ) : null}
+        {saveSuccess ? (
+          <p role="status" className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{saveSuccess}</p>
         ) : null}
 
         {canRenderGoogleLogin ? (
