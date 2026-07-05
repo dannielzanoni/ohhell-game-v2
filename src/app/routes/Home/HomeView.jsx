@@ -11,6 +11,7 @@ import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
 import { cn } from '@/lib/utils.js';
 import { pageLinks } from '../pageLinks.js';
+import { WebHero } from './WebHero.jsx';
 
 const cardGroups = [
   {
@@ -42,16 +43,7 @@ export function HomeView() {
         <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-sm md:p-8 lg:p-5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.2),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.18),transparent_30%)]" />
           <div className="relative">
-            <div className="relative mt-3 hidden h-36 w-full overflow-hidden md:block lg:h-32 xl:h-42">
-              <VideoText
-                src={gameBg}
-                fontSize={13}
-                fontWeight="900"
-                className="drop-shadow-2xl"
-              >
-                {t('common.appName')}
-              </VideoText>
-            </div>
+            <WebHero />
             <div className="relative mt-8 grid gap-1 md:hidden">
               <div className="h-24 overflow-hidden">
                 <VideoText
@@ -76,7 +68,7 @@ export function HomeView() {
                 </div>
               ) : null}
             </div>
-            <p className="mt-4 w-full max-w-none text-base leading-7 text-muted-foreground md:text-lg md:leading-8 lg:mt-3 lg:text-base lg:leading-6">
+            <p className="mt-4 w-full max-w-none text-base leading-7 text-muted-foreground md:hidden">
               {t('pages.home.tagline')}
             </p>
 

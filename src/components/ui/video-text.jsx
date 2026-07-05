@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 
 export function VideoText({
  src,
+ poster,
  children,
  className = "",
  autoPlay = true,
@@ -18,6 +19,8 @@ export function VideoText({
  as: Component = "div"
 }) {
   const [svgMask, setSvgMask] = useState("")
+  const [videoFailed, setVideoFailed] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
   const content = React.Children.toArray(children).join("")
 
   useEffect(() => {
@@ -33,6 +36,14 @@ export function VideoText({
     return () => window.removeEventListener("resize", updateSvgMask);
   }, [content, fontSize, fontWeight, textAnchor, dominantBaseline, fontFamily])
 
+  useEffect(() => {
+    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(Boolean(query?.matches));
+    update();
+    query?.addEventListener?.('change', update);
+    return () => query?.removeEventListener?.('change', update);
+  }, []);
+
   const dataUrlMask = `url("data:image/svg+xml,${encodeURIComponent(svgMask)}")`
 
   return (
@@ -41,6 +52,9 @@ export function VideoText({
     <div
      className="absolute inset-0 flex items-center justify-center"
      style={{
+       backgroundImage: poster ? `url(${poster})` : undefined,
+       backgroundPosition: 'center',
+       backgroundSize: 'cover',
        maskImage: dataUrlMask,
        WebkitMaskImage: dataUrlMask,
        maskSize: "contain",
@@ -50,16 +64,18 @@ export function VideoText({
        maskPosition: "center",
        WebkitMaskPosition: "center",
      }}>
-      <video
+      {!videoFailed ? <video
        className="h-full w-full object-cover"
-       autoPlay={autoPlay}
+       autoPlay={autoPlay && !reducedMotion}
        muted={muted}
        loop={loop}
-       preload={preload}
-       playsInline>
+       preload={reducedMotion ? 'none' : preload}
+       playsInline
+       poster={poster}
+       onError={() => setVideoFailed(true)}>
         <source src={src} />
         Your browser does not support the video tag.
-      </video>
+      </video> : null}
     </div>
     {/* Add a backup text element for SEO/accessibility */}
     <span className="sr-only">{content}</span>
