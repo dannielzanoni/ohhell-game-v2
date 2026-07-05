@@ -70,7 +70,7 @@ export function CreateGameView({ controller }) {
                 type="button"
                 disabled={isCreating}
                 className="h-12 w-full min-w-0 border-border text-base disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={createGame}
+                onClick={createGame}
               >
                 <span className="inline-flex items-center gap-2">
                   {isCreating ? (
@@ -92,7 +92,7 @@ export function CreateGameView({ controller }) {
             </div>
 
             {createError ? (
-              <p className="text-sm text-destructive">{createError}</p>
+              <p role="alert" className="text-sm text-destructive">{createError}</p>
             ) : null}
           </div>
         </section>
