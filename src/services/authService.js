@@ -4,7 +4,7 @@ import {
   getAuthToken,
   setAuthToken,
 } from './apiClient.js';
-import { avatars } from '@/components/auth/avatarOptions.js';
+import { findAvatar } from '@/assets/catalog/avatarCatalog.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
@@ -139,7 +139,7 @@ function persistAuth(response) {
 function getSavedGuestProfile(payload = {}) {
   const savedNickname = storage.getItem(GUEST_NICKNAME_STORAGE_KEY) || '';
   const savedAvatarId = storage.getItem(GUEST_AVATAR_STORAGE_KEY) || '';
-  const savedAvatar = avatars.find((avatar) => avatar.id === savedAvatarId);
+  const savedAvatar = findAvatar(savedAvatarId);
   const nickname = String(payload.nickname ?? savedNickname ?? '').trim();
 
   return {

@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
-import { avatarGroups } from './avatarOptions.js';
+import { avatarGroups } from '@/assets/catalog/avatarCatalog.js';
 
 export { avatarGroups, avatars } from './avatarOptions.js';
 
@@ -67,7 +67,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
           {avatarGroups.map((group) => (
             <div key={group.title} className="not-first:mt-6 sm:not-first:mt-7">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
-                {group.title === 'Avatares' ? t('auth.avatars') : group.title}
+                {t(group.labelKey)}
               </h3>
               <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-x-2 gap-y-3 min-[380px]:grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] sm:mt-4 sm:grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] sm:gap-4">
                 {group.avatars.map((avatar) => {

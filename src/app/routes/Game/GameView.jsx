@@ -7,7 +7,15 @@ import bidTurnSound from '@/assets/sounds/bid.mp3';
 import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
 import playerTurnSound from '@/assets/sounds/default.mp3';
 import tableBackground from '@/assets/back.png';
-import { avatars } from '@/components/auth/AvatarEditModal.jsx';
+import { avatars, resolveAvatarSrc } from '@/assets/catalog/avatarCatalog.js';
+import {
+  defaultCardBack,
+  getCardAssetKey,
+  getCardBackSrc,
+  getCardImageSrc,
+  getCardLabel,
+  getRankLabel,
+} from '@/assets/catalog/cardCatalog.js';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import {
@@ -34,66 +42,6 @@ const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
 const WS_RECONNECT_DELAYS_MS = [100, 250, 500, 1000, 1500, 2500];
-const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
-  eager: true,
-  import: 'default',
-});
-const spanish8BitCardImages = import.meta.glob(
-  '/src/assets/cards/spanish_8bit/*.png',
-  {
-    eager: true,
-    import: 'default',
-  },
-);
-const frenchCardImages = import.meta.glob('/src/assets/cards/french/*.png', {
-  eager: true,
-  import: 'default',
-});
-const cardBackImages = import.meta.glob('/src/assets/cards/back_cards/back_card*.png', {
-  eager: true,
-  import: 'default',
-});
-const defaultCardBack = cardBackImages['/src/assets/cards/back_cards/back_card.png'];
-const rankToAsset = {
-  Eight: '8',
-  Eleven: '11',
-  Five: '5',
-  Four: '4',
-  Nine: '9',
-  One: '1',
-  Seven: '7',
-  Six: '6',
-  Ten: '10',
-  Three: '3',
-  Twelve: '12',
-  Two: '2',
-};
-const suitToAsset = {
-  Clubs: 'paus',
-  Cups: 'copas',
-  Golds: 'ouro',
-  Swords: 'espada',
-};
-const rankLabels = {
-  Eight: '8',
-  Eleven: '11',
-  Five: '5',
-  Four: '4',
-  Nine: '9',
-  One: 'A',
-  Seven: '7',
-  Six: '6',
-  Ten: '10',
-  Three: '3',
-  Twelve: '12',
-  Two: '2',
-};
-const suitLabels = {
-  Clubs: 'paus',
-  Cups: 'copas',
-  Golds: 'ouro',
-  Swords: 'espada',
-};
 const rankStrength = {
   Four: 0,
   Five: 1,
@@ -127,60 +75,7 @@ const nextRank = {
 
 const getCurrentPlayerId = decodeCurrentPlayerId;
 
-function getCardKey(card) {
-  if (!card) {
-    return '';
-  }
-
-  const rank = rankToAsset[card.rank];
-  const suit = suitToAsset[card.suit];
-
-  return rank && suit ? `${rank}${suit}` : '';
-}
-
-function getCardBackSrc(cardBack) {
-  if (!cardBack) {
-    return defaultCardBack;
-  }
-
-  return (
-    cardBackImages[`/src/assets/cards/back_cards/${cardBack}.png`] ||
-    defaultCardBack
-  );
-}
-
-function getCardImageSrc(
-  card,
-  deckType = deckTypes.SPANISH,
-  fallbackSrc = defaultCardBack,
-) {
-  const key = getCardKey(card);
-
-  if (deckType === deckTypes.FRENCH) {
-    return frenchCardImages[`/src/assets/cards/french/${key}.png`] || fallbackSrc;
-  }
-
-  if (deckType === deckTypes.SPANISH_8BIT) {
-    return (
-      spanish8BitCardImages[`/src/assets/cards/spanish_8bit/${key}.png`] ||
-      spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] ||
-      fallbackSrc
-    );
-  }
-
-  return spanishCardImages[`/src/assets/cards/spanish/${key}.jpg`] || fallbackSrc;
-}
-
-function getCardLabel(card) {
-  if (!card) {
-    return '';
-  }
-
-  const rank = rankLabels[card.rank] || card.rank;
-  const suit = suitLabels[card.suit] || card.suit;
-
-  return `${rank} de ${suit}`;
-}
+const getCardKey = getCardAssetKey;
 
 function getCardStrength(card, upcard) {
   if (!card) {
@@ -246,7 +141,7 @@ function playGameSound(soundSrc, volume) {
 function getJokerLabel(upcard) {
   const jokerRank = nextRank[upcard?.rank];
 
-  return jokerRank ? rankLabels[jokerRank] || jokerRank : '-';
+  return jokerRank ? getRankLabel(jokerRank) : '-';
 }
 
 function isSameCard(first, second) {
@@ -272,18 +167,6 @@ function getRandomItem(items) {
   }
 
   return items[Math.floor(Math.random() * items.length)];
-}
-
-function resolveAvatarSrc(picture) {
-  if (!picture) {
-    return '';
-  }
-
-  const avatar = avatars.find((item) => {
-    return item.picture === picture || item.id === picture || item.src === picture;
-  });
-
-  return avatar?.src || picture;
 }
 
 function getSavedPlayer() {
