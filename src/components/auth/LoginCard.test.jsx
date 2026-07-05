@@ -39,6 +39,12 @@ afterEach(() => {
 });
 
 describe('LoginCard profile summary', () => {
+  it('hides Google login when no client ID is configured', () => {
+    render(<LoginCard />);
+    expect(screen.queryByText('Login with Google')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nick')).toBeEnabled();
+  });
+
   it('restores the same saved nickname when the responsive view remounts', async () => {
     const firstRender = render(<LoginCard />);
     fireEvent.change(screen.getByLabelText('Nick'), { target: { value: 'Ada' } });

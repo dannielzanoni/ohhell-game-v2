@@ -22,6 +22,10 @@ for (const id of ['auth.signup', 'auth.profile']) {
   }
 }
 
+if (http.find(({ id }) => id === 'auth.google')?.optionalAuth !== 'anonymous-guest') {
+  throw new Error('auth.google must preserve an optional anonymous guest');
+}
+
 for (const fixture of [...client, ...server]) {
   if (!fixture.type || !Object.hasOwn(fixture, 'data')) {
     throw new Error('Every realtime fixture requires type and data');

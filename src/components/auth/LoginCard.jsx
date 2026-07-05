@@ -20,43 +20,7 @@ import { useAuthController } from './useAuthController.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 import { useOptionalMedia } from '@/platform/useOptionalMedia.js';
-
-const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
-
-function loadGoogleIdentityScript() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return Promise.reject(new Error('Google Identity Services is unavailable.'));
-  }
-
-  if (window.google?.accounts?.id) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(
-      `script[src="${GOOGLE_IDENTITY_SCRIPT_SRC}"]`,
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(), { once: true });
-      existingScript.addEventListener(
-        'error',
-        () => reject(new Error('Failed to load Google Identity Services.')),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = GOOGLE_IDENTITY_SCRIPT_SRC;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error('Failed to load Google Identity Services.'));
-    document.head.appendChild(script);
-  });
-}
+import { loadGoogleIdentity, renderGoogleIdentityButton } from '@/infrastructure/auth/googleIdentityClient.js';
 
 function GoogleLogo() {
   return (
@@ -310,27 +274,14 @@ export const LoginCard = forwardRef(function LoginCard(
     setIsGoogleLoading(true);
     setGoogleError('');
 
-    loadGoogleIdentityScript()
-      .then(() => {
-        if (
-          !isMounted ||
-          !googleButtonRef.current ||
-          !window.google?.accounts?.id
-        ) {
+    loadGoogleIdentity()
+      .then((identity) => {
+        if (!isMounted || !googleButtonRef.current) {
           return;
         }
-
-        googleButtonRef.current.replaceChildren();
-        window.google.accounts.id.initialize({
-          client_id: environment.googleClientId,
+        renderGoogleIdentityButton(identity, googleButtonRef.current, {
           callback: handleGoogleCredential,
-        });
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          shape: 'pill',
-          size: 'large',
-          text: 'continue_with',
-          theme: 'outline',
-          width: 260,
+          clientId: environment.googleClientId,
         });
       })
       .catch(() => {
