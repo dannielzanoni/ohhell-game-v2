@@ -59,6 +59,20 @@ describe('GameRealtimeSession', () => {
     );
   });
 
+  it('does not expose an authenticated socket URL through connection errors', () => {
+    const onError = vi.fn();
+    createSession().connect({ onError });
+    FakeSocket.instances[0].emit('error', {
+      target: { url: 'wss://game.test?token=secret-token' },
+    });
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'realtime_connection_failed',
+      message: 'Realtime connection failed',
+    }));
+    expect(JSON.stringify(onError.mock.calls)).not.toContain('secret-token');
+    expect(JSON.stringify(onError.mock.calls)).not.toContain('wss://');
+  });
+
   it('closes the socket and clears queued commands on dispose', () => {
     const session = createSession().connect();
     sendGameCommand(session, { type: 'PutBid', data: { bid: 1 } });
