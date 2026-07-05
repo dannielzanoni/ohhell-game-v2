@@ -2,7 +2,8 @@ import { AlertCircle, Copy, DoorOpen, Plus, RefreshCw, Users } from 'lucide-reac
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
-import { gamePath, routePaths } from '../routeContract.js';
+import { routePaths } from '../routeContract.js';
+import { roomDestination } from './roomNavigation.js';
 
 export function RoomsView({ controller }) {
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ export function RoomsView({ controller }) {
                       <Button
                         type="button"
                         className="h-11 w-full cursor-pointer gap-2 md:h-10 md:w-auto"
-                        onClick={() => navigate(gamePath(lobby.id))}
+                        onClick={() => navigate(roomDestination(lobby.id))}
                       >
                         <DoorOpen className="size-4" />
                         {t('common.join')}
