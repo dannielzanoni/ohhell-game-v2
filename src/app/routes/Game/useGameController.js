@@ -14,6 +14,7 @@ import {
 } from '@/services/gamePreferencesService.js';
 import { joinLobby } from '@/services/lobbyService.js';
 import { createRoomEntryGateController } from './roomEntryGateController.js';
+import { createReadyController } from './readyController.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -41,6 +42,8 @@ export function useGameController() {
   if (!roomEntryGateRef.current) {
     roomEntryGateRef.current = createRoomEntryGateController({ getAuthToken });
   }
+  const readyRef = useRef(null);
+  if (!readyRef.current) readyRef.current = createReadyController({ send: setPlayerReady });
 
   useEffect(() => () => sessionRef.current?.dispose(), []);
 
@@ -55,7 +58,8 @@ export function useGameController() {
       joinLobby,
       playTurn,
       putBid,
-      setPlayerReady,
+      sendReady: (options) => readyRef.current.toggle(options),
+      settleReady: () => readyRef.current.settle(),
       subscribeToGamePreferences,
     }),
     [],
