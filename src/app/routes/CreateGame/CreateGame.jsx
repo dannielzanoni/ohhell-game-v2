@@ -13,7 +13,12 @@ import {
   ComboboxTrigger,
 } from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
-import { getSelectedGameType, gameTypes } from '@/services/gameTypesService.js';
+import {
+  gameTypeOptions,
+  gameTypes,
+  getSelectedGameType,
+  setSelectedGameType,
+} from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
 const lifeOptions = [1, 2, 3, 4, 5, 50].map((life) => ({
@@ -28,11 +33,31 @@ function getDefaultLives(gameType) {
 export function CreateGame() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [gameType, setGameType] = useState(
+    () => getSelectedGameType() || gameTypes.FODINHA_CLASSIC,
+  );
   const [lives, setLives] = useState(() =>
     getDefaultLives(getSelectedGameType() || gameTypes.FODINHA_CLASSIC),
   );
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const selectedGameTypeOption = gameTypeOptions.find(
+    (option) => option.value === gameType,
+  );
+  const gameTypeItems = gameTypeOptions.map((option) => ({
+    label: t(option.labelKey),
+    value: option.value,
+  }));
+
+  const handleGameTypeChange = (nextGameType) => {
+    if (!nextGameType) {
+      return;
+    }
+
+    setGameType(nextGameType);
+    setSelectedGameType(nextGameType);
+    setLives(getDefaultLives(nextGameType));
+  };
 
   const handleCreateGame = async () => {
     setIsCreating(true);
@@ -40,7 +65,8 @@ export function CreateGame() {
 
     try {
       const selectedLives = Number(lives);
-      const selectedGameType = getSelectedGameType() || gameTypes.FODINHA_CLASSIC;
+      const selectedGameType = gameType || gameTypes.FODINHA_CLASSIC;
+      setSelectedGameType(selectedGameType);
       const lobby = await createLobby({
         gameType: selectedGameType,
         lifes: selectedLives,
@@ -99,6 +125,41 @@ export function CreateGame() {
           </div>
 
           <div className="mt-6 grid gap-5">
+            <div className="block min-w-0">
+              <span className="text-sm font-semibold text-foreground">
+                {t('gameTypes.eyebrow')}
+              </span>
+              <Combobox
+                data={gameTypeItems}
+                type={t('gameTypes.eyebrow')}
+                value={gameType}
+                onValueChange={handleGameTypeChange}
+              >
+                <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
+                <ComboboxContent className="rounded-xl border-border bg-popover">
+                  <ComboboxList>
+                    <ComboboxEmpty>{t('pages.createGame.noOptions')}</ComboboxEmpty>
+                    <ComboboxGroup>
+                      {gameTypeItems.map((option) => (
+                        <ComboboxItem
+                          key={option.value}
+                          value={option.value}
+                          data-checked={gameType === option.value}
+                        >
+                          {option.label}
+                        </ComboboxItem>
+                      ))}
+                    </ComboboxGroup>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+              {selectedGameTypeOption ? (
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t(selectedGameTypeOption.descriptionKey)}
+                </p>
+              ) : null}
+            </div>
+
             <div className="block min-w-0">
               <span className="text-sm font-semibold text-foreground">
                 {t('pages.createGame.livesNumber')}
