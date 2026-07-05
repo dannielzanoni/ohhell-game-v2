@@ -1,0 +1,5 @@
+[
+  {"type":"PlayTurn","data":{"card":{"rank":"One","suit":"Cups"}}},
+  {"type":"PutBid","data":{"bid":1}},
+  {"type":"PlayerStatusChange","data":{"ready":true}}
+]
