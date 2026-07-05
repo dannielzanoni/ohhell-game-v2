@@ -5,15 +5,13 @@ import {
   setAuthToken,
 } from './apiClient.js';
 import { avatars } from '@/components/auth/avatarOptions.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
-const GUEST_AVATAR_STORAGE_KEY = 'ohhell_guest_avatar_id';
-const GUEST_NICKNAME_STORAGE_KEY = 'ohhell_guest_nickname';
-const REFRESH_TOKEN_STORAGE_KEY = 'REFRESH_TOKEN';
+const GUEST_AVATAR_STORAGE_KEY = storageKeys.guestAvatar;
+const GUEST_NICKNAME_STORAGE_KEY = storageKeys.guestNickname;
+const REFRESH_TOKEN_STORAGE_KEY = storageKeys.refreshToken;
 let pendingGuestAuthRefresh = null;
-
-function canUseStorage() {
-  return typeof window !== 'undefined' && window.localStorage;
-}
 
 function getAuthErrorMessage(error) {
   return String(error?.message || error?.data?.error || '');
@@ -127,11 +125,11 @@ function persistAuth(response) {
     setAuthToken(response.token);
   }
 
-  if (canUseStorage() && response?.refresh_token !== undefined) {
+  if (response?.refresh_token !== undefined) {
     if (response.refresh_token) {
-      localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refresh_token);
+      storage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refresh_token);
     } else {
-      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+      storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     }
   }
 
@@ -139,12 +137,8 @@ function persistAuth(response) {
 }
 
 function getSavedGuestProfile(payload = {}) {
-  const savedNickname = canUseStorage()
-    ? localStorage.getItem(GUEST_NICKNAME_STORAGE_KEY)
-    : '';
-  const savedAvatarId = canUseStorage()
-    ? localStorage.getItem(GUEST_AVATAR_STORAGE_KEY)
-    : '';
+  const savedNickname = storage.getItem(GUEST_NICKNAME_STORAGE_KEY) || '';
+  const savedAvatarId = storage.getItem(GUEST_AVATAR_STORAGE_KEY) || '';
   const savedAvatar = avatars.find((avatar) => avatar.id === savedAvatarId);
   const nickname = String(payload.nickname ?? savedNickname ?? '').trim();
 

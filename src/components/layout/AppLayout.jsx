@@ -1,29 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { NavBar } from './NavBar.jsx';
-
-const NAV_COLLAPSED_STORAGE_KEY = 'ohhell_nav_collapsed';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 function getSavedNavCollapsed() {
-  try {
-    return localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return storage.getItem(storageKeys.navCollapsed) === 'true';
 }
 
 export function AppLayout() {
   const [isNavCollapsed, setIsNavCollapsed] = useState(getSavedNavCollapsed);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        NAV_COLLAPSED_STORAGE_KEY,
-        String(isNavCollapsed),
-      );
-    } catch {
-      // Ignore storage failures and keep the menu usable.
-    }
+    storage.setItem(storageKeys.navCollapsed, String(isNavCollapsed));
   }, [isNavCollapsed]);
 
   return (

@@ -1,4 +1,7 @@
-export const GAME_PREFERENCES_STORAGE_KEY = 'ohhell_game_preferences';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
+
+export const GAME_PREFERENCES_STORAGE_KEY = storageKeys.cardPreferences;
 export const GAME_PREFERENCES_CHANGED_EVENT = 'ohhell-game-preferences-changed';
 
 export const deckTypes = {
@@ -12,10 +15,6 @@ export const defaultGamePreferences = {
   deckType: deckTypes.SPANISH,
   volume: 70,
 };
-
-function canUseStorage() {
-  return typeof window !== 'undefined' && window.localStorage;
-}
 
 function normalizeDeckType(deckType) {
   return Object.values(deckTypes).includes(deckType)
@@ -48,12 +47,8 @@ export function normalizeGamePreferences(preferences = {}) {
 }
 
 export function getGamePreferences() {
-  if (!canUseStorage()) {
-    return defaultGamePreferences;
-  }
-
   try {
-    const storedPreferences = localStorage.getItem(GAME_PREFERENCES_STORAGE_KEY);
+    const storedPreferences = storage.getItem(GAME_PREFERENCES_STORAGE_KEY);
 
     if (!storedPreferences) {
       return defaultGamePreferences;
@@ -71,16 +66,7 @@ export function setGamePreferences(nextPreferences) {
     ...nextPreferences,
   });
 
-  if (canUseStorage()) {
-    try {
-      localStorage.setItem(
-        GAME_PREFERENCES_STORAGE_KEY,
-        JSON.stringify(preferences),
-      );
-    } catch {
-      // Keep runtime preferences usable even when storage is unavailable.
-    }
-  }
+  storage.setJson(GAME_PREFERENCES_STORAGE_KEY, preferences);
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
