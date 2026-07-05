@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
 import { ResilientImage } from '@/components/ui/resilient-image.jsx';
+import { useModalFocus } from '@/components/ui/useModalFocus.js';
 import { cn } from '@/lib/utils.js';
 import { avatarGroups } from '@/assets/catalog/avatarCatalog.js';
 
@@ -10,26 +11,8 @@ export { avatarGroups, avatars } from './avatarOptions.js';
 
 export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  const dialogRef = useRef(null);
+  useModalFocus({ dialogRef, isOpen, onClose });
 
   if (!isOpen) {
     return null;
@@ -42,6 +25,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
       onMouseDown={onClose}
     >
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
@@ -81,6 +65,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                       aria-label={t('auth.selectAvatarAria', {
                         label: avatar.label,
                       })}
+                      aria-pressed={isSelected}
                       className={cn(
                         'mx-auto grid size-11 min-w-0 cursor-pointer place-items-center rounded-full p-0.5 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring min-[380px]:size-12 sm:size-16 sm:p-1',
                         isSelected && 'ring-primary',
@@ -94,6 +79,8 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                         <ResilientImage
                           src={avatar.src}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="block h-full w-full scale-110 object-cover"
                           draggable="false"
                         />
