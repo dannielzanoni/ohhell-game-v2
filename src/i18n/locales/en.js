@@ -168,6 +168,7 @@ export const en = {
       },
     },
     rooms: {
+      copyRoomId: 'Copy room ID {{id}}',
       create: 'Create',
       emptyDescription: 'Create a new table to invite your friends.',
       emptyTitle: 'No open rooms',

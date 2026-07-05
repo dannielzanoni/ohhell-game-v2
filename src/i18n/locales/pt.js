@@ -168,6 +168,7 @@ export const pt = {
       },
     },
     rooms: {
+      copyRoomId: 'Copiar ID da sala {{id}}',
       create: 'Criar',
       emptyDescription: 'Crie uma nova mesa para convidar seus amigos.',
       emptyTitle: 'Nenhuma sala aberta',
