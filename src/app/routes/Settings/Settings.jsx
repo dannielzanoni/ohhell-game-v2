@@ -1,13 +1,7 @@
-import { useTranslation } from 'react-i18next';
-import { RoutePage } from '../RoutePage.jsx';
+import { SettingsView } from './SettingsView.jsx';
+import { useStaticRouteController } from '../useStaticRouteController.js';
 
 export function Settings() {
-  const { t } = useTranslation();
-
-  return (
-    <RoutePage
-      title={t('pages.settings.title')}
-      description={t('pages.settings.description')}
-    />
-  );
+  const controller = useStaticRouteController();
+  return <SettingsView controller={controller} />;
 }

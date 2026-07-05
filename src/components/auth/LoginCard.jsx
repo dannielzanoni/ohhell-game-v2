@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { environment } from '@/config/environment.js';
 import { cn } from '@/lib/utils.js';
-import { authService } from '@/services/authService.js';
+import { useAuthController } from './useAuthController.js';
 
 const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
@@ -113,6 +113,7 @@ export const LoginCard = forwardRef(function LoginCard(
   { className, onProfileStateChange, onSaved },
   ref,
 ) {
+  const authService = useAuthController();
   const { t } = useTranslation();
   const googleButtonRef = useRef(null);
   const initialProfileRef = useRef(null);
