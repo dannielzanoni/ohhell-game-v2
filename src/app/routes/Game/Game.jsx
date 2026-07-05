@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog.jsx';
+import { useToast } from '@/app/provider.jsx';
 import { getAuthToken } from '@/services/apiClient.js';
 import {
   isMissingAuthTokenError,
@@ -1429,6 +1430,7 @@ export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { t } = useTranslation();
   const gamePreferencesRef = useRef(getGamePreferences());
   const translateRef = useRef(t);
@@ -2378,14 +2380,11 @@ export function Game() {
               isCurrent = false;
               clearReconnectTimeout();
               setIsReconnecting(false);
-              navigate('/rooms', {
-                replace: true,
-                state: {
-                  toast: {
-                    messageKey: 'pages.rooms.roomInactiveToast',
-                  },
-                },
+              showToast({
+                message: translateRef.current('pages.rooms.roomInactiveToast'),
+                variant: 'warning',
               });
+              navigate('/rooms', { replace: true });
               return;
             }
 
@@ -2499,6 +2498,7 @@ export function Game() {
     lobbyId,
     location.state?.lifes,
     navigate,
+    showToast,
     showLifeLossHighlight,
     startActionTimer,
   ]);

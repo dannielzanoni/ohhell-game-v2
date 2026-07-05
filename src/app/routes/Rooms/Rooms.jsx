@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
 import { getLobbies } from '@/services/lobbyService.js';
 
@@ -10,13 +10,11 @@ function getLobbyId(lobby) {
 }
 
 export function Rooms() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [lobbies, setLobbies] = useState([]);
-  const [toastMessage, setToastMessage] = useState('');
 
   const loadRooms = async () => {
     setIsLoading(true);
@@ -36,49 +34,8 @@ export function Rooms() {
     void loadRooms();
   }, []);
 
-  useEffect(() => {
-    const messageKey = location.state?.toast?.messageKey;
-
-    if (!messageKey) {
-      return;
-    }
-
-    setToastMessage(t(messageKey));
-    navigate(location.pathname, { replace: true, state: null });
-  }, [location.pathname, location.state, navigate, t]);
-
-  useEffect(() => {
-    if (!toastMessage) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setToastMessage('');
-    }, 6000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [toastMessage]);
-
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
-      {toastMessage ? (
-        <div
-          role="status"
-          className="fixed left-1/2 top-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 items-start gap-3 rounded-lg border border-amber-300/50 bg-zinc-950/95 px-4 py-3 text-sm text-amber-50 shadow-xl shadow-black/30 backdrop-blur"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-300" />
-          <span className="flex-1">{toastMessage}</span>
-          <button
-            type="button"
-            className="rounded px-1 text-amber-100/80 hover:text-amber-50"
-            aria-label={t('common.close')}
-            onClick={() => setToastMessage('')}
-          >
-            x
-          </button>
-        </div>
-      ) : null}
-
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-5">
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
