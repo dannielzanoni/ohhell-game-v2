@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getLobbies } from '@/services/lobbyService.js';
 import { normalizeRooms } from './roomModel.js';
+import { copyText } from '@/infrastructure/browser/clipboard.js';
 
 export function useRoomsController() {
   const [error, setError] = useState(null);
@@ -25,5 +26,7 @@ export function useRoomsController() {
     void refresh();
   }, [refresh]);
 
-  return { error, isLoading, lobbies, refresh };
+  const copyRoomId = useCallback((roomId) => copyText(roomId), []);
+
+  return { copyRoomId, error, isLoading, lobbies, refresh };
 }

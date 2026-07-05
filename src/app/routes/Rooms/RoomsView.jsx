@@ -1,4 +1,4 @@
-import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
+import { AlertCircle, Copy, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
@@ -7,7 +7,7 @@ import { gamePath, routePaths } from '../routeContract.js';
 export function RoomsView({ controller }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { error, isLoading, lobbies, refresh } = controller;
+  const { copyRoomId, error, isLoading, lobbies, refresh } = controller;
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
@@ -72,6 +72,7 @@ export function RoomsView({ controller }) {
                 return (
                   <article
                     key={lobby.id}
+                    aria-label={`${t('pages.rooms.room')} ${lobby.id}`}
                     className="grid min-w-0 gap-4 p-4 md:grid-cols-[minmax(0,1fr)_7rem_7rem_7rem] md:items-center md:px-5"
                   >
                     <div className="min-w-0">
@@ -80,7 +81,7 @@ export function RoomsView({ controller }) {
                           <DoorOpen className="size-5" />
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-foreground">
+                          <p title={lobby.id} className="truncate text-sm font-bold text-foreground">
                             {lobby.id}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -99,14 +100,26 @@ export function RoomsView({ controller }) {
                       {lobby.state}
                     </span>
 
-                    <Button
-                      type="button"
-                      className="h-10 cursor-pointer gap-2 md:justify-self-end"
-                      onClick={() => navigate(gamePath(lobby.id))}
-                    >
-                      <DoorOpen className="size-4" />
-                      {t('common.join')}
-                    </Button>
+                    <div className="grid grid-cols-[2.75rem_1fr] gap-2 md:block md:justify-self-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-11 md:hidden"
+                        aria-label={t('pages.rooms.copyRoomId', { id: lobby.id })}
+                        onClick={() => void copyRoomId(lobby.id)}
+                      >
+                        <Copy aria-hidden="true" className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        className="h-11 w-full cursor-pointer gap-2 md:h-10 md:w-auto"
+                        onClick={() => navigate(gamePath(lobby.id))}
+                      >
+                        <DoorOpen className="size-4" />
+                        {t('common.join')}
+                      </Button>
+                    </div>
                   </article>
                 );
               })}
