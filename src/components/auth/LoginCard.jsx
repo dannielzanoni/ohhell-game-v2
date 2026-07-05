@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { Pencil, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
+import { AvatarEditModal } from './AvatarEditModal.jsx';
+import { findAvatar } from '@/assets/catalog/avatarCatalog.js';
 import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { environment } from '@/config/environment.js';
@@ -85,7 +86,7 @@ function GoogleLogo() {
 function getSavedAvatar() {
   const savedAvatarId = storage.getItem(storageKeys.guestAvatar);
 
-  return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
+  return findAvatar(savedAvatarId);
 }
 
 function resolveAvatarFromPicture(picture) {
@@ -93,14 +94,12 @@ function resolveAvatarFromPicture(picture) {
     return null;
   }
 
-  const avatar = avatars.find((item) => {
-    return item.picture === picture || item.id === picture || item.src === picture;
-  });
+  const avatar = findAvatar(picture);
 
   return avatar || { id: '', picture, src: picture };
 }
 
-function getInitialProfile() {
+function getInitialProfile(authService) {
   const profile = authService.getCurrentProfile();
 
   return {
@@ -121,7 +120,7 @@ export const LoginCard = forwardRef(function LoginCard(
   const initialProfileRef = useRef(null);
 
   if (!initialProfileRef.current) {
-    initialProfileRef.current = getInitialProfile();
+    initialProfileRef.current = getInitialProfile(authService);
   }
 
   const [hasAuthToken, setHasAuthToken] = useState(() =>

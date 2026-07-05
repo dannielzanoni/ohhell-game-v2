@@ -1,41 +1,8 @@
 import { AlertCircle, RefreshCw, Trophy, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { avatars } from '@/components/auth/AvatarEditModal.jsx';
+import { resolveAvatarSrc } from '@/assets/catalog/avatarCatalog.js';
+import { getCardLabel as getCatalogCardLabel } from '@/assets/catalog/cardCatalog.js';
 import { Button } from '@/components/ui/button.jsx';
-
-const rankLabels = {
-  Eight: '8',
-  Eleven: '11',
-  Five: '5',
-  Four: '4',
-  Nine: '9',
-  One: 'A',
-  Seven: '7',
-  Six: '6',
-  Ten: '10',
-  Three: '3',
-  Twelve: '12',
-  Two: '2',
-};
-
-const suitLabels = {
-  Clubs: 'paus',
-  Cups: 'copas',
-  Golds: 'ouro',
-  Swords: 'espada',
-};
-
-function resolveAvatarSrc(picture) {
-  if (!picture) {
-    return '';
-  }
-
-  const avatar = avatars.find((item) => {
-    return item.picture === picture || item.id === picture || item.src === picture;
-  });
-
-  return avatar?.src || picture;
-}
 
 function getPlayerName(player, fallback) {
   if (player?.type === 'Anonymous') {
@@ -70,11 +37,7 @@ function getCardLabel(card, t) {
   if (!card) {
     return t('leaderboard.noRounds');
   }
-
-  const rank = rankLabels[card.rank] || card.rank;
-  const suit = suitLabels[card.suit] || card.suit;
-
-  return `${rank} de ${suit}`;
+  return getCatalogCardLabel(card, t);
 }
 
 function formatPercent(value) {
