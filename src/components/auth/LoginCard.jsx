@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils.js';
 import { useAuthController } from './useAuthController.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
+import { useOptionalMedia } from '@/platform/useOptionalMedia.js';
 
 const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
@@ -117,6 +118,7 @@ export const LoginCard = forwardRef(function LoginCard(
   ref,
 ) {
   const authService = useAuthController();
+  const { shouldLoadOptionalMedia } = useOptionalMedia();
   const { t } = useTranslation();
   const googleButtonRef = useRef(null);
   const saveErrorId = useId();
@@ -368,7 +370,7 @@ export const LoginCard = forwardRef(function LoginCard(
             >
               {selectedAvatar ? (
                 <ResilientImage
-                  src={selectedAvatar.src}
+                  src={selectedAvatar.type === 'gif' && !shouldLoadOptionalMedia ? '' : selectedAvatar.src}
                   alt=""
                   className="absolute inset-0 size-full rounded-full object-cover"
                 />

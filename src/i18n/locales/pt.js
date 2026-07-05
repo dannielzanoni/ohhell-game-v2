@@ -1,5 +1,6 @@
 export const pt = {
   auth: {
+    animatedAvatarsPaused: 'Avatares animados estão pausados para respeitar sua preferência de mídia.',
     avatarModalTitle: 'Selecione seu avatar',
     avatars: 'Avatares',
     closeModal: 'Fechar modal',

@@ -1,5 +1,6 @@
 export const en = {
   auth: {
+    animatedAvatarsPaused: 'Animated avatars are paused to respect your media preference.',
     avatarModalTitle: 'Select your avatar',
     avatars: 'Avatars',
     closeModal: 'Close modal',

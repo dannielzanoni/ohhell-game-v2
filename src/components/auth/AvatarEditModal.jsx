@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
 import { ResilientImage } from '@/components/ui/resilient-image.jsx';
 import { useModalFocus } from '@/components/ui/useModalFocus.js';
+import { useOptionalMedia } from '@/platform/useOptionalMedia.js';
 import { cn } from '@/lib/utils.js';
 import { avatarGroups } from '@/assets/catalog/avatarCatalog.js';
 
@@ -11,6 +12,7 @@ export { avatarGroups, avatars } from './avatarOptions.js';
 
 export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
   const { t } = useTranslation();
+  const { shouldLoadOptionalMedia } = useOptionalMedia();
   const dialogRef = useRef(null);
   useModalFocus({ dialogRef, isOpen, onClose });
 
@@ -49,6 +51,11 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
+          {!shouldLoadOptionalMedia ? (
+            <p className="mb-4 text-sm text-muted-foreground" role="status">
+              {t('auth.animatedAvatarsPaused')}
+            </p>
+          ) : null}
           {avatarGroups.map((group) => (
             <div key={group.title} className="not-first:mt-6 sm:not-first:mt-7">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
@@ -77,7 +84,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                     >
                       <span className="block size-full overflow-hidden rounded-full border border-border bg-muted shadow-sm">
                         <ResilientImage
-                          src={avatar.src}
+                          src={avatar.type === 'gif' && !shouldLoadOptionalMedia ? '' : avatar.src}
                           alt=""
                           loading="lazy"
                           decoding="async"
