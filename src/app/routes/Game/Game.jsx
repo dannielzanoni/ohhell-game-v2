@@ -321,18 +321,6 @@ function removePowerCardFromHand(cards, cardId) {
   });
 }
 
-function getPowerCardTarget(card, playersById, currentPlayerId) {
-  if (!card?.requires_target) {
-    return null;
-  }
-
-  return (
-    Object.values(playersById).find((player) => {
-      return player.id !== currentPlayerId && Number(player.lifes) > 0;
-    })?.id || null
-  );
-}
-
 function getRandomItem(items) {
   if (!items?.length) {
     return null;
@@ -933,20 +921,42 @@ function PlayerSeat({
   cardBackSrc,
   bid = null,
   cardCount = 0,
+  canDropPowerCard = false,
+  draggingPowerCard = null,
   isCurrent = false,
   isReady = false,
   isTurnToPlay = false,
   lifes,
   nickname,
+  onPowerCardDrop = null,
   position,
   points,
   readyControls = null,
   showReadyState = false,
 }) {
   const scaleClass = isCurrent ? 'scale-90' : 'scale-75';
-  const avatarBorderClass = isTurnToPlay
+  const isPowerDropActive = canDropPowerCard && draggingPowerCard?.requires_target;
+  const avatarBorderClass = isPowerDropActive
+    ? 'border-violet-200 ring-4 ring-violet-300/55'
+    : isTurnToPlay
     ? 'border-violet-400 ring-4 ring-violet-500/45'
     : 'border-white/20 ring-0';
+  const handleAvatarDragOver = (event) => {
+    if (!isPowerDropActive) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+  const handleAvatarDrop = (event) => {
+    if (!isPowerDropActive) {
+      return;
+    }
+
+    event.preventDefault();
+    onPowerCardDrop?.();
+  };
 
   return (
     <div
@@ -958,6 +968,8 @@ function PlayerSeat({
       <div className="relative z-10 flex items-center">
         <div
           className={`relative z-20 grid size-[6.6rem] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] ${avatarBorderClass} bg-black shadow-2xl shadow-black/60 sm:size-[7.7rem]`}
+          onDragOver={handleAvatarDragOver}
+          onDrop={handleAvatarDrop}
         >
           {avatarSrc ? (
             <img
@@ -1419,7 +1431,13 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
   );
 }
 
-function PowerCardHand({ canUsePowerCards, cards, onUsePowerCard }) {
+function PowerCardHand({
+  canUsePowerCards,
+  cards,
+  onPowerCardDragEnd,
+  onPowerCardDragStart,
+  onUsePowerCard,
+}) {
   const { t } = useTranslation();
 
   if (!cards.length) {
@@ -1428,30 +1446,62 @@ function PowerCardHand({ canUsePowerCards, cards, onUsePowerCard }) {
 
   return (
     <div className="absolute bottom-[11.25rem] left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-2 overflow-x-auto px-2 pb-2 sm:bottom-[13.75rem] sm:max-w-[min(92vw,56rem)] sm:justify-center sm:overflow-visible sm:px-0">
-      {cards.map((card, index) => (
-        <button
-          key={`${card.id}-${index}`}
-          type="button"
-          disabled={!canUsePowerCards}
-          title={card.description || card.name}
-          className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
-            canUsePowerCards
-              ? 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
-              : 'cursor-not-allowed opacity-70'
-          }`}
-          onClick={() => onUsePowerCard(card)}
-        >
-          <span className="block text-[0.62rem] font-black uppercase tracking-[0.22em] text-violet-200">
-            {t('game.powerCard')}
-          </span>
-          <strong className="mt-1 block truncate text-sm font-black sm:text-base">
-            {card.name}
-          </strong>
-          <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
-            {card.description}
-          </small>
-        </button>
-      ))}
+      {cards.map((card, index) => {
+        const requiresTarget = Boolean(card.requires_target);
+        const canDrag = canUsePowerCards && requiresTarget;
+
+        return (
+          <button
+            key={`${card.id}-${index}`}
+            type="button"
+            disabled={!canUsePowerCards}
+            draggable={canDrag}
+            title={
+              requiresTarget
+                ? t('game.powerCardDragToTarget')
+                : card.description || card.name
+            }
+            className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
+              canUsePowerCards
+                ? requiresTarget
+                  ? 'cursor-grab hover:-translate-y-1 hover:border-violet-200 active:cursor-grabbing active:translate-y-0'
+                  : 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
+                : 'cursor-not-allowed opacity-70'
+            }`}
+            onClick={() => {
+              if (!requiresTarget) {
+                onUsePowerCard(card);
+              }
+            }}
+            onDragEnd={onPowerCardDragEnd}
+            onDragStart={(event) => {
+              if (!canDrag) {
+                event.preventDefault();
+                return;
+              }
+
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('text/plain', card.id);
+              onPowerCardDragStart(card);
+            }}
+          >
+            <span className="block text-[0.62rem] font-black uppercase tracking-[0.22em] text-violet-200">
+              {t('game.powerCard')}
+            </span>
+            <strong className="mt-1 block truncate text-sm font-black sm:text-base">
+              {card.name}
+            </strong>
+            <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
+              {card.description}
+            </small>
+            {requiresTarget ? (
+              <span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
+                {t('game.dragToTarget')}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1585,6 +1635,7 @@ export function Game() {
   const [pile, setPile] = useState([]);
   const [playerDeck, setPlayerDeck] = useState([]);
   const [powerCards, setPowerCards] = useState([]);
+  const [draggingPowerCard, setDraggingPowerCard] = useState(null);
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
   const [possibleBids, setPossibleBids] = useState([]);
   const [roundCardCount, setRoundCardCount] = useState(0);
@@ -1856,6 +1907,7 @@ export function Game() {
     setPile([]);
     setPlayerDeck([]);
     setPowerCards([]);
+    setDraggingPowerCard(null);
     setPlayedCardAnimation(null);
     setPossibleBids([]);
     setRoundCardCount(0);
@@ -2061,6 +2113,7 @@ export function Game() {
             updatePile([]);
             updatePlayerDeck([]);
             setPowerCards([]);
+            setDraggingPowerCard(null);
             setPlayedCardAnimation(null);
             setGameEndSummary(null);
             clearLifeLossHighlight();
@@ -2332,6 +2385,7 @@ export function Game() {
           updatePile([]);
           updatePlayerDeck([]);
           setPowerCards([]);
+          setDraggingPowerCard(null);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
@@ -2391,6 +2445,7 @@ export function Game() {
           updatePile([]);
           updatePlayerDeck([]);
           setPowerCards([]);
+          setDraggingPowerCard(null);
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
@@ -2745,7 +2800,7 @@ export function Game() {
     }
   };
 
-  const handleUsePowerCard = (card) => {
+  const handleUsePowerCard = (card, targetPlayerId = null) => {
     if (!socketRef.current) {
       setJoinError(t('game.connectionNotReady'));
       return;
@@ -2756,12 +2811,6 @@ export function Game() {
       return;
     }
 
-    const targetPlayerId = getPowerCardTarget(
-      card,
-      playersById,
-      resolvedCurrentPlayerId,
-    );
-
     if (card.requires_target && !targetPlayerId) {
       setJoinError(t('game.powerCardTargetError'));
       return;
@@ -2770,10 +2819,19 @@ export function Game() {
     try {
       setJoinError('');
       usePowerCard(socketRef.current, card.id, targetPlayerId, gameType);
+      setDraggingPowerCard(null);
       setPowerCards((currentCards) => removePowerCardFromHand(currentCards, card.id));
     } catch (error) {
       setJoinError(error.message || t('game.powerCardUseError'));
     }
+  };
+
+  const handlePowerCardDrop = (targetPlayerId) => {
+    if (!draggingPowerCard) {
+      return;
+    }
+
+    handleUsePowerCard(draggingPowerCard, targetPlayerId);
   };
 
   const handleActionTimerExpire = () => {
@@ -2835,12 +2893,19 @@ export function Game() {
             avatarSrc={player.avatarSrc}
             cardBackSrc={selectedCardBackSrc}
             bid={player.bid}
+            canDropPowerCard={
+              canUsePowerCards &&
+              draggingPowerCard?.requires_target &&
+              Number(player.lifes ?? lifes) > 0
+            }
             cardCount={cardCount}
+            draggingPowerCard={draggingPowerCard}
             isCurrent={isCurrentPlayer}
             isReady={player.ready}
             isTurnToPlay={player.turnToPlay || player.id === turnPlayerId}
             lifes={player.lifes ?? lifes}
             nickname={player.nickname}
+            onPowerCardDrop={() => handlePowerCardDrop(player.id)}
             position={getSeatPosition(
               index,
               tablePlayers.length,
@@ -2869,6 +2934,8 @@ export function Game() {
       <PowerCardHand
         canUsePowerCards={canUsePowerCards}
         cards={powerCards}
+        onPowerCardDragEnd={() => setDraggingPowerCard(null)}
+        onPowerCardDragStart={setDraggingPowerCard}
         onUsePowerCard={handleUsePowerCard}
       />
       <PlayerHand
