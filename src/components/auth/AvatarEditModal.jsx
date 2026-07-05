@@ -36,7 +36,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]"
+      className="fixed inset-0 z-[80] flex min-h-[100dvh] items-end justify-center bg-black/70 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={onClose}
     >
@@ -44,7 +44,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
-        className="flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl"
+        className="flex max-h-[calc(100dvh-max(1rem,env(safe-area-inset-top)))] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-card pb-[env(safe-area-inset-bottom)] text-card-foreground shadow-2xl shadow-black/40 sm:h-[min(42rem,88vh)] sm:max-w-2xl sm:rounded-lg sm:pb-0"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4">
