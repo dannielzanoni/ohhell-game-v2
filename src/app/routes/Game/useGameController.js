@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { getAuthToken } from '@/services/apiClient.js';
 import { isMissingAuthTokenError } from '@/services/authService.js';
 import {
-  createGameSocket,
+  createGameSession,
   playTurn,
   putBid,
   setPlayerReady,
@@ -34,9 +34,14 @@ export function decodeCurrentPlayerId(token = getAuthToken()) {
 export { deckTypes };
 
 export function useGameController() {
+  const sessionRef = useRef(null);
+  if (!sessionRef.current) sessionRef.current = createGameSession();
+
+  useEffect(() => () => sessionRef.current?.dispose(), []);
+
   return useMemo(
     () => ({
-      createGameSocket,
+      createGameSocket: (options) => sessionRef.current.connect(options),
       getAuthToken,
       getCurrentPlayerId: decodeCurrentPlayerId,
       getGamePreferences,
