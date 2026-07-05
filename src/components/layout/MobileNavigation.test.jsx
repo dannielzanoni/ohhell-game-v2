@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '@/app/provider.jsx';
 import { MobileNavigation } from './MobileNavigation.jsx';
 
 afterEach(cleanup);
+beforeEach(() => {
+  vi.stubGlobal('requestAnimationFrame', (callback) => callback());
+});
 
 function renderNavigation() {
   return render(
@@ -38,5 +41,30 @@ describe('MobileNavigation', () => {
     expect(drawer.querySelector('a[href^="https://github.com"]')).not.toHaveAttribute('target');
     expect(screen.getByRole('button', { name: 'Settings' })).toHaveClass('min-h-11');
     expect(screen.getByRole('button', { name: /Language/ })).toHaveClass('min-h-11');
+  });
+
+  it('uses a non-blocking floating utility trigger on the game route', () => {
+    render(
+      <MemoryRouter initialEntries={['/game/room-1']}>
+        <AppProvider><MobileNavigation /></AppProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('navigation', { name: 'Mobile navigation' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open menu' })).toHaveClass(
+      'pointer-events-auto',
+    );
+  });
+
+  it('opens settings as a safe mobile sheet and restores focus', async () => {
+    renderNavigation();
+    const menuButton = screen.getByRole('button', { name: 'Open menu' });
+    fireEvent.click(menuButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    expect(dialog).toHaveClass('bottom-0', 'pb-[env(safe-area-inset-bottom)]');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(menuButton).toHaveFocus());
   });
 });

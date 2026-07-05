@@ -80,7 +80,7 @@ const cardBackOptions = Object.entries(cardBackImages)
   })
   .sort((first, second) => first.sort - second.sort);
 
-export function GameSettingsModal({ onOpenChange, open }) {
+export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('sounds');
   const [activeDeckSettingsTab, setActiveDeckSettingsTab] = useState('deckType');
@@ -98,7 +98,12 @@ export function GameSettingsModal({ onOpenChange, open }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[54dvh] max-w-[calc(100vw-1rem)] flex-col overflow-hidden p-0 sm:h-auto sm:max-h-[46vh] sm:max-w-2xl">
+      <DialogContent className={cn(
+        'flex flex-col overflow-hidden p-0',
+        presentation === 'mobile'
+          ? 'bottom-0 left-0 top-auto h-[min(88dvh,48rem)] max-w-none translate-x-0 translate-y-0 rounded-b-none px-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)]'
+          : 'h-[54dvh] max-w-[calc(100vw-1rem)] sm:h-auto sm:max-h-[46vh] sm:max-w-2xl',
+      )}>
         <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
           <DialogTitle>{t('settings.title')}</DialogTitle>
         </DialogHeader>

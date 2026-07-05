@@ -135,12 +135,16 @@ export function LanguageNavButton({ isCollapsed = false, onClick }) {
   );
 }
 
-export function LanguageSettingsModal({ onOpenChange, open }) {
+export function LanguageSettingsModal({ onOpenChange, open, presentation = 'web' }) {
   const { t } = useTranslation();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={cn(
+        presentation === 'mobile'
+          ? 'bottom-0 left-0 top-auto max-w-none translate-x-0 translate-y-0 rounded-b-none pb-[max(1rem,env(safe-area-inset-bottom))]'
+          : 'max-w-md',
+      )}>
         <DialogHeader>
           <DialogTitle>{t('settings.language')}</DialogTitle>
         </DialogHeader>
