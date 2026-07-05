@@ -2,6 +2,11 @@ import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
 
 const pendingCommandsBySocket = new WeakMap();
+export const WAITING_LOBBY_INACTIVITY_CLOSE_CODE = 4001;
+
+export function isWaitingLobbyInactiveClose(event) {
+  return event?.code === WAITING_LOBBY_INACTIVITY_CLOSE_CODE;
+}
 
 export function getGameSocketUrl(token = getAuthToken()) {
   if (!token) {
@@ -93,6 +98,7 @@ export function setPlayerReady(socket, ready) {
 export const gameSocketService = {
   createGameSocket,
   getGameSocketUrl,
+  isWaitingLobbyInactiveClose,
   playTurn,
   putBid,
   sendGameCommand,

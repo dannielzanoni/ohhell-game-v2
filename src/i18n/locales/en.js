@@ -20,6 +20,7 @@ export const en = {
   common: {
     appName: 'Oh Hell Game',
     backHome: 'Back to Home',
+    close: 'Close',
     create: 'Create',
     home: 'Home',
     join: 'Join',
@@ -169,6 +170,7 @@ export const en = {
       loadError: 'Could not load the rooms.',
       players: 'Players',
       regionWaiting: 'BR - Waiting',
+      roomInactiveToast: 'The room was closed after 3 minutes without activity.',
       room: 'Room',
       title: 'Rooms',
     },

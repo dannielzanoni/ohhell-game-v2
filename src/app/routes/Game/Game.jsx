@@ -25,6 +25,7 @@ import {
 } from '@/services/authService.js';
 import {
   createGameSocket,
+  isWaitingLobbyInactiveClose,
   playTurn,
   putBid,
   setPlayerReady,
@@ -2362,7 +2363,7 @@ export function Game() {
 
       try {
         nextSocket = createGameSocket({
-          onClose: () => {
+          onClose: (event) => {
             if (!isCurrent || socketRef.current !== nextSocket) {
               return;
             }
@@ -2372,6 +2373,22 @@ export function Game() {
             setHasGameSocket(false);
             setIsReadySending(false);
             clearActionTimer();
+
+            if (isWaitingLobbyInactiveClose(event)) {
+              isCurrent = false;
+              clearReconnectTimeout();
+              setIsReconnecting(false);
+              navigate('/rooms', {
+                replace: true,
+                state: {
+                  toast: {
+                    messageKey: 'pages.rooms.roomInactiveToast',
+                  },
+                },
+              });
+              return;
+            }
+
             scheduleReconnect();
           },
           onError: () => {
@@ -2481,6 +2498,7 @@ export function Game() {
     joinAttempt,
     lobbyId,
     location.state?.lifes,
+    navigate,
     showLifeLossHighlight,
     startActionTimer,
   ]);

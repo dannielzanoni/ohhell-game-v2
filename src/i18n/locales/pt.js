@@ -20,6 +20,7 @@ export const pt = {
   common: {
     appName: 'Fodinha',
     backHome: 'Voltar para Home',
+    close: 'Fechar',
     create: 'Criar',
     home: 'Home',
     join: 'Entrar',
@@ -169,6 +170,7 @@ export const pt = {
       loadError: 'Não foi possível carregar as salas.',
       players: 'Players',
       regionWaiting: 'BR - Aguardando',
+      roomInactiveToast: 'A sala foi fechada após 3 minutos sem atividade.',
       room: 'Sala',
       title: 'Salas',
     },
