@@ -1,4 +1,5 @@
 import { BookOpen, Crown, Play, Users } from 'lucide-react';
+import { routePaths } from './routeContract.js';
 
 export const pageLinks = [
   {
@@ -7,7 +8,7 @@ export const pageLinks = [
     icon: Play,
     label: 'Create a Game',
     labelKey: 'pages.links.createGame.label',
-    path: '/create-game',
+    path: routePaths.createGame,
   },
   {
     description: 'View and enter the rooms.',
@@ -15,7 +16,7 @@ export const pageLinks = [
     icon: Users,
     label: 'Rooms',
     labelKey: 'pages.links.rooms.label',
-    path: '/rooms',
+    path: routePaths.rooms,
   },
   {
     description: 'Player ranking.',
@@ -23,7 +24,7 @@ export const pageLinks = [
     icon: Crown,
     label: 'Leaderboard',
     labelKey: 'pages.links.leaderboard.label',
-    path: '/leaderboard',
+    path: routePaths.leaderboard,
   },
   {
     description: 'Rules and game guide.',
@@ -31,7 +32,7 @@ export const pageLinks = [
     icon: BookOpen,
     label: 'How To Play',
     labelKey: 'pages.links.howToPlay.label',
-    path: '/how-to-play',
+    path: routePaths.howToPlay,
   },
   {
     description: 'Project repository for Oh Hell Game v2',
@@ -39,7 +40,7 @@ export const pageLinks = [
     externalUrl: 'https://github.com/dannielzanoni/ohhell-game-v2',
     label: 'Github',
     labelKey: 'pages.links.github.label',
-    path: '/github',
+    path: routePaths.github,
     primeIcon: 'pi pi-github',
   },
 ];
