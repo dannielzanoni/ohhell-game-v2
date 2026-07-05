@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
 import { pageLinks } from '@/app/routes/pageLinks.js';
+import { routePaths } from '@/app/routes/routeContract.js';
 import aceIcon from '@/assets/icons/ace.svg';
 import {
   LanguageNavButton,
@@ -21,7 +22,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
 const navItems = [
-  { label: 'Home', labelKey: 'common.home', path: '/', icon: Home },
+  { label: 'Home', labelKey: 'common.home', path: routePaths.home, icon: Home },
   ...pageLinks,
 ];
 

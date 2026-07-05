@@ -4,19 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
 import { pageLinks } from '@/app/routes/pageLinks.js';
+import { routePaths } from '@/app/routes/routeContract.js';
 import aceIcon from '@/assets/icons/ace.svg';
 import { LanguageSettingsModal } from '@/components/i18n/LanguageSwitcher.jsx';
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { cn } from '@/lib/utils.js';
 
 const primaryItems = [
-  { icon: Home, labelKey: 'common.home', path: '/' },
-  { icon: Play, labelKey: 'pages.links.createGame.label', path: '/create-game' },
-  { icon: Users, labelKey: 'pages.links.rooms.label', path: '/rooms' },
-  { icon: Crown, labelKey: 'pages.links.leaderboard.label', path: '/leaderboard' },
+  { icon: Home, labelKey: 'common.home', path: routePaths.home },
+  { icon: Play, labelKey: 'pages.links.createGame.label', path: routePaths.createGame },
+  { icon: Users, labelKey: 'pages.links.rooms.label', path: routePaths.rooms },
+  { icon: Crown, labelKey: 'pages.links.leaderboard.label', path: routePaths.leaderboard },
 ];
 const secondaryItems = pageLinks.filter((item) =>
-  ['/how-to-play', '/github'].includes(item.path),
+  [routePaths.howToPlay, routePaths.github].includes(item.path),
 );
 
 export function MobileNavigation() {
