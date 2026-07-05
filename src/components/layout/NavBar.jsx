@@ -25,7 +25,7 @@ const navItems = [
   ...pageLinks,
 ];
 
-export function NavBar({ isCollapsed, onToggle }) {
+export function DesktopSidebar({ isCollapsed, onToggle }) {
   const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -39,6 +39,8 @@ export function NavBar({ isCollapsed, onToggle }) {
           variant="outline"
           size="icon"
           aria-label={t('nav.expandMenu')}
+          aria-controls="desktop-sidebar"
+          aria-expanded={!isCollapsed}
           className="fixed left-3 top-3 z-50 size-11 cursor-pointer border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl shadow-black/20 backdrop-blur hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
           onClick={onToggle}
         >
@@ -56,6 +58,8 @@ export function NavBar({ isCollapsed, onToggle }) {
       ) : null}
 
       <aside
+        id="desktop-sidebar"
+        data-testid="desktop-sidebar"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar/95 text-sidebar-foreground shadow-2xl shadow-black/10 backdrop-blur transition-[width] duration-300',
           isCollapsed ? 'hidden w-20 md:flex' : 'w-64',
@@ -114,7 +118,10 @@ export function NavBar({ isCollapsed, onToggle }) {
         </Button>
       )}
 
-      <nav className="flex flex-1 flex-col gap-2 px-3 py-5">
+      <nav
+        aria-label={t('nav.primaryNavigation')}
+        className="flex flex-1 flex-col gap-2 px-3 py-5"
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const label = item.labelKey ? t(item.labelKey) : item.label;
@@ -221,3 +228,5 @@ export function NavBar({ isCollapsed, onToggle }) {
     </>
   );
 }
+
+export const NavBar = DesktopSidebar;

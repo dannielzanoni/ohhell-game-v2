@@ -103,6 +103,7 @@ export const en = {
     languageTitle: 'Language: {{language}}',
     lightTheme: 'Light theme',
     minimizeMenu: 'Minimize menu',
+    primaryNavigation: 'Primary navigation',
     toggleTheme: 'Toggle theme',
   },
   pages: {
