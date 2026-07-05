@@ -1,11 +1,14 @@
 import { AppProvider } from './provider.jsx';
 import { AppRouter } from './router.jsx';
+import { PlatformProvider } from '@/platform/PlatformProvider.jsx';
 
 function App() {
   return (
-    <AppProvider>
-      <AppRouter />
-    </AppProvider>
+    <PlatformProvider>
+      <AppProvider>
+        <AppRouter />
+      </AppProvider>
+    </PlatformProvider>
   );
 }
 

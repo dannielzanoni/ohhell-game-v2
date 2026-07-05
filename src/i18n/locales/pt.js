@@ -64,6 +64,7 @@ export const pt = {
     ready: 'Ready',
     readyError: 'Não foi possível marcar ready.',
     readySending: 'Enviando...',
+    reconnecting: 'Reconectando na partida...',
     roomLink: 'Link da sala',
     socketError: 'Erro na conexão em tempo real da sala.',
     tableAria: 'Mesa do Oh Hell',
