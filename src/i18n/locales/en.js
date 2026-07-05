@@ -64,6 +64,7 @@ export const en = {
     ready: 'Ready',
     readyError: 'Could not update ready state.',
     readySending: 'Sending...',
+    reconnecting: 'Reconnecting to the match...',
     roomLink: 'Room link',
     socketError: 'Room realtime connection error.',
     tableAria: 'Oh Hell game table',

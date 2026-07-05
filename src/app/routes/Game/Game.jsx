@@ -41,6 +41,7 @@ const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
+const WS_RECONNECT_DELAYS_MS = [100, 250, 500, 1000, 1500, 2500];
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
   import: 'default',
@@ -1478,6 +1479,7 @@ export function Game() {
   const [lifeLossHighlight, setLifeLossHighlight] = useState(null);
   const [gameStage, setGameStage] = useState('waiting');
   const [hasGameSocket, setHasGameSocket] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [isReadySending, setIsReadySending] = useState(false);
   const [matchPhase, setMatchPhase] = useState('waiting');
   const [elevatedPileCardKey, setElevatedPileCardKey] = useState('');
@@ -1731,6 +1733,7 @@ export function Game() {
     setGameEndSummary(null);
     clearLifeLossHighlight();
     setHasGameSocket(false);
+    setIsReconnecting(false);
     setIsReadySending(false);
     setMatchPhase('waiting');
     clearActionTimer();
@@ -1762,6 +1765,16 @@ export function Game() {
 
     let isCurrent = true;
     let socket = null;
+    let reconnectAttempt = 0;
+    let reconnectTimeoutId = null;
+
+    const clearReconnectTimeout = () => {
+      if (reconnectTimeoutId !== null) {
+        window.clearTimeout(reconnectTimeoutId);
+      }
+
+      reconnectTimeoutId = null;
+    };
 
     const clearRoundEndDelay = () => {
       if (roundEndDelayTimeoutRef.current) {
@@ -2289,6 +2302,94 @@ export function Game() {
       processServerMessage(message);
     };
 
+    function scheduleReconnect() {
+      if (!isCurrent) {
+        return;
+      }
+
+      clearReconnectTimeout();
+      setHasGameSocket(false);
+      setIsReconnecting(true);
+      setIsReadySending(false);
+      clearActionTimer();
+      setJoinError('');
+
+      const delayMs = WS_RECONNECT_DELAYS_MS[
+        Math.min(reconnectAttempt, WS_RECONNECT_DELAYS_MS.length - 1)
+      ];
+      reconnectAttempt += 1;
+
+      reconnectTimeoutId = window.setTimeout(() => {
+        reconnectTimeoutId = null;
+        connectSocket();
+      }, delayMs);
+    }
+
+    function connectSocket() {
+      if (!isCurrent) {
+        return;
+      }
+
+      const latestToken = getAuthToken();
+
+      if (!latestToken) {
+        setIsReconnecting(false);
+        setAuthGateOpen(true);
+        setAuthGateError(translateRef.current('game.missingAuth'));
+        return;
+      }
+
+      let nextSocket = null;
+
+      try {
+        nextSocket = createGameSocket({
+          onClose: () => {
+            if (!isCurrent || socketRef.current !== nextSocket) {
+              return;
+            }
+
+            socketRef.current = null;
+            socket = null;
+            setHasGameSocket(false);
+            setIsReadySending(false);
+            clearActionTimer();
+            scheduleReconnect();
+          },
+          onError: () => {
+            if (!isCurrent || socketRef.current !== nextSocket) {
+              return;
+            }
+
+            setHasGameSocket(false);
+            setIsReadySending(false);
+          },
+          onMessage: (message) => {
+            if (socketRef.current === nextSocket) {
+              handleServerMessage(message);
+            }
+          },
+          onOpen: () => {
+            if (!isCurrent || socketRef.current !== nextSocket) {
+              return;
+            }
+
+            reconnectAttempt = 0;
+            clearReconnectTimeout();
+            setHasGameSocket(true);
+            setIsReconnecting(false);
+            setJoinError('');
+          },
+          token: latestToken,
+        });
+      } catch {
+        scheduleReconnect();
+        return;
+      }
+
+      socket = nextSocket;
+      socketRef.current = nextSocket;
+    }
+
     joinLobby(lobbyId)
       .then((lobbyInfo) => {
         if (!isCurrent) {
@@ -2315,29 +2416,7 @@ export function Game() {
           );
         }
 
-        socket = createGameSocket({
-          onClose: () => {
-            if (isCurrent) {
-              setHasGameSocket(false);
-              setIsReadySending(false);
-            }
-          },
-          onError: () => {
-            if (isCurrent) {
-              setHasGameSocket(false);
-              setIsReadySending(false);
-              setJoinError(translateRef.current('game.socketError'));
-            }
-          },
-          onMessage: handleServerMessage,
-          onOpen: () => {
-            if (isCurrent) {
-              setHasGameSocket(true);
-            }
-          },
-        });
-        socketRef.current = socket;
-        setHasGameSocket(true);
+        connectSocket();
       })
       .catch((error) => {
         if (isCurrent) {
@@ -2355,6 +2434,7 @@ export function Game() {
 
     return () => {
       isCurrent = false;
+      clearReconnectTimeout();
       clearRoundEndDelay();
       clearLifeLossHighlight();
       if (pileElevationTimeoutRef.current) {
@@ -2371,6 +2451,8 @@ export function Game() {
       if (socketRef.current === socket) {
         socketRef.current = null;
       }
+
+      setIsReconnecting(false);
     };
   }, [
     clearActionTimer,
@@ -2567,7 +2649,7 @@ export function Game() {
         );
       })}
 
-      <BidControls onBid={sendBid} possibleBids={possibleBids} />
+      <BidControls onBid={sendBid} possibleBids={hasGameSocket ? possibleBids : []} />
       <PlayerHand
         canPlayCards={canPlayCards}
         cardBackSrc={selectedCardBackSrc}
@@ -2591,6 +2673,12 @@ export function Game() {
       {joinError ? (
         <div className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-destructive/50 bg-background/90 px-4 py-3 text-center text-sm text-destructive shadow-lg backdrop-blur">
           {joinError}
+        </div>
+      ) : null}
+
+      {isReconnecting && !joinError ? (
+        <div className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-amber-300/40 bg-black/85 px-4 py-3 text-center text-sm font-semibold text-amber-100 shadow-lg backdrop-blur">
+          {t('game.reconnecting')}
         </div>
       ) : null}
 
