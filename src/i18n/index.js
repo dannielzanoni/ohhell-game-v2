@@ -45,10 +45,20 @@ i18n.use(initReactI18next).init({
   supportedLngs: languageOptions.map((language) => language.value),
 });
 
+function updateDocumentTitle() {
+  if (typeof document !== 'undefined') {
+    document.title = i18n.t('common.appName');
+  }
+}
+
+updateDocumentTitle();
+
 i18n.on('languageChanged', (language) => {
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   }
+
+  updateDocumentTitle();
 });
 
 export function getResolvedLanguage(language = i18n.resolvedLanguage || i18n.language) {
