@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { NavBar } from './NavBar.jsx';
+import { DesktopSidebar } from './NavBar.jsx';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
@@ -17,7 +17,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <NavBar
+      <DesktopSidebar
         isCollapsed={isNavCollapsed}
         onToggle={() => setIsNavCollapsed((current) => !current)}
       />
