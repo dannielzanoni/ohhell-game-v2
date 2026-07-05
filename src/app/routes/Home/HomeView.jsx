@@ -6,11 +6,10 @@ import card3Paus from '@/assets/cards/spanish/3paus.jpg';
 import frenchCard1Ouro from '@/assets/cards/french/1ouro.png';
 import frenchCard2Espada from '@/assets/cards/french/2espada.png';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
-import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
-import { VideoText } from '@/components/ui/video-text.jsx';
 import { cn } from '@/lib/utils.js';
 import { pageLinks } from '../pageLinks.js';
+import { MobileHero } from './MobileHero.jsx';
 import { WebHero } from './WebHero.jsx';
 
 const cardGroups = [
@@ -34,8 +33,6 @@ const cardGroups = [
 
 export function HomeView() {
   const { t } = useTranslation();
-  const mobileTitleSecondLine = t('common.appNameShort2');
-  const hasMobileTitleSecondLine = mobileTitleSecondLine.trim().length > 0;
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
@@ -44,33 +41,7 @@ export function HomeView() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.2),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.18),transparent_30%)]" />
           <div className="relative">
             <WebHero />
-            <div className="relative mt-8 grid gap-1 md:hidden">
-              <div className="h-24 overflow-hidden">
-                <VideoText
-                  src={gameBg}
-                  fontSize={24}
-                  fontWeight="900"
-                  className="drop-shadow-2xl"
-                >
-                  {t('common.appNameShort')}
-                </VideoText>
-              </div>
-              {hasMobileTitleSecondLine ? (
-                <div className="h-24 overflow-hidden">
-                  <VideoText
-                    src={gameBg}
-                    fontSize={32}
-                    fontWeight="900"
-                    className="drop-shadow-2xl"
-                  >
-                    {mobileTitleSecondLine}
-                  </VideoText>
-                </div>
-              ) : null}
-            </div>
-            <p className="mt-4 w-full max-w-none text-base leading-7 text-muted-foreground md:hidden">
-              {t('pages.home.tagline')}
-            </p>
+            <MobileHero />
 
             <section className="mt-4 rounded-lg border border-border bg-background/55 p-4 shadow-lg shadow-black/10 backdrop-blur lg:mt-4 lg:p-3">
               <div className="grid gap-4 md:grid-cols-2 lg:gap-3">
