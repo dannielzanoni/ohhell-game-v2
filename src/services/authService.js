@@ -1,6 +1,6 @@
 import {
   apiRequest,
-  clearAuthToken,
+  clearAuthToken as clearStoredAuthToken,
   getAuthToken,
   setAuthToken,
 } from './apiClient.js';
@@ -9,6 +9,9 @@ import { avatars } from '@/components/auth/avatarOptions.js';
 const GUEST_AVATAR_STORAGE_KEY = 'ohhell_guest_avatar_id';
 const GUEST_NICKNAME_STORAGE_KEY = 'ohhell_guest_nickname';
 const REFRESH_TOKEN_STORAGE_KEY = 'REFRESH_TOKEN';
+const ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 30;
+const MISSING_REFRESH_TOKEN_CODE = 'MISSING_REFRESH_TOKEN';
+let pendingAuthRefresh = null;
 let pendingGuestAuthRefresh = null;
 
 function canUseStorage() {
@@ -17,6 +20,30 @@ function canUseStorage() {
 
 function getAuthErrorMessage(error) {
   return String(error?.message || error?.data?.error || '');
+}
+
+function getRefreshToken() {
+  return canUseStorage() ? localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) : null;
+}
+
+function setRefreshToken(token) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  }
+}
+
+function createMissingRefreshTokenError() {
+  const error = new Error('Missing refresh token');
+  error.code = MISSING_REFRESH_TOKEN_CODE;
+  error.status = 401;
+  error.data = { error: 'Missing refresh token' };
+  return error;
 }
 
 function decodeAuthTokenPayload(token) {
@@ -106,15 +133,41 @@ export function isMissingAuthTokenError(error) {
   );
 }
 
-function isInvalidAuthTokenError(error) {
+function isInvalidAuthTokenError(error, hadAuthToken = Boolean(getAuthToken())) {
   const message = getAuthErrorMessage(error);
 
   return (
     !isMissingAuthTokenError(error) &&
     (message.includes("Invalid KeyId ('kid')") ||
       message.toLowerCase().includes('invalid token') ||
-      (error?.status === 401 && Boolean(getAuthToken())))
+      (error?.status === 401 && hadAuthToken))
   );
+}
+
+function canFallbackToGuestAuth(error) {
+  return (
+    error?.code === MISSING_REFRESH_TOKEN_CODE ||
+    (error?.status === 401 &&
+      getAuthErrorMessage(error).toLowerCase().includes('refresh token'))
+  );
+}
+
+function shouldRefreshAccessToken(token) {
+  const claims = decodeAuthTokenPayload(token);
+  const expiresAt = Number(claims?.exp);
+
+  if (!Number.isFinite(expiresAt)) {
+    return true;
+  }
+
+  return (
+    expiresAt <= Math.floor(Date.now() / 1000) + ACCESS_TOKEN_REFRESH_SKEW_SECONDS
+  );
+}
+
+export function clearAuthToken() {
+  clearStoredAuthToken();
+  setRefreshToken(null);
 }
 
 function persistAuth(response) {
@@ -127,12 +180,8 @@ function persistAuth(response) {
     setAuthToken(response.token);
   }
 
-  if (canUseStorage() && response?.refresh_token !== undefined) {
-    if (response.refresh_token) {
-      localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refresh_token);
-    } else {
-      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    }
+  if (response?.refresh_token !== undefined) {
+    setRefreshToken(response.refresh_token);
   }
 
   return response;
@@ -164,13 +213,74 @@ export async function signUp({ nickname, picture } = {}) {
 }
 
 export async function updateProfile({ nickname, picture }) {
-  const response = await apiRequest('/auth/profile', {
-    auth: true,
-    method: 'POST',
-    body: { nickname, picture },
-  });
+  const response = await withAuthRetry(
+    () =>
+      apiRequest('/auth/profile', {
+        auth: true,
+        method: 'POST',
+        body: { nickname, picture },
+      }),
+    { nickname, picture },
+  );
 
   return persistAuth(response);
+}
+
+export async function refreshAuth() {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    clearAuthToken();
+    throw createMissingRefreshTokenError();
+  }
+
+  if (!pendingAuthRefresh) {
+    pendingAuthRefresh = apiRequest('/auth/refresh', {
+      method: 'POST',
+      body: { refresh_token: refreshToken },
+      token: null,
+    })
+      .then(persistAuth)
+      .catch((error) => {
+        if (error?.status === 401) {
+          clearAuthToken();
+        }
+
+        throw error;
+      })
+      .finally(() => {
+        pendingAuthRefresh = null;
+      });
+  }
+
+  return pendingAuthRefresh;
+}
+
+export async function refreshAuthIfNeeded() {
+  const token = getAuthToken();
+  const player = parseAuthPlayer(token);
+
+  if (!token) {
+    return null;
+  }
+
+  if (!shouldRefreshAccessToken(token)) {
+    return token;
+  }
+
+  try {
+    const response = await refreshAuth();
+
+    return response?.token || getAuthToken();
+  } catch (error) {
+    if (player?.type !== 'Anonymous' || !canFallbackToGuestAuth(error)) {
+      throw error;
+    }
+
+    const response = await refreshGuestAuth();
+
+    return response?.token || getAuthToken();
+  }
 }
 
 export async function loginWithGoogle(credential) {
@@ -187,6 +297,7 @@ export async function loginWithGoogle(credential) {
 
 export async function saveGuestProfile(payload) {
   const guestProfile = getSavedGuestProfile(payload);
+  const existingPlayer = getAuthPlayer();
 
   if (!getAuthToken()) {
     return signUp(guestProfile);
@@ -195,7 +306,7 @@ export async function saveGuestProfile(payload) {
   try {
     return await updateProfile(guestProfile);
   } catch (error) {
-    if (!isInvalidAuthTokenError(error)) {
+    if (existingPlayer?.type === 'Google' || !isInvalidAuthTokenError(error)) {
       throw error;
     }
 
@@ -236,8 +347,9 @@ export function isGoogleAuthenticated() {
   return getAuthPlayer()?.type === 'Google';
 }
 
-export async function withGuestAuthRetry(request, payload) {
+export async function withAuthRetry(request, payload) {
   const tokenBeforeRequest = getAuthToken();
+  const playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
 
   try {
     return await request();
@@ -245,12 +357,24 @@ export async function withGuestAuthRetry(request, payload) {
     if (
       !tokenBeforeRequest ||
       isMissingAuthTokenError(error) ||
-      !isInvalidAuthTokenError(error)
+      !isInvalidAuthTokenError(error, Boolean(tokenBeforeRequest))
     ) {
       throw error;
     }
 
-    await refreshGuestAuth(payload);
+    try {
+      await refreshAuth();
+    } catch (refreshError) {
+      if (
+        playerBeforeRequest?.type !== 'Anonymous' ||
+        !canFallbackToGuestAuth(refreshError)
+      ) {
+        throw refreshError;
+      }
+
+      await refreshGuestAuth(payload);
+    }
+
     return request();
   }
 }
@@ -262,9 +386,11 @@ export const authService = {
   getCurrentProfile,
   isGoogleAuthenticated,
   loginWithGoogle,
+  refreshAuth,
+  refreshAuthIfNeeded,
   refreshGuestAuth,
   saveGuestProfile,
   signUp,
   updateProfile,
-  withGuestAuthRetry,
+  withAuthRetry,
 };

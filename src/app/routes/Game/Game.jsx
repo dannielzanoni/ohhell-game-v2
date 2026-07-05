@@ -19,7 +19,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.jsx';
 import { getAuthToken } from '@/services/apiClient.js';
-import { isMissingAuthTokenError } from '@/services/authService.js';
+import {
+  isMissingAuthTokenError,
+  refreshAuthIfNeeded,
+} from '@/services/authService.js';
 import {
   createGameSocket,
   playTurn,
@@ -2321,16 +2324,32 @@ export function Game() {
 
       reconnectTimeoutId = window.setTimeout(() => {
         reconnectTimeoutId = null;
-        connectSocket();
+        void connectSocket();
       }, delayMs);
     }
 
-    function connectSocket() {
+    async function connectSocket() {
       if (!isCurrent) {
         return;
       }
 
-      const latestToken = getAuthToken();
+      let latestToken;
+
+      try {
+        latestToken = await refreshAuthIfNeeded();
+      } catch {
+        if (isCurrent) {
+          setIsReconnecting(false);
+          setAuthGateOpen(true);
+          setAuthGateError(translateRef.current('game.missingAuth'));
+        }
+
+        return;
+      }
+
+      if (!isCurrent) {
+        return;
+      }
 
       if (!latestToken) {
         setIsReconnecting(false);
@@ -2416,7 +2435,7 @@ export function Game() {
           );
         }
 
-        connectSocket();
+        void connectSocket();
       })
       .catch((error) => {
         if (isCurrent) {

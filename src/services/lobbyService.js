@@ -1,12 +1,12 @@
 import { apiRequest } from './apiClient.js';
-import { withGuestAuthRetry } from './authService.js';
+import { withAuthRetry } from './authService.js';
 
 export function getLobbies() {
-  return withGuestAuthRetry(() => apiRequest('/lobby', { auth: true }));
+  return withAuthRetry(() => apiRequest('/lobby', { auth: true }));
 }
 
 export function createLobby({ lifes } = {}) {
-  return withGuestAuthRetry(() =>
+  return withAuthRetry(() =>
     apiRequest('/lobby', {
       auth: true,
       method: 'POST',
@@ -16,7 +16,7 @@ export function createLobby({ lifes } = {}) {
 }
 
 export function joinLobby(lobbyId) {
-  return withGuestAuthRetry(() =>
+  return withAuthRetry(() =>
     apiRequest(`/lobby/${encodeURIComponent(lobbyId)}`, {
       auth: true,
       method: 'PUT',
