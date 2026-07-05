@@ -11,7 +11,7 @@ import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 const GUEST_AVATAR_STORAGE_KEY = storageKeys.guestAvatar;
 const GUEST_NICKNAME_STORAGE_KEY = storageKeys.guestNickname;
 const REFRESH_TOKEN_STORAGE_KEY = storageKeys.refreshToken;
-let pendingGuestAuthRefresh = null;
+let pendingSessionRefresh = null;
 export const MAX_GUEST_NICKNAME_LENGTH = 24;
 
 export function normalizeGuestNickname(value) {
@@ -24,6 +24,14 @@ export function normalizeGuestNickname(value) {
   }
 
   return nickname || 'Guest';
+}
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired. Confirm your profile to continue.');
+    this.name = 'SessionExpiredError';
+    this.code = 'profile_confirmation_required';
+  }
 }
 
 function getAuthErrorMessage(error) {
@@ -211,18 +219,47 @@ export async function saveGuestProfile(payload) {
   }
 }
 
-export async function refreshGuestAuth(payload) {
-  if (!pendingGuestAuthRefresh) {
-    pendingGuestAuthRefresh = (async () => {
-      clearAuthToken();
-      return signUp(getSavedGuestProfile(payload));
+function clearSession() {
+  clearAuthToken();
+  storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+function isDefinitiveRefreshFailure(error) {
+  return [400, 401, 403].includes(error?.status);
+}
+
+export async function refreshAuthSession() {
+  if (!pendingSessionRefresh) {
+    pendingSessionRefresh = (async () => {
+      const refreshToken = storage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+
+      if (!refreshToken) {
+        clearSession();
+        throw new SessionExpiredError();
+      }
+
+      try {
+        const response = await apiRequest('/auth/refresh', {
+          method: 'POST',
+          body: { refresh_token: refreshToken },
+        });
+        return persistAuth(response);
+      } catch (error) {
+        if (isDefinitiveRefreshFailure(error)) {
+          clearSession();
+          throw new SessionExpiredError();
+        }
+        throw error;
+      }
     })().finally(() => {
-      pendingGuestAuthRefresh = null;
+      pendingSessionRefresh = null;
     });
   }
 
-  return pendingGuestAuthRefresh;
+  return pendingSessionRefresh;
 }
+
+export const refreshGuestAuth = refreshAuthSession;
 
 export function getAuthPlayer() {
   return parseAuthPlayer();
@@ -257,7 +294,7 @@ export async function withGuestAuthRetry(request, payload) {
       throw error;
     }
 
-    await refreshGuestAuth(payload);
+    await refreshAuthSession();
     return request();
   }
 }
@@ -269,6 +306,7 @@ export const authService = {
   getCurrentProfile,
   isGoogleAuthenticated,
   loginWithGoogle,
+  refreshAuthSession,
   refreshGuestAuth,
   saveGuestProfile,
   signUp,
