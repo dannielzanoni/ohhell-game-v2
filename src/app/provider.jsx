@@ -1,15 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { migrateApplicationStorage } from '@/infrastructure/storage/migrations.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 const ThemeContext = createContext(null);
 
 export function AppProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'dark';
+    migrateApplicationStorage();
+    return storage.getItem(storageKeys.theme) || 'dark';
   });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('theme', theme);
+    storage.setItem(storageKeys.theme, theme);
   }, [theme]);
 
   const value = useMemo(

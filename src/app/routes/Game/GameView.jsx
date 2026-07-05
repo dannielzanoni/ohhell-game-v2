@@ -19,6 +19,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.jsx';
 import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import {
+  lobbyLivesStorageKey,
+  storageKeys,
+} from '@/infrastructure/storage/storageKeys.js';
 
 const MAX_TABLE_PLAYERS = 10;
 const MAX_DISPLAYED_LIFES = 5;
@@ -282,8 +287,8 @@ function resolveAvatarSrc(picture) {
 }
 
 function getSavedPlayer() {
-  const nickname = localStorage.getItem('ohhell_guest_nickname') || 'Guest';
-  const avatarId = localStorage.getItem('ohhell_guest_avatar_id') || '';
+  const nickname = storage.getItem(storageKeys.guestNickname) || 'Guest';
+  const avatarId = storage.getItem(storageKeys.guestAvatar) || '';
   const avatar = avatars.find((item) => item.id === avatarId);
 
   return {
@@ -301,7 +306,7 @@ function getLobbyLifes(lobbyId, routeLifes) {
 
   if (lobbyId) {
     const savedLifes = Number(
-      localStorage.getItem(`ohhell_lobby_lifes_${lobbyId}`),
+      storage.getItem(lobbyLivesStorageKey(lobbyId)),
     );
 
     if (Number.isFinite(savedLifes) && savedLifes > 0) {

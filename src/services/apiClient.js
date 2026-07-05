@@ -1,9 +1,11 @@
 import { environment } from '@/config/environment.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { legacyStorageKeys, storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 export const API_BASE_URL = environment.apiUrl;
 
-export const JWT_TOKEN = 'JWT_TOKEN';
-const LEGACY_AUTH_TOKEN_STORAGE_KEY = 'ohhell_auth_token';
+export const JWT_TOKEN = storageKeys.authToken;
+const LEGACY_AUTH_TOKEN_STORAGE_KEY = legacyStorageKeys.authToken;
 
 export class ApiError extends Error {
   constructor({ message, status, statusText, data }) {
@@ -13,10 +15,6 @@ export class ApiError extends Error {
     this.statusText = statusText;
     this.data = data;
   }
-}
-
-function canUseStorage() {
-  return typeof window !== 'undefined' && window.localStorage;
 }
 
 function normalizeStoredToken(value) {
@@ -44,16 +42,12 @@ function normalizeStoredToken(value) {
 }
 
 export function getAuthToken() {
-  if (!canUseStorage()) {
-    return null;
-  }
-
   const token = normalizeStoredToken(
-    localStorage.getItem(JWT_TOKEN) ||
-      localStorage.getItem(LEGACY_AUTH_TOKEN_STORAGE_KEY),
+    storage.getItem(JWT_TOKEN) ||
+      storage.getItem(LEGACY_AUTH_TOKEN_STORAGE_KEY),
   );
 
-  if (token && token !== localStorage.getItem(JWT_TOKEN)) {
+  if (token && token !== storage.getItem(JWT_TOKEN)) {
     setAuthToken(token);
   }
 
@@ -61,21 +55,13 @@ export function getAuthToken() {
 }
 
 export function setAuthToken(token) {
-  if (!canUseStorage()) {
-    return;
-  }
-
-  localStorage.setItem(JWT_TOKEN, normalizeStoredToken(token) || '');
-  localStorage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
+  storage.setItem(JWT_TOKEN, normalizeStoredToken(token) || '');
+  storage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function clearAuthToken() {
-  if (!canUseStorage()) {
-    return;
-  }
-
-  localStorage.removeItem(JWT_TOKEN);
-  localStorage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
+  storage.removeItem(JWT_TOKEN);
+  storage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
 }
 
 function buildUrl(path, query) {

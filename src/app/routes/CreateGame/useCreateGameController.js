@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createLobby } from '@/services/lobbyService.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { lobbyLivesStorageKey } from '@/infrastructure/storage/storageKeys.js';
 
 export function useCreateGameController() {
   const navigate = useNavigate();
@@ -18,10 +20,7 @@ export function useCreateGameController() {
       const selectedLives = Number(lives);
       const lobby = await createLobby({ lifes: selectedLives });
 
-      localStorage.setItem(
-        `ohhell_lobby_lifes_${lobby.lobby_id}`,
-        String(selectedLives),
-      );
+      storage.setItem(lobbyLivesStorageKey(lobby.lobby_id), selectedLives);
       navigate(`/game/${lobby.lobby_id}`, {
         state: { lifes: selectedLives },
       });

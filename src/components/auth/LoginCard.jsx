@@ -14,6 +14,8 @@ import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { environment } from '@/config/environment.js';
 import { cn } from '@/lib/utils.js';
 import { useAuthController } from './useAuthController.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
@@ -81,7 +83,7 @@ function GoogleLogo() {
 }
 
 function getSavedAvatar() {
-  const savedAvatarId = localStorage.getItem('ohhell_guest_avatar_id');
+  const savedAvatarId = storage.getItem(storageKeys.guestAvatar);
 
   return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
 }
@@ -105,7 +107,7 @@ function getInitialProfile() {
     avatar: resolveAvatarFromPicture(profile.picture) || getSavedAvatar(),
     isGoogle: profile.isGoogle,
     nickname:
-      profile.nickname || localStorage.getItem('ohhell_guest_nickname') || '',
+      profile.nickname || storage.getItem(storageKeys.guestNickname) || '',
   };
 }
 
@@ -188,11 +190,11 @@ export const LoginCard = forwardRef(function LoginCard(
     try {
       const response = await authService.saveGuestProfile(payload);
 
-      localStorage.setItem('ohhell_guest_nickname', nextNickname);
+      storage.setItem(storageKeys.guestNickname, nextNickname);
       if (nextAvatarId) {
-        localStorage.setItem('ohhell_guest_avatar_id', nextAvatarId);
+        storage.setItem(storageKeys.guestAvatar, nextAvatarId);
       } else {
-        localStorage.removeItem('ohhell_guest_avatar_id');
+        storage.removeItem(storageKeys.guestAvatar);
       }
 
       setNickname(nextNickname);
@@ -251,7 +253,7 @@ export const LoginCard = forwardRef(function LoginCard(
   const shouldAnimateNickname = Boolean(savedNickname) && !canSaveProfile;
   const canRenderGoogleLogin = Boolean(environment.googleClientId) && !isGoogleAuth;
   const selectAvatar = (avatar) => {
-    localStorage.setItem('ohhell_guest_avatar_id', avatar.id);
+    storage.setItem(storageKeys.guestAvatar, avatar.id);
     setSelectedAvatar(avatar);
     setSaveError('');
   };
