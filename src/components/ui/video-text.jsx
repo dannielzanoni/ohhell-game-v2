@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 export function VideoText({
  src,
  poster,
+ videoEnabled = true,
  children,
  className = "",
  autoPlay = true,
@@ -64,7 +65,7 @@ export function VideoText({
        maskPosition: "center",
        WebkitMaskPosition: "center",
      }}>
-      {!videoFailed ? <video
+      {videoEnabled && !videoFailed ? <video
        className="h-full w-full object-cover"
        autoPlay={autoPlay && !reducedMotion}
        muted={muted}
