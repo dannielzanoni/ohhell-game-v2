@@ -77,6 +77,14 @@ export const en = {
     waitingForPlayersTitle: 'Waiting for at least 2 players',
     waitTurn: 'Wait for your turn.',
   },
+  gameTypes: {
+    continue: 'Continue',
+    description: 'Choose the card game rules for this session before entering the hub.',
+    eyebrow: 'Game type',
+    fodinhaClassic: 'Fodinha Classic',
+    fodinhaClassicDescription: 'The current Oh Hell/Fodinha trick-taking rules.',
+    title: 'Pick a game',
+  },
   leaderboard: {
     averageBid: 'Avg bid',
     bid: 'Bid',

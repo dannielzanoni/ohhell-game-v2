@@ -3,6 +3,7 @@ import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
+import { getGameTypeOption } from '@/services/gameTypesService.js';
 import { getLobbies } from '@/services/lobbyService.js';
 
 function getLobbyId(lobby) {
@@ -95,6 +96,10 @@ export function Rooms() {
               {lobbies.map((lobby) => {
                 const lobbyId = getLobbyId(lobby);
                 const playerCount = Number(lobby.player_count) || 0;
+                const gameTypeLabelKey = getGameTypeOption(lobby.game_type)?.labelKey;
+                const gameTypeLabel = gameTypeLabelKey
+                  ? t(gameTypeLabelKey)
+                  : lobby.game_type;
 
                 return (
                   <article
@@ -111,7 +116,7 @@ export function Rooms() {
                             {lobbyId}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {t('pages.rooms.regionWaiting')}
+                            {gameTypeLabel || t('pages.rooms.regionWaiting')}
                           </p>
                         </div>
                       </div>
@@ -125,7 +130,11 @@ export function Rooms() {
                     <Button
                       type="button"
                       className="h-10 cursor-pointer gap-2 md:justify-self-end"
-                      onClick={() => navigate(`/game/${lobbyId}`)}
+                      onClick={() =>
+                        navigate(`/game/${lobbyId}`, {
+                          state: { gameType: lobby.game_type },
+                        })
+                      }
                     >
                       <DoorOpen className="size-4" />
                       {t('common.join')}

@@ -5,12 +5,17 @@ export function getLobbies() {
   return withAuthRetry(() => apiRequest('/lobby', { auth: true }));
 }
 
-export function createLobby({ lifes } = {}) {
+export function createLobby({ gameType, lifes } = {}) {
+  const body = {
+    ...(gameType ? { game_type: gameType } : {}),
+    ...(lifes === undefined || lifes === null ? {} : { lifes }),
+  };
+
   return withAuthRetry(() =>
     apiRequest('/lobby', {
       auth: true,
       method: 'POST',
-      body: lifes === undefined || lifes === null ? undefined : { lifes },
+      body: Object.keys(body).length ? body : undefined,
     }),
   );
 }

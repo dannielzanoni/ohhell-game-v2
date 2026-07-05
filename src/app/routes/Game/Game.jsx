@@ -36,6 +36,11 @@ import {
   getGamePreferences,
   subscribeToGamePreferences,
 } from '@/services/gamePreferencesService.js';
+import {
+  gameTypes,
+  getGameTypeOption,
+  getSelectedGameType,
+} from '@/services/gameTypesService.js';
 import { joinLobby } from '@/services/lobbyService.js';
 
 const MAX_TABLE_PLAYERS = 10;
@@ -351,6 +356,22 @@ function getLobbyLifes(lobbyId, routeLifes) {
   }
 
   return 5;
+}
+
+function getLobbyGameType(lobbyId, routeGameType) {
+  if (getGameTypeOption(routeGameType)) {
+    return routeGameType;
+  }
+
+  if (lobbyId) {
+    const savedGameType = localStorage.getItem(`ohhell_lobby_game_type_${lobbyId}`);
+
+    if (getGameTypeOption(savedGameType)) {
+      return savedGameType;
+    }
+  }
+
+  return getSelectedGameType() || gameTypes.FODINHA_CLASSIC;
 }
 
 function getClaimsPlayerId(player) {
@@ -1465,6 +1486,9 @@ export function Game() {
   const [lifes, setLifes] = useState(() =>
     getLobbyLifes(lobbyId, location.state?.lifes),
   );
+  const [gameType, setGameType] = useState(() =>
+    getLobbyGameType(lobbyId, location.state?.gameType),
+  );
   const [playersById, setPlayersById] = useState(() => {
     const playerId = getCurrentPlayerId();
 
@@ -1729,10 +1753,15 @@ export function Game() {
 
   useEffect(() => {
     const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
+    const nextGameType = getLobbyGameType(lobbyId, location.state?.gameType);
     const nextCurrentPlayerId = getCurrentPlayerId();
     const token = getAuthToken();
 
     setLifes(nextLifes);
+    setGameType(nextGameType);
+    if (lobbyId) {
+      localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, nextGameType);
+    }
     setCurrentPlayerId(nextCurrentPlayerId);
     setGameStage('waiting');
     setJoinError('');
@@ -2497,6 +2526,7 @@ export function Game() {
     joinAttempt,
     lobbyId,
     location.state?.lifes,
+    location.state?.gameType,
     navigate,
     showToast,
     showLifeLossHighlight,
@@ -2542,7 +2572,7 @@ export function Game() {
     });
 
     try {
-      putBid(socketRef.current, bid);
+      putBid(socketRef.current, bid, gameType);
     } catch (error) {
       setJoinError(error.message || t('game.bidError'));
     }
@@ -2573,7 +2603,7 @@ export function Game() {
         card,
         id: `${Date.now()}-${getCardKey(card)}`,
       });
-      playTurn(socketRef.current, card);
+      playTurn(socketRef.current, card, gameType);
       setPlayerDeck((currentDeck) => {
         const nextDeck = removeCardFromDeck(currentDeck, card);
         playerDeckCountRef.current = nextDeck.length;

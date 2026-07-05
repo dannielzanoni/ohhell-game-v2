@@ -77,6 +77,14 @@ export const pt = {
     waitingForPlayersTitle: 'Aguardando pelo menos 2 jogadores',
     waitTurn: 'Aguarde sua vez para jogar.',
   },
+  gameTypes: {
+    continue: 'Continuar',
+    description: 'Escolha as regras do jogo de cartas desta sessão antes de entrar no hub.',
+    eyebrow: 'Tipo de jogo',
+    fodinhaClassic: 'Fodinha Clássico',
+    fodinhaClassicDescription: 'As regras atuais de Fodinha/Oh Hell com vazas e bids.',
+    title: 'Escolha um jogo',
+  },
   leaderboard: {
     averageBid: 'Bid médio',
     bid: 'Bid',

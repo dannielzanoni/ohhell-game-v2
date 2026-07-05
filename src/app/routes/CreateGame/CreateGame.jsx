@@ -13,6 +13,7 @@ import {
   ComboboxTrigger,
 } from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
+import { getSelectedGameType, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
 const lifeOptions = [1, 2, 3, 4, 5].map((life) => ({
@@ -33,14 +34,20 @@ export function CreateGame() {
 
     try {
       const selectedLives = Number(lives);
-      const lobby = await createLobby({ lifes: selectedLives });
+      const selectedGameType = getSelectedGameType() || gameTypes.FODINHA_CLASSIC;
+      const lobby = await createLobby({
+        gameType: selectedGameType,
+        lifes: selectedLives,
+      });
+      const lobbyGameType = lobby.game_type || selectedGameType;
 
       localStorage.setItem(
         `ohhell_lobby_lifes_${lobby.lobby_id}`,
         String(selectedLives),
       );
+      localStorage.setItem(`ohhell_lobby_game_type_${lobby.lobby_id}`, lobbyGameType);
       navigate(`/game/${lobby.lobby_id}`, {
-        state: { lifes: selectedLives },
+        state: { gameType: lobbyGameType, lifes: selectedLives },
       });
     } catch (error) {
       setCreateError(error.message || t('pages.createGame.createError'));
