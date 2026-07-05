@@ -1192,11 +1192,19 @@ function LifeLossPopup({ highlight }) {
 export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
   const { t } = useTranslation();
   const playGateRef = useRef(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
   if (!playGateRef.current) playGateRef.current = createCardPlayGate();
 
   useEffect(() => {
-    if (!canPlayCards) playGateRef.current.reset();
+    if (!canPlayCards) {
+      playGateRef.current.reset();
+      setSelectedIndex(null);
+    }
   }, [canPlayCards]);
+
+  useEffect(() => {
+    if (selectedIndex !== null && !cards[selectedIndex]) setSelectedIndex(null);
+  }, [cards, selectedIndex]);
 
   if (!cards.length) {
     return null;
@@ -1218,22 +1226,34 @@ export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayC
     ? 'h-[9.22rem] w-[6.35rem] sm:h-[9.8rem] sm:w-[6.75rem]'
     : 'h-[10.25rem] w-[6.82rem] sm:h-[10.89rem] sm:w-[7.26rem]';
 
+  const selectedCard = selectedIndex === null ? null : cards[selectedIndex];
+  const playSelectedCard = () => {
+    if (!selectedCard || !canPlayCards) return;
+    playGateRef.current.tryPlay(() => onPlayCard(selectedCard));
+  };
+
   return (
-    <div className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 translate-y-[10%] items-end justify-start overflow-x-auto px-2 pb-3 sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:justify-center sm:overflow-visible sm:px-0">
+    <>
+    <div
+      aria-label={t('game.playerHand')}
+      className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] touch-pan-x snap-x snap-mandatory -translate-x-1/2 translate-y-[10%] items-end justify-start overflow-x-auto overscroll-x-contain px-2 pb-3 [scrollbar-width:none] sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:justify-center sm:overflow-visible sm:px-0"
+      data-testid="player-hand-scroll"
+    >
       <div className="flex w-max shrink-0 items-end justify-center gap-0">
         {cards.map((card, index) => (
           <button
             key={`${getCardKey(card)}-${index}`}
             type="button"
             disabled={!canPlayCards}
-            aria-label={t('game.playCardLabel', { card: getCardLabel(card, t) })}
+            aria-pressed={selectedIndex === index}
+            aria-label={t('game.selectCardLabel', { card: getCardLabel(card, t) })}
             title={getCardLabel(card, t)}
-            className={`shrink-0 sm:scale-110 ${index === 0 ? '' : overlapClass} ${
+            className={`min-h-11 min-w-11 shrink-0 snap-center sm:scale-110 ${index === 0 ? '' : overlapClass} ${
               canPlayCards
                 ? 'cursor-pointer active:-translate-y-3 sm:hover:-translate-y-6 sm:hover:scale-125 focus-visible:-translate-y-6 focus-visible:scale-125 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300'
                 : 'cursor-not-allowed opacity-98'
-            } transition duration-200`}
-            onClick={() => playGateRef.current.tryPlay(() => onPlayCard(card))}
+            } ${selectedIndex === index ? '-translate-y-3 ring-4 ring-amber-300 sm:-translate-y-6 sm:scale-125' : ''} transition duration-200`}
+            onClick={() => setSelectedIndex(index)}
           >
             <img
               src={getCardImageSrc(card, deckType, cardBackSrc)}
@@ -1245,6 +1265,17 @@ export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayC
         ))}
       </div>
     </div>
+    <button
+      type="button"
+      disabled={!canPlayCards || !selectedCard}
+      className="absolute bottom-[calc(env(safe-area-inset-bottom)+11.5rem)] right-3 z-50 min-h-11 rounded-xl border border-amber-200 bg-amber-400 px-4 py-2 text-sm font-black text-zinc-950 shadow-xl disabled:cursor-not-allowed disabled:opacity-50 md:bottom-44 md:right-6"
+      onClick={playSelectedCard}
+    >
+      {selectedCard
+        ? t('game.playSelectedCard', { card: getCardLabel(selectedCard, t) })
+        : t('game.selectCard')}
+    </button>
+    </>
   );
 }
 
