@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiRequest, getAuthToken } from './apiClient.js';
-import { loginWithGoogle, MAX_GUEST_NICKNAME_LENGTH, normalizeGuestNickname, saveGuestProfile } from './authService.js';
+import { apiRequest, clearAuthToken, getAuthToken, setAuthToken } from './apiClient.js';
+import { loginWithGoogle, MAX_GUEST_NICKNAME_LENGTH, normalizeGuestNickname, refreshAuthSession, saveGuestProfile } from './authService.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 vi.mock('./apiClient.js', () => ({
   apiRequest: vi.fn(),
@@ -11,6 +13,7 @@ vi.mock('./apiClient.js', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  storage.removeItem(storageKeys.refreshToken);
   apiRequest.mockResolvedValue({ token: 'next-token' });
 });
 
@@ -62,5 +65,48 @@ describe('Google migration contract', () => {
     getAuthToken.mockReturnValue(tokenFor({ type: 'Google', data: { email: 'player@example.com' } }));
     await loginWithGoogle('google-credential');
     expect(apiRequest).toHaveBeenCalledWith('/auth/google', expect.objectContaining({ token: null }));
+  });
+});
+
+describe('session refresh', () => {
+  it('rotates tokens through one request for concurrent callers', async () => {
+    storage.setItem(storageKeys.refreshToken, 'old-refresh');
+    let resolveRefresh;
+    apiRequest.mockImplementationOnce(() => new Promise((resolve) => { resolveRefresh = resolve; }));
+
+    const first = refreshAuthSession();
+    const second = refreshAuthSession();
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(apiRequest).toHaveBeenCalledWith('/auth/refresh', {
+      method: 'POST',
+      body: { refresh_token: 'old-refresh' },
+    });
+
+    resolveRefresh({ token: 'new-access', refresh_token: 'rotated-refresh' });
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { token: 'new-access', refresh_token: 'rotated-refresh' },
+      { token: 'new-access', refresh_token: 'rotated-refresh' },
+    ]);
+    expect(setAuthToken).toHaveBeenCalledOnce();
+    expect(storage.getItem(storageKeys.refreshToken)).toBe('rotated-refresh');
+  });
+
+  it('clears a definitively rejected session and requests profile confirmation', async () => {
+    storage.setItem(storageKeys.refreshToken, 'invalid-refresh');
+    apiRequest.mockRejectedValueOnce({ status: 401 });
+    await expect(refreshAuthSession()).rejects.toMatchObject({
+      code: 'profile_confirmation_required',
+      name: 'SessionExpiredError',
+    });
+    expect(clearAuthToken).toHaveBeenCalledOnce();
+    expect(storage.getItem(storageKeys.refreshToken)).toBeNull();
+  });
+
+  it('preserves the session on a transient refresh failure', async () => {
+    storage.setItem(storageKeys.refreshToken, 'retryable-refresh');
+    apiRequest.mockRejectedValueOnce({ status: 503 });
+    await expect(refreshAuthSession()).rejects.toMatchObject({ status: 503 });
+    expect(clearAuthToken).not.toHaveBeenCalled();
+    expect(storage.getItem(storageKeys.refreshToken)).toBe('retryable-refresh');
   });
 });
