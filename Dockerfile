@@ -1,7 +1,7 @@
 # Stage 1: Compile and build Vite codebase
 
 # Use official node image as the base image
-FROM node:20 AS build
+FROM node:26 AS build
 
 # Set the working directory
 WORKDIR /usr/local/app
