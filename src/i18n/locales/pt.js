@@ -12,6 +12,7 @@ export const pt = {
     nickPlaceholder: 'Digite seu nick',
     or: 'ou',
     playAsGuest: 'Jogar como Guest',
+    profileSaved: 'Perfil salvo.',
     saveNick: 'Salvar nick',
     saveProfileError: 'Não foi possível salvar o perfil.',
     selectAvatar: 'Selecione seu avatar',
