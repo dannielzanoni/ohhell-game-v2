@@ -1,21 +1,14 @@
 import { environment } from '@/config/environment.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { legacyStorageKeys, storageKeys } from '@/infrastructure/storage/storageKeys.js';
+import { createHttpClient, HttpError } from '@/infrastructure/http/httpClient.js';
 
 export const API_BASE_URL = environment.apiUrl;
 
 export const JWT_TOKEN = storageKeys.authToken;
 const LEGACY_AUTH_TOKEN_STORAGE_KEY = legacyStorageKeys.authToken;
 
-export class ApiError extends Error {
-  constructor({ message, status, statusText, data }) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.statusText = statusText;
-    this.data = data;
-  }
-}
+export { HttpError as ApiError };
 
 function normalizeStoredToken(value) {
   if (!value) {
@@ -64,97 +57,11 @@ export function clearAuthToken() {
   storage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
 }
 
-function buildUrl(path, query) {
-  const url = new URL(
-    path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`,
-  );
+const httpClient = createHttpClient({
+  baseUrl: API_BASE_URL,
+  getAccessToken: getAuthToken,
+});
 
-  Object.entries(query || {}).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      url.searchParams.set(key, String(value));
-    }
-  });
-
-  return url.toString();
-}
-
-async function parseResponse(response) {
-  const text = await response.text();
-
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-
-export async function apiRequest(
-  path,
-  {
-    auth = false,
-    body,
-    headers,
-    method = 'GET',
-    query,
-    signal,
-    token = getAuthToken(),
-  } = {},
-) {
-  if (auth && !token) {
-    throw new ApiError({
-      message: 'Missing auth token',
-      status: 401,
-      statusText: 'Unauthorized',
-      data: { error: 'Missing auth token' },
-    });
-  }
-
-  const requestHeaders = {
-    Accept: 'application/json',
-    ...headers,
-  };
-
-  if (body !== undefined) {
-    requestHeaders['Content-Type'] = 'application/json';
-  }
-
-  if (token) {
-    requestHeaders.Authorization = `Bearer ${token}`;
-  }
-
-  const requestUrl = buildUrl(path, query);
-  let response;
-
-  try {
-    response = await fetch(requestUrl, {
-      body: body === undefined ? undefined : JSON.stringify(body),
-      headers: requestHeaders,
-      method,
-      signal,
-    });
-  } catch (error) {
-    throw new ApiError({
-      message: `Nao foi possivel conectar na API em ${API_BASE_URL}. Verifique se o backend esta rodando.`,
-      status: 0,
-      statusText: 'Network Error',
-      data: { error: error.message, url: requestUrl },
-    });
-  }
-
-  const data = await parseResponse(response);
-
-  if (!response.ok) {
-    throw new ApiError({
-      message: data?.error || response.statusText || 'Request failed',
-      status: response.status,
-      statusText: response.statusText,
-      data,
-    });
-  }
-
-  return data;
+export function apiRequest(path, options) {
+  return httpClient.request(path, options);
 }
