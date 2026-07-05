@@ -2,21 +2,8 @@ import { Home, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxTrigger,
-} from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
-
-const lifeOptions = [1, 2, 3, 4, 5].map((life) => ({
-  label: String(life),
-  value: String(life),
-}));
+import { LivesSelector } from './LivesSelector.jsx';
 
 export function CreateGameView({ controller }) {
   const { t } = useTranslation();
@@ -60,35 +47,7 @@ export function CreateGameView({ controller }) {
           </div>
 
           <div className="mt-6 grid gap-5">
-            <div className="block min-w-0">
-              <span className="text-sm font-semibold text-foreground">
-                {t('pages.createGame.livesNumber')}
-              </span>
-              <Combobox
-                data={lifeOptions}
-                type={t('pages.createGame.lifeType')}
-                value={lives}
-                onValueChange={setLives}
-              >
-                <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
-                <ComboboxContent className="rounded-xl border-border bg-popover">
-                  <ComboboxList>
-                    <ComboboxEmpty>{t('pages.createGame.noOptions')}</ComboboxEmpty>
-                    <ComboboxGroup>
-                      {lifeOptions.map((option) => (
-                        <ComboboxItem
-                          key={option.value}
-                          value={option.value}
-                          data-checked={lives === option.value}
-                        >
-                          {option.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxGroup>
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </div>
+            <LivesSelector lives={lives} onChange={setLives} />
 
             <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
