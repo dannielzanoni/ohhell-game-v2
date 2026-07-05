@@ -18,6 +18,7 @@ import { createReadyController } from './readyController.js';
 import { copyText } from '@/infrastructure/browser/clipboard.js';
 import { getRoomInviteLink, shareRoomInvite } from './roomInvite.js';
 import { getOnlineStatus, subscribeConnectivity } from '@/infrastructure/browser/connectivity.js';
+import { createGameStateController } from '@/domain/gameStateReducer.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -47,6 +48,8 @@ export function useGameController() {
   }
   const readyRef = useRef(null);
   if (!readyRef.current) readyRef.current = createReadyController({ send: setPlayerReady });
+  const gameStateRef = useRef(null);
+  if (!gameStateRef.current) gameStateRef.current = createGameStateController();
 
   useEffect(() => () => sessionRef.current?.dispose(), []);
 
@@ -54,10 +57,12 @@ export function useGameController() {
     () => ({
       createGameSocket: (options) => sessionRef.current.connect(options),
       confirmRoomEntry: (options) => roomEntryGateRef.current.confirm(options),
+      consumeGameMessage: (message) => gameStateRef.current.consume(message),
       copyText,
       getAuthToken,
       getCurrentPlayerId: decodeCurrentPlayerId,
       getGamePreferences,
+      getGameState: () => gameStateRef.current.getState(),
       getOnlineStatus,
       getRoomInviteLink,
       isMissingAuthTokenError,
@@ -68,6 +73,7 @@ export function useGameController() {
       shareRoomInvite,
       settleReady: () => readyRef.current.settle(),
       subscribeConnectivity,
+      subscribeGameState: (subscriber) => gameStateRef.current.subscribe(subscriber),
       subscribeToGamePreferences,
     }),
     [],

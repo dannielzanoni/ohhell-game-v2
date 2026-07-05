@@ -1304,8 +1304,10 @@ export function GameView({ controller }) {
     createGameSocket,
     copyText,
     confirmRoomEntry,
+    consumeGameMessage,
     getAuthToken,
     getGamePreferences,
+    getGameState,
     getOnlineStatus,
     getRoomInviteLink,
     isMissingAuthTokenError,
@@ -1317,6 +1319,7 @@ export function GameView({ controller }) {
     settleReady,
     subscribeToGamePreferences,
     subscribeConnectivity,
+    subscribeGameState,
   } = controller;
   const { lobbyId } = useParams();
   const location = useLocation();
@@ -1377,6 +1380,7 @@ export function GameView({ controller }) {
   const [hasGameSocket, setHasGameSocket] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isOffline, setIsOffline] = useState(() => !getOnlineStatus());
+  const [sharedGameState, setSharedGameState] = useState(() => getGameState());
   const [isReadySending, setIsReadySending] = useState(false);
   const [matchPhase, setMatchPhase] = useState('waiting');
   const [elevatedPileCardKey, setElevatedPileCardKey] = useState('');
@@ -1568,6 +1572,8 @@ export function GameView({ controller }) {
     setIsOffline(!online);
     if (online) setJoinAttempt((attempt) => attempt + 1);
   }), []);
+
+  useEffect(() => subscribeGameState(setSharedGameState), []);
 
   const handleProfileStateChange = useCallback((state) => {
     setProfileGateState((previousState) => {
@@ -1838,6 +1844,7 @@ export function GameView({ controller }) {
     };
 
     function processServerMessage(message) {
+      consumeGameMessage(message);
       switch (message.type) {
         case 'Snapshot': {
           if (message.data?.type === 'Waiting') {
@@ -2512,6 +2519,7 @@ export function GameView({ controller }) {
 
   return (
     <main
+      data-game-phase={sharedGameState.phase}
       aria-label={t('game.tableAria')}
       className="relative min-h-screen overflow-hidden bg-black"
     >

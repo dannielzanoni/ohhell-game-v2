@@ -59,6 +59,17 @@ describe('GameRealtimeSession', () => {
     );
   });
 
+  it('ignores and reports unknown messages without failing the session', () => {
+    const onError = vi.fn();
+    const onUnknown = vi.fn();
+    createSession().connect({ onError, onMessage: vi.fn(), onUnknown });
+    FakeSocket.instances[0].emit('message', {
+      data: JSON.stringify({ type: 'FutureMessage', data: {} }),
+    });
+    expect(onUnknown).toHaveBeenCalledWith({ code: 'unknown_server_message' });
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it('does not expose an authenticated socket URL through connection errors', () => {
     const onError = vi.fn();
     createSession().connect({ onError });

@@ -43,9 +43,9 @@ export class GameRealtimeSession {
     return this.socket?.readyState ?? CLOSED;
   }
 
-  connect({ onClose, onError, onMessage, onOpen, token = getAuthToken() } = {}) {
+  connect({ onClose, onError, onMessage, onOpen, onUnknown, token = getAuthToken() } = {}) {
     if (this.disposed) throw new Error('Realtime session is disposed');
-    this.handlers = { onClose, onError, onMessage, onOpen };
+    this.handlers = { onClose, onError, onMessage, onOpen, onUnknown };
 
     if (this.socket && [CONNECTING, OPEN].includes(this.socket.readyState)) {
       return this;
@@ -64,7 +64,11 @@ export class GameRealtimeSession {
       try {
         this.handlers.onMessage?.(parseRealtimeMessage(event.data), event);
       } catch (error) {
-        this.handlers.onError?.(error);
+        if (String(error?.message).startsWith('Unknown realtime message type:')) {
+          this.handlers.onUnknown?.({ code: 'unknown_server_message' });
+        } else {
+          this.handlers.onError?.(error);
+        }
       }
     });
     socket.addEventListener('error', (event) => {
