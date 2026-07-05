@@ -1,7 +1,10 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
 
-const pendingCommandsBySocket = new WeakMap();
+const CONNECTING = 0;
+const OPEN = 1;
+const CLOSING = 2;
+const CLOSED = 3;
 
 export function getGameSocketUrl(token = getAuthToken()) {
   if (!token) {
@@ -14,40 +17,87 @@ export function getGameSocketUrl(token = getAuthToken()) {
   return url.toString();
 }
 
-export function createGameSocket({
-  onClose,
-  onError,
-  onMessage,
-  onOpen,
-  token = getAuthToken(),
-} = {}) {
-  const socket = new WebSocket(getGameSocketUrl(token));
+export class GameRealtimeSession {
+  constructor({ Socket = globalThis.WebSocket, urlFactory = getGameSocketUrl } = {}) {
+    this.Socket = Socket;
+    this.urlFactory = urlFactory;
+    this.socket = null;
+    this.pending = [];
+    this.handlers = {};
+    this.disposed = false;
+  }
 
-  socket.addEventListener('open', (event) => {
-    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
+  get readyState() {
+    return this.socket?.readyState ?? CLOSED;
+  }
 
-    pendingCommands.forEach((command) => {
-      socket.send(JSON.stringify(command));
+  connect({ onClose, onError, onMessage, onOpen, token = getAuthToken() } = {}) {
+    if (this.disposed) throw new Error('Realtime session is disposed');
+    this.handlers = { onClose, onError, onMessage, onOpen };
+
+    if (this.socket && [CONNECTING, OPEN].includes(this.socket.readyState)) {
+      return this;
+    }
+    if (!this.Socket) throw new Error('WebSocket is unavailable');
+
+    const socket = new this.Socket(this.urlFactory(token));
+    this.socket = socket;
+    socket.addEventListener('open', (event) => {
+      if (this.socket !== socket || this.disposed) return;
+      this.pending.splice(0).forEach((payload) => socket.send(payload));
+      this.handlers.onOpen?.(event);
     });
-    pendingCommandsBySocket.delete(socket);
+    socket.addEventListener('message', (event) => {
+      if (this.socket !== socket || this.disposed) return;
+      try {
+        this.handlers.onMessage?.(JSON.parse(event.data), event);
+      } catch (error) {
+        this.handlers.onError?.(error);
+      }
+    });
+    socket.addEventListener('error', (event) => {
+      if (this.socket === socket && !this.disposed) this.handlers.onError?.(event);
+    });
+    socket.addEventListener('close', (event) => {
+      if (this.socket !== socket) return;
+      this.socket = null;
+      if (!this.disposed) this.handlers.onClose?.(event);
+    });
 
-    onOpen?.(event);
-  });
+    return this;
+  }
 
-  socket.addEventListener('message', (event) => {
-    const message = JSON.parse(event.data);
-    onMessage?.(message, event);
-  });
+  send(payload) {
+    if (this.disposed) throw new Error('Realtime session is disposed');
+    if (this.readyState === CONNECTING) {
+      this.pending.push(payload);
+      return;
+    }
+    if (this.readyState !== OPEN) throw new Error('WebSocket is not open');
+    this.socket.send(payload);
+  }
 
-  socket.addEventListener('error', (event) => {
-    onError?.(event);
-  });
+  close(code, reason) {
+    this.pending = [];
+    if (this.socket && this.socket.readyState < CLOSING) {
+      this.socket.close(code, reason);
+    }
+  }
 
-  socket.addEventListener('close', (event) => {
-    onClose?.(event);
-  });
+  dispose() {
+    this.disposed = true;
+    this.handlers = {};
+    this.close(1000, 'route-unmounted');
+    this.socket = null;
+  }
+}
 
-  return socket;
+export function createGameSession(options) {
+  return new GameRealtimeSession(options);
+}
+
+export function createGameSocket(options) {
+  return createGameSession().connect(options);
 }
 
 export function sendGameCommand(socket, command) {
@@ -55,14 +105,7 @@ export function sendGameCommand(socket, command) {
     throw new Error('WebSocket is not open');
   }
 
-  if (socket.readyState === WebSocket.CONNECTING) {
-    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
-    pendingCommands.push(command);
-    pendingCommandsBySocket.set(socket, pendingCommands);
-    return;
-  }
-
-  if (socket.readyState !== WebSocket.OPEN) {
+  if (![CONNECTING, OPEN].includes(socket.readyState)) {
     throw new Error('WebSocket is not open');
   }
 
@@ -92,6 +135,7 @@ export function setPlayerReady(socket, ready) {
 
 export const gameSocketService = {
   createGameSocket,
+  createGameSession,
   getGameSocketUrl,
   playTurn,
   putBid,
