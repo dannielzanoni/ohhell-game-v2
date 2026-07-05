@@ -354,7 +354,7 @@ function createLifeLossHighlight(lifesByPlayer, playersById, defaultLifes) {
   return null;
 }
 
-function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
+export function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
   return Object.entries(statusMap || {}).reduce((players, [id, status]) => {
     const previous = previousPlayers[id];
     const nextPlayer = normalizePlayer({
@@ -399,9 +399,9 @@ function getLobbyGameInfo(lobbyInfo) {
   return null;
 }
 
-function getSnapshotStatusMap(snapshot) {
+export function getSnapshotStatusMap(snapshot) {
   if (snapshot?.type === 'Waiting') {
-    return snapshot.data;
+    return snapshot.status || snapshot.data;
   }
 
   if (snapshot?.type === 'Playing') {

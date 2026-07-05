@@ -1,5 +1,5 @@
 [
-  {"type":"Snapshot","data":{"type":"Waiting","status":{"player-1":{"ready":false}}}},
+  {"type":"Snapshot","data":{"type":"Waiting","status":{"player-1":{"ready":false,"player":{"type":"Anonymous","data":{"id":"player-1","data":{"nickname":"Guest","picture":"avatar-1"}}}}}}},
   {"type":"PlayerJoined","data":{"id":"player-1","nickname":"Guest","picture":"avatar-1"}},
   {"type":"PlayerLeft","data":{"player_id":"player-1"}},
   {"type":"PlayerStatusChange","data":{"player_id":"player-1","ready":true}},
