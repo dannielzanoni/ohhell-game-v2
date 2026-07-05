@@ -6,8 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh Hell Game V2</title>
     <script>
-      const theme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.classList.toggle('dark', theme === 'dark');
+      (() => {
+        let theme = 'dark';
+        try {
+          theme = localStorage.getItem('ohhell_theme') || localStorage.getItem('theme') || theme;
+          if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+          localStorage.setItem('ohhell_theme', theme);
+          localStorage.removeItem('theme');
+        } catch (_) {
+          // Storage may be unavailable; the deterministic dark default still applies.
+        }
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
     </script>
   </head>
   <body>

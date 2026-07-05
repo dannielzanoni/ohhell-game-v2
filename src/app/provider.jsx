@@ -1,25 +1,25 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { migrateApplicationStorage } from '@/infrastructure/storage/migrations.js';
-import { storage } from '@/infrastructure/storage/storageAdapter.js';
-import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
+import { createContext, useContext, useLayoutEffect, useMemo, useState } from 'react';
+import { applyTheme, getInitialTheme, themes } from '@/theme/theme.js';
 
 const ThemeContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    migrateApplicationStorage();
-    return storage.getItem(storageKeys.theme) || 'dark';
-  });
+  const [theme, setThemeState] = useState(getInitialTheme);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    storage.setItem(storageKeys.theme, theme);
+  useLayoutEffect(() => {
+    applyTheme(theme);
   }, [theme]);
+
+  const setTheme = (nextTheme) => {
+    const resolved = typeof nextTheme === 'function' ? nextTheme(theme) : nextTheme;
+    setThemeState(applyTheme(resolved));
+  };
 
   const value = useMemo(
     () => ({
       theme,
-      toggleTheme: () => setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
+      setTheme,
+      toggleTheme: () => setTheme(theme === themes.DARK ? themes.LIGHT : themes.DARK),
     }),
     [theme],
   );
