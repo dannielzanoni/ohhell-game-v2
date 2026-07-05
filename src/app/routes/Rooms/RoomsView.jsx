@@ -149,6 +149,12 @@ export function RoomsView({ controller }) {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t('pages.rooms.emptyDescription')}
                 </p>
+                <Button asChild className="mt-5 h-11 gap-2">
+                  <Link to={routePaths.createGame}>
+                    <Plus aria-hidden="true" className="size-4" />
+                    {t('pages.rooms.create')}
+                  </Link>
+                </Button>
               </div>
             </div>
           )}
