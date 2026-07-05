@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
+import { ResilientImage } from '@/components/ui/resilient-image.jsx';
 import { cn } from '@/lib/utils.js';
 import { avatarGroups } from '@/assets/catalog/avatarCatalog.js';
 
@@ -90,7 +91,7 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                       }}
                     >
                       <span className="block size-full overflow-hidden rounded-full border border-border bg-muted shadow-sm">
-                        <img
+                        <ResilientImage
                           src={avatar.src}
                           alt=""
                           className="block h-full w-full scale-110 object-cover"
