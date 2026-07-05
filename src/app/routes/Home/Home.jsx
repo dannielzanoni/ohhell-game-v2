@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import card1Ouro from '@/assets/cards/spanish/1ouro.jpg';
@@ -10,6 +11,8 @@ import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
 import { cn } from '@/lib/utils.js';
+import { authService } from '@/services/authService.js';
+import { getMyStats } from '@/services/statsService.js';
 import { pageLinks } from '../pageLinks.js';
 
 const cardGroups = [
@@ -31,10 +34,126 @@ const cardGroups = [
   },
 ];
 
+const playerStatItems = [
+  {
+    labelKey: 'leaderboard.games',
+    getValue: (stats) => formatNumber(stats.games_played),
+  },
+  {
+    labelKey: 'leaderboard.wins',
+    getValue: (stats) => formatNumber(stats.matches_won),
+  },
+  {
+    labelKey: 'leaderboard.winRate',
+    getValue: (stats) => formatPercent(stats.win_rate),
+  },
+  {
+    labelKey: 'leaderboard.rounds',
+    getValue: (stats) => formatNumber(stats.rounds_won),
+  },
+  {
+    labelKey: 'leaderboard.bidHit',
+    getValue: (stats) => formatPercent(stats.bid_accuracy),
+  },
+  {
+    labelKey: 'leaderboard.averageBid',
+    getValue: (stats) => formatNumber(stats.average_bid, 2),
+  },
+];
+
+function formatNumber(value, fractionDigits = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(fractionDigits) : '0';
+}
+
+function formatPercent(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toFixed(1)}%` : '0.0%';
+}
+
+function PlayerStatsPanel({ error, isLoading, stats, t }) {
+  return (
+    <section className="rounded-lg border border-border bg-card p-6 shadow-sm lg:p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+        {t('pages.home.stats.eyebrow')}
+      </p>
+      <h2 className="mt-2 text-lg font-black tracking-tight text-foreground">
+        {t('pages.home.stats.title')}
+      </h2>
+
+      {isLoading ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="h-16 animate-pulse rounded-md bg-muted" />
+          ))}
+        </div>
+      ) : error ? (
+        <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
+          {error}
+        </p>
+      ) : stats ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {playerStatItems.map((item) => (
+            <div key={item.labelKey} className="rounded-md bg-muted px-3 py-2">
+              <span className="block text-xs font-semibold text-muted-foreground">
+                {t(item.labelKey)}
+              </span>
+              <strong className="mt-1 block text-xl font-black text-foreground">
+                {item.getValue(stats)}
+              </strong>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          {t('pages.home.stats.empty')}
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function Home() {
   const { t } = useTranslation();
+  const [hasAuthToken, setHasAuthToken] = useState(() =>
+    Boolean(authService.getAuthToken()),
+  );
+  const [playerStats, setPlayerStats] = useState(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState('');
   const mobileTitleSecondLine = t('common.appNameShort2');
   const hasMobileTitleSecondLine = mobileTitleSecondLine.trim().length > 0;
+
+  const loadPlayerStats = useCallback(async () => {
+    const token = authService.getAuthToken();
+
+    setHasAuthToken(Boolean(token));
+
+    if (!token) {
+      setPlayerStats(null);
+      setStatsError('');
+      return;
+    }
+
+    setIsStatsLoading(true);
+    setStatsError('');
+
+    try {
+      setPlayerStats(await getMyStats());
+    } catch (error) {
+      setStatsError(error.message || t('pages.home.stats.loadError'));
+    } finally {
+      setIsStatsLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    void loadPlayerStats();
+  }, [loadPlayerStats]);
+
+  const handleProfileSaved = useCallback(() => {
+    void loadPlayerStats();
+  }, [loadPlayerStats]);
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
@@ -109,7 +228,17 @@ export function Home() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-5">
-          <LoginCard className="lg:p-5" />
+          <div className="grid gap-4 lg:gap-3">
+            <LoginCard className="lg:p-5" onSaved={handleProfileSaved} />
+            {hasAuthToken ? (
+              <PlayerStatsPanel
+                error={statsError}
+                isLoading={isStatsLoading}
+                stats={playerStats}
+                t={t}
+              />
+            ) : null}
+          </div>
 
           <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
             {pageLinks.map((page) => {

@@ -125,6 +125,12 @@ export const en = {
       title: 'GitHub',
     },
     home: {
+      stats: {
+        empty: 'Play matches to build your stats.',
+        eyebrow: 'Your stats',
+        loadError: 'Could not load your stats.',
+        title: 'Player stats',
+      },
       tagline:
         'Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!',
     },

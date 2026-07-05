@@ -125,6 +125,12 @@ export const pt = {
       title: 'GitHub',
     },
     home: {
+      stats: {
+        empty: 'Jogue partidas para criar suas estatísticas.',
+        eyebrow: 'Suas estatísticas',
+        loadError: 'Não foi possível carregar suas estatísticas.',
+        title: 'Estatísticas do jogador',
+      },
       tagline:
         'Fodinha, também conhecido como Oh Hell, é um jogo clássico de cartas originário do Truco. Preveja suas vitórias, supere seus amigos e divirta-se online!',
     },
