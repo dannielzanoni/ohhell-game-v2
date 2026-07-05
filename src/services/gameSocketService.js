@@ -1,5 +1,9 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
+import {
+  parseRealtimeMessage,
+  serializeRealtimeCommand,
+} from '@/contracts/v1/contracts.js';
 
 const CONNECTING = 0;
 const OPEN = 1;
@@ -50,7 +54,7 @@ export class GameRealtimeSession {
     socket.addEventListener('message', (event) => {
       if (this.socket !== socket || this.disposed) return;
       try {
-        this.handlers.onMessage?.(JSON.parse(event.data), event);
+        this.handlers.onMessage?.(parseRealtimeMessage(event.data), event);
       } catch (error) {
         this.handlers.onError?.(error);
       }
@@ -109,7 +113,7 @@ export function sendGameCommand(socket, command) {
     throw new Error('WebSocket is not open');
   }
 
-  socket.send(JSON.stringify(command));
+  socket.send(serializeRealtimeCommand(command));
 }
 
 export function playTurn(socket, card) {

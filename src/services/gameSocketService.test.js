@@ -35,15 +35,15 @@ describe('GameRealtimeSession', () => {
 
   it('queues commands during CONNECTING and flushes in order', () => {
     const session = createSession().connect();
-    sendGameCommand(session, { type: 'First' });
-    sendGameCommand(session, { type: 'Second' });
+    sendGameCommand(session, { type: 'PutBid', data: { bid: 1 } });
+    sendGameCommand(session, { type: 'PlayerStatusChange', data: { ready: true } });
     const socket = FakeSocket.instances[0];
     socket.readyState = 1;
     socket.emit('open');
 
     expect(socket.send.mock.calls.flat()).toEqual([
-      JSON.stringify({ type: 'First' }),
-      JSON.stringify({ type: 'Second' }),
+      JSON.stringify({ type: 'PutBid', data: { bid: 1 } }),
+      JSON.stringify({ type: 'PlayerStatusChange', data: { ready: true } }),
     ]);
   });
 
@@ -61,7 +61,7 @@ describe('GameRealtimeSession', () => {
 
   it('closes the socket and clears queued commands on dispose', () => {
     const session = createSession().connect();
-    sendGameCommand(session, { type: 'Queued' });
+    sendGameCommand(session, { type: 'PutBid', data: { bid: 1 } });
     const socket = FakeSocket.instances[0];
     session.dispose();
 
