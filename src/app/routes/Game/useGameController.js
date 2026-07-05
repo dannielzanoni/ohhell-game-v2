@@ -17,6 +17,7 @@ import { createRoomEntryGateController } from './roomEntryGateController.js';
 import { createReadyController } from './readyController.js';
 import { copyText } from '@/infrastructure/browser/clipboard.js';
 import { getRoomInviteLink, shareRoomInvite } from './roomInvite.js';
+import { getOnlineStatus, subscribeConnectivity } from '@/infrastructure/browser/connectivity.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -57,6 +58,7 @@ export function useGameController() {
       getAuthToken,
       getCurrentPlayerId: decodeCurrentPlayerId,
       getGamePreferences,
+      getOnlineStatus,
       getRoomInviteLink,
       isMissingAuthTokenError,
       joinLobby,
@@ -65,6 +67,7 @@ export function useGameController() {
       sendReady: (options) => readyRef.current.toggle(options),
       shareRoomInvite,
       settleReady: () => readyRef.current.settle(),
+      subscribeConnectivity,
       subscribeToGamePreferences,
     }),
     [],

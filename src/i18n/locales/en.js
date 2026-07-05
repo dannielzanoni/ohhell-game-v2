@@ -59,6 +59,7 @@ export const en = {
     lostLives_one: 'Lost {{count}} life',
     lostLives_other: 'Lost {{count}} lives',
     noWinners: 'No winners',
+    offline: 'You are offline. Reconnection will resume when the network returns.',
     winner: 'Winner',
     winners: 'Winners',
     lives_one: '{{count}} life',

@@ -31,6 +31,7 @@ import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
 import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
 import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence.js';
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
+import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import {
   lobbyLivesStorageKey,
@@ -44,7 +45,6 @@ const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
-const WS_RECONNECT_DELAYS_MS = [100, 250, 500, 1000, 1500, 2500];
 const rankStrength = {
   Four: 0,
   Five: 1,
@@ -1306,6 +1306,7 @@ export function GameView({ controller }) {
     confirmRoomEntry,
     getAuthToken,
     getGamePreferences,
+    getOnlineStatus,
     getRoomInviteLink,
     isMissingAuthTokenError,
     joinLobby,
@@ -1315,6 +1316,7 @@ export function GameView({ controller }) {
     shareRoomInvite,
     settleReady,
     subscribeToGamePreferences,
+    subscribeConnectivity,
   } = controller;
   const { lobbyId } = useParams();
   const location = useLocation();
@@ -1374,6 +1376,7 @@ export function GameView({ controller }) {
   const [gameStage, setGameStage] = useState('waiting');
   const [hasGameSocket, setHasGameSocket] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [isOffline, setIsOffline] = useState(() => !getOnlineStatus());
   const [isReadySending, setIsReadySending] = useState(false);
   const [matchPhase, setMatchPhase] = useState('waiting');
   const [elevatedPileCardKey, setElevatedPileCardKey] = useState('');
@@ -1560,6 +1563,11 @@ export function GameView({ controller }) {
       setGamePreferencesState(preferences);
     });
   }, []);
+
+  useEffect(() => subscribeConnectivity(({ online }) => {
+    setIsOffline(!online);
+    if (online) setJoinAttempt((attempt) => attempt + 1);
+  }), []);
 
   const handleProfileStateChange = useCallback((state) => {
     setProfileGateState((previousState) => {
@@ -2193,6 +2201,24 @@ export function GameView({ controller }) {
       processServerMessage(message);
     };
 
+    const applyLobbyInfo = (lobbyInfo) => {
+      const latestCurrentPlayerId = getCurrentPlayerId();
+      const statusMap = getLobbyStatusMap(lobbyInfo);
+      const gameInfo = getLobbyGameInfo(lobbyInfo);
+
+      if (latestCurrentPlayerId) setCurrentPlayerId(latestCurrentPlayerId);
+      if (statusMap) {
+        setMatchPhase('waiting');
+        applyStatusMap(statusMap);
+      }
+      if (gameInfo) {
+        applyGameState(gameInfo, statusMap);
+        setPlayersById((previousPlayers) =>
+          applyGameInfo(previousPlayers, gameInfo, nextLifes),
+        );
+      }
+    };
+
     function scheduleReconnect() {
       if (!isCurrent) {
         return;
@@ -2205,14 +2231,41 @@ export function GameView({ controller }) {
       clearActionTimer();
       setJoinError('');
 
-      const delayMs = WS_RECONNECT_DELAYS_MS[
-        Math.min(reconnectAttempt, WS_RECONNECT_DELAYS_MS.length - 1)
-      ];
+      if (!getOnlineStatus()) {
+        setIsOffline(true);
+        setIsReconnecting(false);
+        return;
+      }
+
+      if (reconnectAttempt >= RECONNECT_DELAYS_MS.length) {
+        setIsReconnecting(false);
+        setJoinError(translateRef.current('game.socketError'));
+        return;
+      }
+
+      const delayMs = reconnectDelay(reconnectAttempt);
       reconnectAttempt += 1;
 
       reconnectTimeoutId = window.setTimeout(() => {
         reconnectTimeoutId = null;
-        connectSocket();
+        reconnectWithSnapshot({
+          join: () => joinLobby(lobbyId),
+          applySnapshot: (lobbyInfo) => {
+            if (isCurrent) applyLobbyInfo(lobbyInfo);
+          },
+          connect: () => {
+            if (isCurrent) connectSocket();
+          },
+        })
+          .catch((error) => {
+            if (!isCurrent) return;
+            if ([403, 404, 409].includes(error?.status)) {
+              setIsReconnecting(false);
+              setJoinError(translateRef.current(joinRoomErrorKey(error)));
+              return;
+            }
+            scheduleReconnect();
+          });
       }, delayMs);
     }
 
@@ -2288,27 +2341,7 @@ export function GameView({ controller }) {
         if (!isCurrent) {
           return;
         }
-
-        const latestCurrentPlayerId = getCurrentPlayerId();
-        const statusMap = getLobbyStatusMap(lobbyInfo);
-        const gameInfo = getLobbyGameInfo(lobbyInfo);
-
-        if (latestCurrentPlayerId) {
-          setCurrentPlayerId(latestCurrentPlayerId);
-        }
-
-        if (statusMap) {
-          setMatchPhase('waiting');
-          applyStatusMap(statusMap);
-        }
-
-        if (gameInfo) {
-          applyGameState(gameInfo, statusMap);
-          setPlayersById((previousPlayers) =>
-            applyGameInfo(previousPlayers, gameInfo, nextLifes),
-          );
-        }
-
+        applyLobbyInfo(lobbyInfo);
         connectSocket();
       })
       .catch((error) => {
@@ -2575,7 +2608,13 @@ export function GameView({ controller }) {
         </div>
       ) : null}
 
-      {isReconnecting && !joinError ? (
+      {isOffline && !joinError ? (
+        <div role="status" className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-orange-300/40 bg-black/85 px-4 py-3 text-center text-sm font-semibold text-orange-100 shadow-lg backdrop-blur">
+          {t('game.offline')}
+        </div>
+      ) : null}
+
+      {isReconnecting && !isOffline && !joinError ? (
         <div className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-amber-300/40 bg-black/85 px-4 py-3 text-center text-sm font-semibold text-amber-100 shadow-lg backdrop-blur">
           {t('game.reconnecting')}
         </div>
