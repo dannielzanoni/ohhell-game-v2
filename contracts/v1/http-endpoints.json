@@ -1,7 +1,7 @@
 [
   {"id":"auth.signup","method":"POST","path":"/auth/signup","request":{"nickname":"Guest","picture":"avatar-1"},"constraints":{"nickname":{"type":"string","maxLength":24}},"response":{"token":"jwt","refresh_token":"refresh"}},
   {"id":"auth.profile","method":"POST","path":"/auth/profile","auth":true,"request":{"nickname":"Guest","picture":"avatar-1"},"constraints":{"nickname":{"type":"string","maxLength":24}},"response":{"token":"jwt"}},
-  {"id":"auth.google","method":"POST","path":"/auth/google","request":{"credential":"google-id-token"},"response":{"token":"jwt","refresh_token":"refresh"}},
+  {"id":"auth.google","method":"POST","path":"/auth/google","optionalAuth":"anonymous-guest","request":{"credential":"google-id-token"},"response":{"token":"jwt","refresh_token":"refresh"}},
   {"id":"auth.refresh","method":"POST","path":"/auth/refresh","request":{"refresh_token":"refresh"},"response":{"token":"jwt","refresh_token":"rotated-refresh"}},
   {"id":"lobby.list","method":"GET","path":"/lobby","auth":true,"response":[{"lobby_id":"room-1","players":2,"capacity":13,"state":"Waiting"}]},
   {"id":"lobby.create","method":"POST","path":"/lobby","auth":true,"request":{"lifes":5},"response":{"lobby_id":"room-1","lifes":5}},
