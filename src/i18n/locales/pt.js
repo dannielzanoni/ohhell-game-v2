@@ -59,6 +59,7 @@ export const pt = {
     lostLives_one: 'Perdeu {{count}} vida',
     lostLives_other: 'Perdeu {{count}} vidas',
     noWinners: 'Sem vencedores',
+    offline: 'Você está offline. A reconexão continuará quando a rede voltar.',
     winner: 'Vencedor',
     winners: 'Vencedores',
     lives_one: '{{count}} vida',
