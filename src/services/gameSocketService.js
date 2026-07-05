@@ -10,6 +10,14 @@ const OPEN = 1;
 const CLOSING = 2;
 const CLOSED = 3;
 
+export class RealtimeConnectionError extends Error {
+  constructor() {
+    super('Realtime connection failed');
+    this.name = 'RealtimeConnectionError';
+    this.code = 'realtime_connection_failed';
+  }
+}
+
 export function getGameSocketUrl(token = getAuthToken()) {
   if (!token) {
     throw new Error('Missing auth token');
@@ -60,7 +68,9 @@ export class GameRealtimeSession {
       }
     });
     socket.addEventListener('error', (event) => {
-      if (this.socket === socket && !this.disposed) this.handlers.onError?.(event);
+      if (this.socket === socket && !this.disposed) {
+        this.handlers.onError?.(new RealtimeConnectionError());
+      }
     });
     socket.addEventListener('close', (event) => {
       if (this.socket !== socket) return;
