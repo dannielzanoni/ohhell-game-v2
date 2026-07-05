@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog.jsx';
 import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
 import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
+import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence.js';
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import {
@@ -35,7 +36,6 @@ import {
   storageKeys,
 } from '@/infrastructure/storage/storageKeys.js';
 
-const MAX_TABLE_PLAYERS = 10;
 const MAX_DISPLAYED_LIFES = 5;
 const MAX_VISIBLE_SEAT_CARDS = 6;
 const CURRENT_PLAYER_SEAT_LIFT = 2;
@@ -1369,7 +1369,7 @@ export function GameView({ controller }) {
   const tablePlayers = useMemo(() => {
     return sortPlayers(Object.values(playersById), resolvedCurrentPlayerId).slice(
       0,
-      MAX_TABLE_PLAYERS,
+      MAX_LOBBY_PLAYERS,
     );
   }, [playersById, resolvedCurrentPlayerId]);
 
@@ -1839,23 +1839,18 @@ export function GameView({ controller }) {
               ready: false,
             });
 
-            return {
-              ...previousPlayers,
-              [player.id]: {
-                ...previousPlayers[player.id],
-                ...player,
-              },
-            };
+            return reducePlayerPresence(previousPlayers, {
+              type: 'PlayerJoined',
+              player,
+            });
           });
           break;
         }
         case 'PlayerLeft':
-          setPlayersById((previousPlayers) => {
-            const nextPlayers = { ...previousPlayers };
-            delete nextPlayers[message.data.player_id];
-
-            return nextPlayers;
-          });
+          setPlayersById((previousPlayers) => reducePlayerPresence(previousPlayers, {
+            type: 'PlayerLeft',
+            playerId: message.data.player_id,
+          }));
           break;
         case 'PlayerStatusChange':
           setIsReadySending(false);
