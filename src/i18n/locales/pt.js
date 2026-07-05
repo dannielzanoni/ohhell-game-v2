@@ -75,6 +75,8 @@ export const pt = {
     reconnecting: 'Reconectando na partida...',
     roomLink: 'Link da sala',
     linkCopied: 'Link da sala copiado.',
+    shareRoomLink: 'Compartilhar link da sala',
+    shareRoomTitle: 'Entre na minha sala de Fodinha',
     socketError: 'Erro na conexão em tempo real da sala.',
     tableAria: 'Mesa do Oh Hell',
     timerBid: 'Bid',
