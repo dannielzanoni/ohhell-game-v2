@@ -59,6 +59,7 @@ export const en = {
     deckAndJoker: 'Deck and joker card',
     deckAndJokerSelected: '{{deck}} deck and joker card',
     playedCardLabel: '{{player}} played {{card}}',
+    playCardLabel: 'Play {{card}}',
     enterRoom: 'Enter room',
     enterRoomError: 'Could not enter the room.',
     enteringRoom: 'Entering...',

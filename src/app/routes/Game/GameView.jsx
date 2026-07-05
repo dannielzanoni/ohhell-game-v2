@@ -32,6 +32,7 @@ import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
 import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence.js';
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
+import { createCardPlayGate } from './cardPlayGate.js';
 import {
   createPileVisualModel,
   getCardStrength,
@@ -1188,7 +1189,15 @@ function LifeLossPopup({ highlight }) {
   );
 }
 
-function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
+export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
+  const { t } = useTranslation();
+  const playGateRef = useRef(null);
+  if (!playGateRef.current) playGateRef.current = createCardPlayGate();
+
+  useEffect(() => {
+    if (!canPlayCards) playGateRef.current.reset();
+  }, [canPlayCards]);
+
   if (!cards.length) {
     return null;
   }
@@ -1217,17 +1226,18 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
             key={`${getCardKey(card)}-${index}`}
             type="button"
             disabled={!canPlayCards}
-            title={getCardLabel(card)}
+            aria-label={t('game.playCardLabel', { card: getCardLabel(card, t) })}
+            title={getCardLabel(card, t)}
             className={`shrink-0 sm:scale-110 ${index === 0 ? '' : overlapClass} ${
               canPlayCards
-                ? 'cursor-pointer active:-translate-y-3 sm:hover:-translate-y-6 sm:hover:scale-125'
+                ? 'cursor-pointer active:-translate-y-3 sm:hover:-translate-y-6 sm:hover:scale-125 focus-visible:-translate-y-6 focus-visible:scale-125 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300'
                 : 'cursor-not-allowed opacity-98'
             } transition duration-200`}
-            onClick={() => onPlayCard(card)}
+            onClick={() => playGateRef.current.tryPlay(() => onPlayCard(card))}
           >
             <img
               src={getCardImageSrc(card, deckType, cardBackSrc)}
-              alt={getCardLabel(card)}
+              alt=""
               className={`${cardSizeClass} rounded-lg border-2 border-black bg-white object-contain shadow-2xl shadow-black/60`}
               draggable="false"
             />
