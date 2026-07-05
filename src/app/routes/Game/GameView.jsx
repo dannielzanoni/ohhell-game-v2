@@ -18,6 +18,7 @@ import {
 } from '@/assets/catalog/cardCatalog.js';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import { useTemporaryValue } from '@/components/ui/useTemporaryValue.js';
 import {
   Dialog,
   DialogContent,
@@ -994,18 +995,17 @@ function ActionTimer({ onExpire, timer }) {
   );
 }
 
-function RoomLinkCopy({ lobbyId }) {
+export function RoomLinkCopy({ copyText, getRoomInviteLink, lobbyId }) {
   const { t } = useTranslation();
-  const [wasCopied, setWasCopied] = useState(false);
-  const roomLink = `${window.location.origin}/game/${lobbyId}`;
+  const [copyStatus, setCopyStatus] = useTemporaryValue('idle');
+  const roomLink = getRoomInviteLink(lobbyId);
 
   const copyRoomLink = async () => {
     try {
-      await navigator.clipboard.writeText(roomLink);
-      setWasCopied(true);
-      window.setTimeout(() => setWasCopied(false), 1600);
+      await copyText(roomLink);
+      setCopyStatus('copied');
     } catch {
-      setWasCopied(false);
+      setCopyStatus('failed');
     }
   };
 
@@ -1028,8 +1028,15 @@ function RoomLinkCopy({ lobbyId }) {
         className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-amber-300 text-zinc-950 transition hover:bg-amber-200"
         onClick={copyRoomLink}
       >
-        {wasCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        {copyStatus === 'copied' ? <Check className="size-4" /> : <Copy className="size-4" />}
       </button>
+      <span className="sr-only" role="status">
+        {copyStatus === 'copied'
+          ? t('game.linkCopied')
+          : copyStatus === 'failed'
+            ? t('game.copyFailed')
+            : ''}
+      </span>
     </div>
   );
 }
@@ -1278,9 +1285,11 @@ function LobbyAuthGate({
 export function GameView({ controller }) {
   const {
     createGameSocket,
+    copyText,
     confirmRoomEntry,
     getAuthToken,
     getGamePreferences,
+    getRoomInviteLink,
     isMissingAuthTokenError,
     joinLobby,
     playTurn,
@@ -2471,7 +2480,9 @@ export function GameView({ controller }) {
 
       <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
 
-      {isWaitingForReady && lobbyId ? <RoomLinkCopy lobbyId={lobbyId} /> : null}
+      {isWaitingForReady && lobbyId ? (
+        <RoomLinkCopy copyText={copyText} getRoomInviteLink={getRoomInviteLink} lobbyId={lobbyId} />
+      ) : null}
 
       {tablePlayers.map((player, index) => {
         const isCurrentPlayer = player.id === resolvedCurrentPlayerId;
