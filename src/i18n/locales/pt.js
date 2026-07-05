@@ -115,6 +115,7 @@ export const pt = {
   },
   pages: {
     createGame: {
+      comingSoon: 'Em breve',
       configureBefore: 'Configure a partida antes de entrar na mesa.',
       configurations: 'Configurações do jogo',
       createError: 'Não foi possível criar a sala.',
@@ -127,6 +128,7 @@ export const pt = {
       livesNumber: 'Número de vidas',
       noOptions: 'Nenhuma opção encontrada.',
       publicRoom: 'Sala pública',
+      publicRoomUnavailable: 'Requer suporte futuro do backend.',
     },
     github: {
       description: 'Repositório do projeto Oh Hell Game v2',

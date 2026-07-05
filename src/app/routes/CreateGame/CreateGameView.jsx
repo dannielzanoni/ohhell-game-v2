@@ -52,14 +52,23 @@ export function CreateGameView({ controller }) {
 
             <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
                   {t('pages.createGame.publicRoom')}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {t('pages.createGame.comingSoon')}
+                  </span>
+                </p>
+                <p id="public-room-unavailable" className="mt-1 text-xs text-muted-foreground">
+                  {t('pages.createGame.publicRoomUnavailable')}
                 </p>
               </div>
               <button
                 type="button"
+                role="switch"
+                aria-checked="false"
                 disabled
-                aria-label={t('pages.createGame.enablePublicRoom')}
+                aria-label={t('pages.createGame.publicRoom')}
+                aria-describedby="public-room-unavailable"
                 className="relative h-7 w-12 shrink-0 cursor-not-allowed rounded-full bg-muted opacity-60"
               >
                 <span className="absolute left-1 top-1 size-5 rounded-full bg-muted-foreground/70" />
