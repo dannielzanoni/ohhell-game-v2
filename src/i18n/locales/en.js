@@ -7,6 +7,7 @@ export const en = {
     googleKeepsGuest: 'Signing in with Google will keep your guest username and avatar.',
     googleLoginError: 'Google login failed. Please try again.',
     googleUnavailable: 'Google login is unavailable right now.',
+    gifs: 'Animated avatars',
     loginGoogle: 'Login with Google',
     nick: 'Nick',
     nickPlaceholder: 'Enter your nick',

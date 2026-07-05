@@ -7,6 +7,7 @@ export const pt = {
     googleKeepsGuest: 'Entrar com Google manterá seu nick e avatar de guest.',
     googleLoginError: 'Falha no login com Google. Tente novamente.',
     googleUnavailable: 'O login com Google não está disponível agora.',
+    gifs: 'Avatares animados',
     loginGoogle: 'Login com Google',
     nick: 'Nick',
     nickPlaceholder: 'Digite seu nick',
