@@ -15,6 +15,8 @@ import {
 import { joinLobby } from '@/services/lobbyService.js';
 import { createRoomEntryGateController } from './roomEntryGateController.js';
 import { createReadyController } from './readyController.js';
+import { copyText } from '@/infrastructure/browser/clipboard.js';
+import { getRoomInviteLink } from './roomInvite.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -51,9 +53,11 @@ export function useGameController() {
     () => ({
       createGameSocket: (options) => sessionRef.current.connect(options),
       confirmRoomEntry: (options) => roomEntryGateRef.current.confirm(options),
+      copyText,
       getAuthToken,
       getCurrentPlayerId: decodeCurrentPlayerId,
       getGamePreferences,
+      getRoomInviteLink,
       isMissingAuthTokenError,
       joinLobby,
       playTurn,
