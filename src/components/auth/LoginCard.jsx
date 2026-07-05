@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AvatarEditModal } from './AvatarEditModal.jsx';
 import { findAvatar } from '@/assets/catalog/avatarCatalog.js';
 import { Button } from '@/components/ui/button.jsx';
+import { ResilientImage } from '@/components/ui/resilient-image.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { environment } from '@/config/environment.js';
 import { cn } from '@/lib/utils.js';
@@ -362,7 +363,7 @@ export const LoginCard = forwardRef(function LoginCard(
               onClick={() => setIsAvatarModalOpen(true)}
             >
               {selectedAvatar ? (
-                <img
+                <ResilientImage
                   src={selectedAvatar.src}
                   alt=""
                   className="absolute inset-0 size-full rounded-full object-cover"

@@ -5,6 +5,7 @@ import frenchCard1Ouro from '@/assets/cards/french/1ouro.png';
 import frenchCard2Espada from '@/assets/cards/french/2espada.png';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
+import { ResilientImage } from '@/components/ui/resilient-image.jsx';
 import { HomeShortcuts } from './HomeShortcuts.jsx';
 import { MobileHero } from './MobileHero.jsx';
 import { WebHero } from './WebHero.jsx';
@@ -47,7 +48,7 @@ export function HomeView() {
                   >
                     <div className="flex h-[8.5rem] items-start justify-center px-2 pt-2 md:h-34 lg:h-28 xl:h-32">
                       {group.cards.map((card, index) => (
-                        <img
+                        <ResilientImage
                           key={card.label}
                           src={card.src}
                           alt={card.label}
