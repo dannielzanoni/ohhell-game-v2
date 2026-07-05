@@ -9,6 +9,24 @@ import '@/i18n/index.js';
 afterEach(cleanup);
 
 describe('RoomsView desktop listing', () => {
+  it('offers the same create route in the header and empty state', () => {
+    render(
+      <MemoryRouter>
+        <RoomsView controller={{
+          copyRoomId: vi.fn(),
+          error: null,
+          isLoading: false,
+          lobbies: [],
+          refresh: vi.fn(),
+          status: 'empty',
+        }} />
+      </MemoryRouter>,
+    );
+    const createLinks = screen.getAllByRole('link', { name: 'Create' });
+    expect(createLinks).toHaveLength(2);
+    for (const link of createLinks) expect(link).toHaveAttribute('href', '/create-game');
+  });
+
   it('shows id, players/capacity, state and join action in a bounded grid', () => {
     const copyRoomId = vi.fn();
     render(
