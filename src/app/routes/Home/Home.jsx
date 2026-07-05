@@ -228,17 +228,7 @@ export function Home() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-5">
-          <div className="grid gap-4 lg:gap-3">
-            <LoginCard className="lg:p-5" onSaved={handleProfileSaved} />
-            {hasAuthToken ? (
-              <PlayerStatsPanel
-                error={statsError}
-                isLoading={isStatsLoading}
-                stats={playerStats}
-                t={t}
-              />
-            ) : null}
-          </div>
+          <LoginCard className="lg:p-5" onSaved={handleProfileSaved} />
 
           <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
             {pageLinks.map((page) => {
@@ -298,6 +288,17 @@ export function Home() {
               );
             })}
           </nav>
+
+          {hasAuthToken ? (
+            <div className="lg:col-span-2">
+              <PlayerStatsPanel
+                error={statsError}
+                isLoading={isStatsLoading}
+                stats={playerStats}
+                t={t}
+              />
+            </div>
+          ) : null}
         </div>
       </section>
     </main>
