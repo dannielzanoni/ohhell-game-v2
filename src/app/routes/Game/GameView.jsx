@@ -1248,7 +1248,7 @@ function LobbyAuthGate({
         />
 
         {error ? (
-          <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         ) : null}
@@ -1276,6 +1276,7 @@ function LobbyAuthGate({
 export function GameView({ controller }) {
   const {
     createGameSocket,
+    confirmRoomEntry,
     getAuthToken,
     getGamePreferences,
     isMissingAuthTokenError,
@@ -1554,31 +1555,32 @@ export function GameView({ controller }) {
     setAuthGateError('');
 
     try {
-      const savedProfile = await profileCardRef.current?.saveIfNeeded?.();
-      const token = savedProfile?.token || getAuthToken();
+      await confirmRoomEntry({
+        persistProfile: () => profileCardRef.current?.saveIfNeeded?.(),
+        onConfirmed: () => {
+          const nextCurrentPlayerId = getCurrentPlayerId();
 
-      if (!token) {
-        setAuthGateError(t('game.authSaveGuest'));
-        return;
-      }
+          setAuthGateOpen(false);
+          setCurrentPlayerId(nextCurrentPlayerId);
+          setPlayersById((previousPlayers) => {
+            if (!nextCurrentPlayerId || previousPlayers[nextCurrentPlayerId]) {
+              return previousPlayers;
+            }
 
-      const nextCurrentPlayerId = getCurrentPlayerId();
-
-      setAuthGateOpen(false);
-      setCurrentPlayerId(nextCurrentPlayerId);
-      setPlayersById((previousPlayers) => {
-        if (!nextCurrentPlayerId || previousPlayers[nextCurrentPlayerId]) {
-          return previousPlayers;
-        }
-
-        return {
-          ...previousPlayers,
-          [nextCurrentPlayerId]: createFallbackPlayer(nextCurrentPlayerId, lifes),
-        };
+            return {
+              ...previousPlayers,
+              [nextCurrentPlayerId]: createFallbackPlayer(nextCurrentPlayerId, lifes),
+            };
+          });
+          setJoinAttempt((attempt) => attempt + 1);
+        },
       });
-      setJoinAttempt((attempt) => attempt + 1);
     } catch (error) {
-      setAuthGateError(error.message || t('game.confirmProfileError'));
+      setAuthGateError(
+        error.code === 'profile_confirmation_required'
+          ? t('game.authSaveGuest')
+          : error.message || t('game.confirmProfileError'),
+      );
     } finally {
       setIsProfileConfirming(false);
     }
