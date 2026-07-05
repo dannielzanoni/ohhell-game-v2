@@ -56,7 +56,9 @@ export function getCardAssetKey(card) {
 
 export function getCardLabel(card, translate) {
   if (!card) return '';
-  return `${getRankLabel(card.rank, translate)} de ${getSuitLabel(card.suit, translate)}`;
+  const rank = getRankLabel(card.rank, translate);
+  const suit = getSuitLabel(card.suit, translate);
+  return translate ? translate('cards.label', { rank, suit }) : `${rank} de ${suit}`;
 }
 
 export function getCardBackSrc(cardBack) {

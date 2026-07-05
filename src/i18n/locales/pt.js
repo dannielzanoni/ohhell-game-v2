@@ -35,6 +35,14 @@ export const pt = {
     appNameShort: 'Fodinha',
     appNameShort2: '',
   },
+  cards: {
+    label: '{{rank}} de {{suit}}',
+    ranks: {
+      eight: '8', eleven: '11', five: '5', four: '4', nine: '9', one: 'ás',
+      seven: '7', six: '6', ten: '10', three: '3', twelve: '12', two: '2',
+    },
+    suits: { clubs: 'paus', cups: 'copas', golds: 'ouro', swords: 'espadas' },
+  },
   game: {
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
     bidDone: 'Bid {{number}} feito',
@@ -49,6 +57,8 @@ export const pt = {
     copyRoomLink: 'Copiar link da sala',
     copyFailed: 'Não foi possível copiar o link da sala.',
     deckAndJoker: 'Baralho e carta joker',
+    deckAndJokerSelected: 'Baralho {{deck}} e carta joker',
+    playedCardLabel: '{{player}} jogou {{card}}',
     enterRoom: 'Entrar na sala',
     enterRoomError: 'Não foi possível entrar na sala.',
     enteringRoom: 'Entrando...',

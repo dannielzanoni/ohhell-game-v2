@@ -32,6 +32,14 @@ import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
 import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence.js';
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
+import {
+  createPileVisualModel,
+  getCardStrength,
+  getDeckTranslationKey,
+  getStrongestTurn,
+  getTurnKey,
+  nextRank,
+} from './tableCenterModel.js';
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import {
   lobbyLivesStorageKey,
@@ -45,69 +53,9 @@ const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
-const rankStrength = {
-  Four: 0,
-  Five: 1,
-  Six: 2,
-  Seven: 3,
-  Ten: 4,
-  Eleven: 5,
-  Twelve: 6,
-  One: 7,
-  Two: 8,
-  Three: 9,
-};
-const suitStrength = {
-  Golds: 0,
-  Swords: 1,
-  Cups: 2,
-  Clubs: 3,
-};
-const nextRank = {
-  Eleven: 'Twelve',
-  Five: 'Six',
-  Four: 'Five',
-  One: 'Two',
-  Seven: 'Ten',
-  Six: 'Seven',
-  Ten: 'Eleven',
-  Three: 'Four',
-  Twelve: 'One',
-  Two: 'Three',
-};
-
 const getCurrentPlayerId = decodeCurrentPlayerId;
 
 const getCardKey = getCardAssetKey;
-
-function getCardStrength(card, upcard) {
-  if (!card) {
-    return Number.NEGATIVE_INFINITY;
-  }
-
-  const rankValue = rankStrength[card.rank] ?? -1;
-  const suitValue = suitStrength[card.suit] ?? -1;
-  const baseValue = rankValue * 10 + suitValue;
-
-  return nextRank[upcard?.rank] === card.rank ? baseValue + 100 : baseValue;
-}
-
-function getTurnKey(turn) {
-  return `${turn?.player_id || ''}:${getCardKey(turn?.card)}`;
-}
-
-function getStrongestTurn(pile, upcard) {
-  return (pile || []).reduce((strongestTurn, turn) => {
-    if (!strongestTurn) {
-      return turn;
-    }
-
-    return getCardStrength(turn.card, upcard) >
-      getCardStrength(strongestTurn.card, upcard)
-      ? turn
-      : strongestTurn;
-  }, null);
-}
 
 function getAddedTurn(previousPile, nextPile) {
   const previousCounts = (previousPile || []).reduce((counts, turn) => {
@@ -867,7 +815,7 @@ export function MobileTableHud({ action, currentPlayer, opponents, turnPlayerId 
   );
 }
 
-function TableCenter({
+export function TableCenter({
   cardBackSrc,
   deckType,
   elevatedPileCardKey,
@@ -886,31 +834,14 @@ function TableCenter({
     deckType === deckTypes.FRENCH
       ? 'h-[8.35rem] w-[5.75rem] sm:h-[10.16rem] sm:w-[7rem]'
       : 'h-[8.35rem] w-[5.56rem] sm:h-[10.16rem] sm:w-[6.76rem]';
-  const visualPile = [...pile]
-    .map((turn, index) => ({
-      index,
-      isElevated: elevatedPileCardKey === getTurnKey(turn),
-      strength: getCardStrength(turn.card, upcard),
-      turn,
-    }))
-    .sort((first, second) => {
-      if (first.isElevated !== second.isElevated) {
-        return first.isElevated ? 1 : -1;
-      }
-
-      if (first.strength !== second.strength) {
-        return first.strength - second.strength;
-      }
-
-      return first.index - second.index;
-    });
+  const visualPile = createPileVisualModel(pile, elevatedPileCardKey);
 
   return (
     <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 p-4 text-white sm:gap-8">
       {upcard ? (
         <div className="grid justify-items-center gap-1">
           <div
-            aria-label={t('game.deckAndJoker')}
+            aria-label={t('game.deckAndJokerSelected', { deck: t(getDeckTranslationKey(deckType)) })}
             className="relative h-[7.99rem] w-[5.32rem] [--deck-gap:0.67rem] sm:h-[10.65rem] sm:w-[7.18rem] sm:[--deck-gap:0.97rem]"
           >
             {deckBackCards.map((_, index) => (
@@ -943,21 +874,21 @@ function TableCenter({
       <div className="grid min-w-28 justify-items-center gap-2">
         <div className="relative h-[7.7rem] w-[8.8rem] translate-y-[20%] sm:h-[9.9rem] sm:w-[12.1rem]">
           {visualPile.length ? (
-            visualPile.map(({ isElevated, turn }, index) => {
+            visualPile.map(({ isElevated, key, sourceIndex, turn }) => {
               const playerName =
                 playersById[turn.player_id]?.nickname || turn.player_id;
 
               return (
                 <img
-                  key={getTurnKey(turn)}
+                  key={key}
                   src={getCardImageSrc(turn.card, deckType, cardBackSrc)}
-                  alt={`${playerName}: ${getCardLabel(turn.card)}`}
-                  title={`${playerName}: ${getCardLabel(turn.card)}`}
-                  className={`absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black bg-white object-contain shadow-xl shadow-black/60 transition-transform duration-500 ease-out`}
+                  alt={t('game.playedCardLabel', { card: getCardLabel(turn.card, t), player: playerName })}
+                  title={t('game.playedCardLabel', { card: getCardLabel(turn.card, t), player: playerName })}
+                  className={`pointer-events-none absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 bg-white object-contain shadow-xl shadow-black/60 transition-transform duration-500 ease-out ${isElevated ? 'border-amber-300 ring-4 ring-amber-300/50' : 'border-black'}`}
                   draggable="false"
                   style={{
-                    transform: `translate(-50%, -50%) translateX(${index * 22}px) rotate(${index * 5 - 8}deg)`,
-                    zIndex: isElevated ? visualPile.length + 10 : index + 1,
+                    transform: `translate(-50%, -50%) translate(${sourceIndex * 22}px, ${isElevated ? '-18px' : '0'}) rotate(${sourceIndex * 5 - 8}deg)`,
+                    zIndex: sourceIndex + 1,
                   }}
                 />
               );
