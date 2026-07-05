@@ -766,7 +766,7 @@ export function PlayerSeat({
         ready: t(isReady ? 'game.ready' : 'game.waiting'),
         turn: isTurnToPlay ? t('game.yourTurn') : '',
       })}
-      className={`absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} ${desktopDensityClass} sm:w-[21.6rem] md:w-[18rem]`}
+      className={`absolute z-10 hidden w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} ${desktopDensityClass} sm:w-[21.6rem] md:block md:w-[18rem]`}
       style={{ left: position.left, top: position.top }}
     >
       <SeatCardBacks cardBackSrc={cardBackSrc} count={cardCount} />
@@ -819,6 +819,51 @@ export function PlayerSeat({
 
       {showReadyState && !isCurrent ? <ReadyStatusBadge isReady={isReady} /> : null}
     </div>
+  );
+}
+
+export function MobileTableHud({ action, currentPlayer, opponents, turnPlayerId }) {
+  const { t } = useTranslation();
+  if (!currentPlayer) return null;
+
+  return (
+    <section className="md:hidden" aria-label={t('game.mobileTableStatus')}>
+      <div
+        className="absolute left-0 right-0 top-[max(5.5rem,env(safe-area-inset-top))] z-30 flex gap-2 overflow-x-auto px-3 pb-2 landscape:top-14"
+        aria-label={t('game.opponents')}
+      >
+        {opponents.map((player) => (
+          <article
+            key={player.id}
+            className={`flex min-w-32 shrink-0 items-center gap-2 rounded-full border px-2 py-1.5 text-white shadow-lg ${player.id === turnPlayerId ? 'border-violet-300 bg-violet-950/90' : 'border-white/15 bg-black/80'}`}
+            aria-label={`${player.nickname}; ${player.id === turnPlayerId ? t('game.yourTurn') : ''}`}
+          >
+            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-800">
+              {player.avatarSrc ? <img src={player.avatarSrc} alt="" className="size-full object-cover" /> : <UserRound className="size-5" />}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-xs font-bold">{player.nickname}</span>
+              <span className="block text-[0.65rem] text-zinc-300">{t('game.compactPlayerStats', { bid: player.bid ?? 0, lifes: player.lifes ?? 0 })}</span>
+            </span>
+          </article>
+        ))}
+      </div>
+
+      <article
+        className={`absolute bottom-[calc(env(safe-area-inset-bottom)+10.5rem)] left-3 right-3 z-30 rounded-2xl border p-3 text-white shadow-2xl landscape:bottom-3 landscape:left-3 landscape:right-auto landscape:w-64 ${currentPlayer.id === turnPlayerId ? 'border-violet-300 bg-violet-950/90' : 'border-white/15 bg-black/85'}`}
+        aria-label={t('game.localPlayer')}
+        data-priority="local-player"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <strong className="truncate">{currentPlayer.nickname} · {t('game.you')}</strong>
+          {currentPlayer.id === turnPlayerId ? <span className="rounded-full bg-violet-300 px-2 py-1 text-xs font-black text-violet-950">{t('game.yourTurn')}</span> : null}
+        </div>
+        <p className="mt-1 text-xs text-zinc-200">
+          {t('game.mobilePlayerStats', { bid: currentPlayer.bid ?? 0, lifes: currentPlayer.lifes ?? 0, points: currentPlayer.points ?? 0, ready: t(currentPlayer.ready ? 'game.ready' : 'game.waiting') })}
+        </p>
+        {action ? <div className="mt-2">{action}</div> : null}
+      </article>
+    </section>
   );
 }
 
@@ -2547,7 +2592,7 @@ export function GameView({ controller }) {
       className="relative min-h-screen overflow-hidden bg-black"
     >
       <div
-        className="absolute left-1/2 top-1/2 h-screen w-[130vh] -translate-x-1/2 -translate-y-1/2 rotate-90 scale-80 bg-cover bg-center bg-no-repeat sm:h-full sm:w-full sm:rotate-0 sm:scale-100"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat landscape:bg-cover"
         style={{ backgroundImage: `url(${tableBackground})` }}
       />
 
@@ -2565,6 +2610,23 @@ export function GameView({ controller }) {
       {isWaitingForReady && lobbyId ? (
         <RoomLinkCopy copyText={copyText} getRoomInviteLink={getRoomInviteLink} lobbyId={lobbyId} shareRoomInvite={shareRoomInvite} />
       ) : null}
+
+      <MobileTableHud
+        action={isWaitingForReady && currentPlayer ? (
+          <ReadyControls
+            canToggleReady={canToggleReady}
+            hasEnoughPlayers={hasEnoughPlayers}
+            isPending={isReadySending}
+            isReady={currentPlayer.ready}
+            onToggleReady={toggleReady}
+            readyCount={readyCount}
+            totalPlayers={totalPlayers}
+          />
+        ) : null}
+        currentPlayer={currentPlayer}
+        opponents={tablePlayers.filter((player) => player.id !== resolvedCurrentPlayerId)}
+        turnPlayerId={turnPlayerId}
+      />
 
       {tablePlayers.map((player, index) => {
         const isCurrentPlayer = player.id === resolvedCurrentPlayerId;
