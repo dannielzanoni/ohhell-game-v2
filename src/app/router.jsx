@@ -6,6 +6,7 @@ import { Github } from './routes/Github/Github.jsx';
 import { Home } from './routes/Home/Home.jsx';
 import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
+import { Playground } from './routes/Playground/Playground.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
 
 export function AppRouter() {
@@ -20,6 +21,7 @@ export function AppRouter() {
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
+          <Route path="/playground" element={<Playground />} />
           <Route path="/github" element={<Github />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

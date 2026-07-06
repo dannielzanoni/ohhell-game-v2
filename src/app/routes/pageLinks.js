@@ -1,4 +1,4 @@
-import { BookOpen, Crown, Play, Users } from 'lucide-react';
+import { BookOpen, Crown, Play, Sparkles, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
@@ -32,6 +32,14 @@ export const pageLinks = [
     label: 'How To Play',
     labelKey: 'pages.links.howToPlay.label',
     path: '/how-to-play',
+  },
+  {
+    description: 'Create and save custom magic cards.',
+    descriptionKey: 'pages.links.playground.description',
+    icon: Sparkles,
+    label: 'Playground',
+    labelKey: 'pages.links.playground.label',
+    path: '/playground',
   },
   {
     description: 'Project repository for Oh Hell Game v2',

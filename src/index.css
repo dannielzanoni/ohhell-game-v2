@@ -6,6 +6,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'CardDisplay';
+  src: url('./assets/fonts/black-chancery/BLKCHCRY.TTF') format('truetype');
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
