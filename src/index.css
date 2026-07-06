@@ -370,3 +370,15 @@ select {
     width: 5.5rem;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .ohhell-game-ended-overlay,
+  .ohhell-game-ended-card,
+  .ohhell-game-ended-card::before,
+  .ohhell-game-ended-card::after,
+  .ohhell-winner-avatar,
+  .ohhell-no-winners-mark,
+  .ohhell-life-loss-burst {
+    animation: none !important;
+  }
+}
