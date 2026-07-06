@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Home, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ import {
 } from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import { getPowerDecks } from '@/services/cardDefinitionsService.js';
 import { gameTypeOptions, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
@@ -71,6 +72,10 @@ export function CreateGame() {
   const { t } = useTranslation();
   const [gameType, setGameType] = useState(gameTypes.FODINHA_CLASSIC);
   const [livesByGameType, setLivesByGameType] = useState(createDefaultLivesByGameType);
+  const [powerDeckId, setPowerDeckId] = useState('');
+  const [powerDecks, setPowerDecks] = useState([]);
+  const [isLoadingPowerDecks, setIsLoadingPowerDecks] = useState(false);
+  const [powerDeckError, setPowerDeckError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const selectedLifeSettings = getLifeSettings(gameType);
@@ -78,10 +83,57 @@ export function CreateGame() {
   const selectedGameTypeOption = gameTypeOptions.find(
     (option) => option.value === gameType,
   );
+  const isPowerGame = gameType === gameTypes.FODINHA_POWER;
+  const isPowerDeckUnavailable = isPowerGame && (isLoadingPowerDecks || !powerDeckId);
   const gameTypeItems = gameTypeOptions.map((option) => ({
     label: t(option.labelKey),
     value: option.value,
   }));
+
+  useEffect(() => {
+    if (gameType !== gameTypes.FODINHA_POWER) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    async function loadPowerDecks() {
+      setIsLoadingPowerDecks(true);
+      setPowerDeckError('');
+
+      try {
+        const decks = await getPowerDecks();
+
+        if (isActive) {
+          const nextDecks = Array.isArray(decks) ? decks : [];
+          setPowerDecks(nextDecks);
+          setPowerDeckId((current) => {
+            if (nextDecks.some((deck) => deck.id === current)) {
+              return current;
+            }
+
+            return nextDecks[0]?.id || '';
+          });
+        }
+      } catch (error) {
+        if (isActive) {
+          setPowerDecks([]);
+          setPowerDeckId('');
+          setPowerDeckError(error.message || t('pages.createGame.powerDeckLoadError'));
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingPowerDecks(false);
+        }
+      }
+    }
+
+    void loadPowerDecks();
+
+    return () => {
+      isActive = false;
+    };
+  }, [gameType, t]);
 
   const handleGameTypeChange = (nextGameType) => {
     if (!nextGameType) {
@@ -115,12 +167,21 @@ export function CreateGame() {
       return;
     }
 
+    const selectedPowerDeckId =
+      selectedGameType === gameTypes.FODINHA_POWER ? powerDeckId : '';
+
+    if (selectedGameType === gameTypes.FODINHA_POWER && !selectedPowerDeckId) {
+      setCreateError(t('pages.createGame.powerDeckRequired'));
+      return;
+    }
+
     setIsCreating(true);
 
     try {
       const lobby = await createLobby({
         gameType: selectedGameType,
         lifes: selectedLives,
+        powerDeckId: selectedPowerDeckId,
       });
       const lobbyGameType = lobby.game_type || selectedGameType;
 
@@ -129,8 +190,14 @@ export function CreateGame() {
         String(selectedLives),
       );
       localStorage.setItem(`ohhell_lobby_game_type_${lobby.lobby_id}`, lobbyGameType);
+      if (selectedPowerDeckId) {
+        localStorage.setItem(
+          `ohhell_lobby_power_deck_${lobby.lobby_id}`,
+          selectedPowerDeckId,
+        );
+      }
       navigate(`/game/${lobby.lobby_id}`, {
-        state: { gameType: lobbyGameType, lifes: selectedLives },
+        state: { gameType: lobbyGameType, lifes: selectedLives, powerDeckId: selectedPowerDeckId },
       });
     } catch (error) {
       setCreateError(error.message || t('pages.createGame.createError'));
@@ -234,6 +301,42 @@ export function CreateGame() {
               </p>
             </div>
 
+            {isPowerGame ? (
+              <div className="block min-w-0 rounded-lg border border-border bg-background/55 p-4">
+                <label className="text-sm font-semibold text-foreground">
+                  {t('pages.createGame.powerDeck')}
+                  <select
+                    className="mt-3 h-11 w-full rounded-full border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    disabled={isLoadingPowerDecks || !powerDecks.length}
+                    value={powerDeckId}
+                    onChange={(event) => setPowerDeckId(event.target.value)}
+                  >
+                    <option value="" disabled>
+                      {t('pages.createGame.selectPowerDeck')}
+                    </option>
+                    {powerDecks.map((deck) => (
+                      <option key={deck.id} value={deck.id}>
+                        {t('pages.createGame.powerDeckOption', {
+                          count: deck.card_count,
+                          name: deck.name,
+                        })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {isLoadingPowerDecks
+                    ? t('pages.createGame.loadingPowerDecks')
+                    : powerDecks.length
+                      ? t('pages.createGame.powerDeckHint')
+                      : t('pages.createGame.powerDeckEmpty')}
+                </p>
+                {powerDeckError ? (
+                  <p className="mt-2 text-sm text-destructive">{powerDeckError}</p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
@@ -253,7 +356,7 @@ export function CreateGame() {
             <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2">
               <InteractiveHoverButton
                 type="button"
-                disabled={isCreating}
+                disabled={isCreating || isPowerDeckUnavailable}
                 className="h-12 w-full min-w-0 border-border text-base disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleCreateGame}
               >

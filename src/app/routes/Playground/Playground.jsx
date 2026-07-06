@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Code2,
   Download,
   ImagePlus,
   Plus,
   RotateCcw,
   Save,
   Trash2,
+  UploadCloud,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { cn } from '@/lib/utils.js';
+import { createCardDefinition } from '@/services/cardDefinitionsService.js';
 
 const STORAGE_KEY = 'ohhell_magic_card_playground';
 const EXPORT_CARD_HEIGHT = 1344;
@@ -52,6 +56,9 @@ const emptyDraft = {
   imageLayout: createDefaultImageLayout(),
   layout: createDefaultLayout(),
   life: 7,
+  luaScript: '',
+  luaScriptName: '',
+  requiresTarget: false,
   template: '',
   title: 'Artemis Guard',
 };
@@ -89,6 +96,10 @@ function normalizeCard(card) {
       ...(cleanedCard.imageLayout || {}),
     },
     layout,
+    luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
+    luaScriptName:
+      typeof cleanedCard.luaScriptName === 'string' ? cleanedCard.luaScriptName : '',
+    requiresTarget: Boolean(cleanedCard.requiresTarget),
   };
 }
 
@@ -98,6 +109,15 @@ function readImageAsDataUrl(file) {
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsText(file);
   });
 }
 
@@ -578,11 +598,15 @@ function ImageLayoutControls({ draft, onChange, t }) {
 export function Playground() {
   const { t } = useTranslation();
   const assetInputRef = useRef(null);
+  const scriptInputRef = useRef(null);
   const templateInputRef = useRef(null);
   const [cards, setCards] = useState(readSavedCards);
   const [draft, setDraft] = useState(() => normalizeCard(emptyDraft));
   const [editingId, setEditingId] = useState('');
   const [imageError, setImageError] = useState('');
+  const [publishError, setPublishError] = useState('');
+  const [publishSuccess, setPublishSuccess] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     try {
@@ -673,10 +697,37 @@ export function Playground() {
     }
   };
 
+  const handleScriptChange = async (event) => {
+    const [file] = event.target.files || [];
+
+    if (!file) {
+      return;
+    }
+
+    setPublishError('');
+    setPublishSuccess('');
+
+    try {
+      const script = await readFileAsText(file);
+
+      setDraft((current) => ({
+        ...current,
+        luaScript: script,
+        luaScriptName: file.name,
+      }));
+    } catch {
+      setPublishError(t('pages.playground.luaImportError'));
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   const resetDraft = () => {
     setDraft(normalizeCard(emptyDraft));
     setEditingId('');
     setImageError('');
+    setPublishError('');
+    setPublishSuccess('');
   };
 
   const saveCard = (event) => {
@@ -750,6 +801,43 @@ export function Playground() {
       URL.revokeObjectURL(url);
     } catch {
       setImageError(t('pages.playground.renderError'));
+    }
+  };
+
+  const publishCommunityCard = async () => {
+    if (!draft.template) {
+      setPublishError(t('pages.playground.templateRequired'));
+      return;
+    }
+
+    if (!draft.luaScript) {
+      setPublishError(t('pages.playground.luaRequired'));
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError('');
+    setPublishSuccess('');
+
+    try {
+      const imageBlob = await renderCardToBlob(draft);
+      const card = await createCardDefinition({
+        description: draft.description,
+        imageBlob,
+        life: normalizeNumber(draft.life, emptyDraft.life),
+        name: draft.title.trim() || t('pages.playground.untitled'),
+        requiresTarget: draft.requiresTarget,
+        scriptFileName: draft.luaScriptName || `${slugifyFileName(draft.title)}.lua`,
+        scriptText: draft.luaScript,
+      });
+
+      setPublishSuccess(
+        t('pages.playground.publishSuccess', { name: card.name || draft.title }),
+      );
+    } catch (error) {
+      setPublishError(error.message || t('pages.playground.publishError'));
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -855,6 +943,18 @@ export function Playground() {
                     }
                   />
                 </label>
+
+                <label className="flex items-center gap-3 rounded-lg border border-border bg-background/45 px-3 py-2 text-sm font-semibold sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={Boolean(draft.requiresTarget)}
+                    onChange={(event) =>
+                      updateDraft('requiresTarget', event.target.checked)
+                    }
+                  />
+                  {t('pages.playground.fields.requiresTarget')}
+                </label>
               </div>
 
               <FieldLayoutControls
@@ -877,6 +977,13 @@ export function Playground() {
                   accept="image/*"
                   className="hidden"
                   onChange={(event) => void handleAssetImageChange(event)}
+                />
+                <input
+                  ref={scriptInputRef}
+                  type="file"
+                  accept=".lua,text/x-lua,text/plain"
+                  className="hidden"
+                  onChange={(event) => void handleScriptChange(event)}
                 />
 
                 <div className="grid gap-4">
@@ -933,6 +1040,41 @@ export function Playground() {
                       </Button>
                     </div>
                   </div>
+
+                  <div className="rounded-lg border border-border bg-background/45 p-3">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">
+                      {t('pages.playground.luaScript')}
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 cursor-pointer gap-2"
+                        onClick={() => scriptInputRef.current?.click()}
+                      >
+                        <Code2 className="size-4" />
+                        {t('pages.playground.importLua')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-10 cursor-pointer gap-2"
+                        disabled={!draft.luaScript}
+                        onClick={() => {
+                          updateDraft('luaScript', '');
+                          updateDraft('luaScriptName', '');
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                        {t('pages.playground.removeLua')}
+                      </Button>
+                    </div>
+                    {draft.luaScriptName ? (
+                      <p className="mt-2 text-xs font-semibold text-primary">
+                        {draft.luaScriptName}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
 
                 {imageError ? (
@@ -952,7 +1094,7 @@ export function Playground() {
                 onChange={updateImageLayout}
               />
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <Button
                   type="submit"
                   className="h-11 w-full cursor-pointer gap-2"
@@ -971,7 +1113,43 @@ export function Playground() {
                   <Download className="size-4" />
                   {t('pages.playground.saveImage')}
                 </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-11 w-full cursor-pointer gap-2"
+                  disabled={isPublishing}
+                  onClick={() => void publishCommunityCard()}
+                >
+                  {isPublishing ? (
+                    <i className="pi pi-spin pi-spinner text-sm" />
+                  ) : (
+                    <UploadCloud className="size-4" />
+                  )}
+                  {isPublishing
+                    ? t('pages.playground.publishing')
+                    : t('pages.playground.publish')}
+                </Button>
               </div>
+
+              {publishError || publishSuccess ? (
+                <div
+                  className={cn(
+                    'mt-4 rounded-lg border px-4 py-3 text-sm font-semibold',
+                    publishError
+                      ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                      : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600',
+                  )}
+                >
+                  {publishError || publishSuccess}
+                  {publishSuccess ? (
+                    <Button asChild variant="link" className="ml-2 h-auto p-0">
+                      <Link to="/power-decks">
+                        {t('pages.playground.viewCommunityCards')}
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
             </form>
           </section>
 

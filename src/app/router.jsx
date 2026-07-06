@@ -8,6 +8,7 @@ import { Home } from './routes/Home/Home.jsx';
 import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
 import { Playground } from './routes/Playground/Playground.jsx';
+import { PowerDecks } from './routes/PowerDecks/PowerDecks.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
 
@@ -32,6 +33,7 @@ export function AppRouter() {
           <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
           <Route path="/playground" element={<Playground />} />
+          <Route path="/power-decks" element={<PowerDecks />} />
           <Route path="/github" element={<Github />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

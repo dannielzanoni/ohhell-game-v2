@@ -1,0 +1,66 @@
+import { apiRequest } from './apiClient.js';
+import { withAuthRetry } from './authService.js';
+
+export function getCardDefinitions() {
+  return withAuthRetry(() => apiRequest('/card-definitions', { auth: true }));
+}
+
+export function getPowerDecks() {
+  return withAuthRetry(() => apiRequest('/power-decks', { auth: true }));
+}
+
+export function createPowerDeck({ cardIds, description, name }) {
+  return withAuthRetry(() =>
+    apiRequest('/power-decks', {
+      auth: true,
+      body: {
+        card_ids: cardIds,
+        description,
+        name,
+      },
+      method: 'POST',
+    }),
+  );
+}
+
+export function createCardDefinition({
+  description,
+  imageBlob,
+  life,
+  name,
+  requiresTarget,
+  scriptFileName = 'effect.lua',
+  scriptText,
+}) {
+  const form = new FormData();
+
+  form.set('name', name || 'Untitled card');
+  form.set('description', description || '');
+  form.set('requires_target', requiresTarget ? 'true' : 'false');
+
+  if (life !== undefined && life !== null && life !== '') {
+    form.set('life', String(life));
+  }
+
+  form.set('image', imageBlob, `${name || 'card'}.png`);
+  form.set(
+    'script',
+    new Blob([scriptText || ''], { type: 'text/x-lua' }),
+    scriptFileName,
+  );
+
+  return withAuthRetry(() =>
+    apiRequest('/card-definitions', {
+      auth: true,
+      body: form,
+      method: 'POST',
+    }),
+  );
+}
+
+export const cardDefinitionsService = {
+  createCardDefinition,
+  createPowerDeck,
+  getCardDefinitions,
+  getPowerDecks,
+};

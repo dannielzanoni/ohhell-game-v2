@@ -1,4 +1,4 @@
-import { BookOpen, Crown, Play, Sparkles, UserRound, Users } from 'lucide-react';
+import { BookOpen, Crown, GalleryVerticalEnd, Play, Sparkles, UserRound, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
@@ -48,6 +48,14 @@ export const pageLinks = [
     label: 'Playground',
     labelKey: 'pages.links.playground.label',
     path: '/playground',
+  },
+  {
+    description: 'Create Fodinha Power decks.',
+    descriptionKey: 'pages.links.powerDecks.description',
+    icon: GalleryVerticalEnd,
+    label: 'Power Decks',
+    labelKey: 'pages.links.powerDecks.label',
+    path: '/power-decks',
   },
   {
     description: 'Project repository for Oh Hell Game v2',

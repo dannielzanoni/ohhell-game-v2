@@ -5,10 +5,11 @@ export function getLobbies() {
   return withAuthRetry(() => apiRequest('/lobby', { auth: true }));
 }
 
-export function createLobby({ gameType, lifes } = {}) {
+export function createLobby({ gameType, lifes, powerDeckId } = {}) {
   const body = {
     ...(gameType ? { game_type: gameType } : {}),
     ...(lifes === undefined || lifes === null ? {} : { lifes }),
+    ...(powerDeckId ? { power_deck_id: powerDeckId } : {}),
   };
 
   return withAuthRetry(() =>
