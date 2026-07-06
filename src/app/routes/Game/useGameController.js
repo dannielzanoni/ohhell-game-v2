@@ -19,6 +19,7 @@ import { copyText } from '@/infrastructure/browser/clipboard.js';
 import { getRoomInviteLink, shareRoomInvite } from './roomInvite.js';
 import { getOnlineStatus, subscribeConnectivity } from '@/infrastructure/browser/connectivity.js';
 import { createGameStateController } from '@/domain/gameStateReducer.js';
+import { createAudioAdapter } from '@/infrastructure/browser/audio.js';
 
 export function decodeCurrentPlayerId(token = getAuthToken()) {
   if (!token) return null;
@@ -50,12 +51,15 @@ export function useGameController() {
   if (!readyRef.current) readyRef.current = createReadyController({ send: setPlayerReady });
   const gameStateRef = useRef(null);
   if (!gameStateRef.current) gameStateRef.current = createGameStateController();
+  const audioRef = useRef(null);
+  if (!audioRef.current) audioRef.current = createAudioAdapter();
 
   useEffect(() => () => sessionRef.current?.dispose(), []);
 
   return useMemo(
     () => ({
       createGameSocket: (options) => sessionRef.current.connect(options),
+      clearSoundSlot: (slot) => audioRef.current.clearSlot(slot),
       confirmRoomEntry: (options) => roomEntryGateRef.current.confirm(options),
       consumeGameMessage: (message) => gameStateRef.current.consume(message),
       copyText,
@@ -68,6 +72,8 @@ export function useGameController() {
       isMissingAuthTokenError,
       joinLobby,
       playTurn,
+      playSound: (src, volume) => audioRef.current.play(src, volume),
+      playSoundOnce: (slot, eventId, src, volume) => audioRef.current.playOnce(slot, eventId, src, volume),
       putBid,
       sendReady: (options) => readyRef.current.toggle(options),
       shareRoomInvite,
