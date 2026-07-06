@@ -79,6 +79,8 @@ export const pt = {
     everyoneRanOut: 'Todos ficaram sem vidas.',
     gameEnded: 'Fim de jogo',
     lastPlayerStanding: '\u00daltimo jogador de p\u00e9.',
+    tiedWinners: 'Os jogadores restantes empataram.',
+    winnerAvatar: 'Avatar de {{name}}',
     localPlayer: 'jogador local',
     lifeLossEvent: 'Perda de vidas',
     unknownPlayer: 'Jogador desconhecido',

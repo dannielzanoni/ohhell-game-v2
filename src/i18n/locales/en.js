@@ -79,6 +79,8 @@ export const en = {
     everyoneRanOut: 'Everyone ran out of lives.',
     gameEnded: 'Game ended',
     lastPlayerStanding: 'Last player standing.',
+    tiedWinners: 'The remaining players tied.',
+    winnerAvatar: '{{name}} avatar',
     localPlayer: 'local player',
     lifeLossEvent: 'Life lost',
     unknownPlayer: 'Unknown player',
