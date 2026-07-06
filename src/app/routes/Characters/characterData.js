@@ -1,0 +1,53 @@
+import artemisBanner from '@/assets/characters/artemis/banner.png';
+import artemisCard1 from '@/assets/characters/artemis/cards/1.png';
+import artemisCard2 from '@/assets/characters/artemis/cards/2.png';
+import artemisCard3 from '@/assets/characters/artemis/cards/3.png';
+import artemisCard4 from '@/assets/characters/artemis/cards/4.png';
+import artemisCard5 from '@/assets/characters/artemis/cards/5.png';
+import conjuruzBanner from '@/assets/characters/conjuruz/banner.png';
+import gamblerBanner from '@/assets/characters/gambler/banner.png';
+import gamblerCard2 from '@/assets/characters/gambler/cards/2.png';
+import gamblerCard3 from '@/assets/characters/gambler/cards/3.png';
+import gamblerCard5 from '@/assets/characters/gambler/cards/5.png';
+
+export const mercenaries = [
+  {
+    id: 'artemis',
+    accentClass: 'from-emerald-500/25 via-black/25 to-amber-500/20',
+    banner: artemisBanner,
+    bannerPosition: 'center 35%',
+    cards: [
+      { id: 'moonGuard', image: artemisCard1, manaCost: 2 },
+      { id: 'silverOath', image: artemisCard2, manaCost: 3 },
+      { id: 'lastWatch', image: artemisCard3, manaCost: 4 },
+      { id: 'forestSign', image: artemisCard4, manaCost: 2 },
+      { id: 'hunterGrace', image: artemisCard5, manaCost: 3 },
+    ],
+    markerClass: 'bg-emerald-500',
+    path: '/mercenaries/Artemis',
+  },
+  {
+    id: 'conjuruz',
+    accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
+    banner: conjuruzBanner,
+    cards: [],
+    markerClass: 'bg-violet-500',
+    path: '/mercenaries/Conjuruz',
+  },
+  {
+    id: 'gambler',
+    accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
+    banner: gamblerBanner,
+    cards: [
+      { id: 'loadedDice', image: gamblerCard2, manaCost: 2 },
+      { id: 'allIn', image: gamblerCard3, manaCost: 5 },
+      { id: 'lastCoin', image: gamblerCard5, manaCost: 1 },
+    ],
+    markerClass: 'bg-red-500',
+    path: '/mercenaries/Gambler',
+  },
+];
+
+export function findMercenary(id) {
+  return mercenaries.find((mercenary) => mercenary.id === id);
+}

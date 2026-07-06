@@ -1,4 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { CharacterProfile } from './routes/Characters/CharacterProfile.jsx';
+import { Mercenaries } from './routes/Characters/Characters.jsx';
 import { GameTypeGate } from './GameTypeGate.jsx';
 import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
@@ -20,6 +22,14 @@ export function AppRouter() {
           <Route path="/game/:lobbyId" element={<Game />} />
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/characters" element={<Mercenaries />} />
+          <Route path="/mercenaries" element={<Mercenaries />} />
+          <Route path="/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
+          <Route path="/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />
+          <Route path="/mercenaries/Gambler" element={<CharacterProfile characterId="gambler" />} />
+          <Route path="/Artemis" element={<Navigate to="/mercenaries/Artemis" replace />} />
+          <Route path="/Conjuruz" element={<Navigate to="/mercenaries/Conjuruz" replace />} />
+          <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
           <Route path="/playground" element={<Playground />} />
           <Route path="/github" element={<Github />} />

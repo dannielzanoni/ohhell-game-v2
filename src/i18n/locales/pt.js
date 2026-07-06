@@ -155,6 +155,126 @@ export const pt = {
       description: 'Página reservada para explicar regras, rodadas e pontuação.',
       title: 'Como jogar',
     },
+    characters: {
+      backToMercenaries: 'Voltar para mercenarios',
+      cardLabel: 'Mercenario',
+      cardsEyebrow: 'Cartas do mercenario',
+      cardsTitle: 'Cartas em destaque',
+      cardInfo: 'Ver informacoes de {{name}}',
+      cardStory: 'Historia da carta',
+      carouselEyebrow: 'Selecao',
+      carouselTitle: 'Carrossel de mercenarios',
+      chooseCharacter: 'Selecionar {{name}}',
+      description:
+        'Escolha um mercenario para inspecionar suas cartas e habilidades.',
+      eyebrow: 'Mercenarios',
+      emptyCardsDescription:
+        'Quando as imagens e dados deste mercenario forem criados, elas aparecerao aqui.',
+      emptyCardsTitle: 'Cartas ainda nao adicionadas',
+      historyEyebrow: 'Historia',
+      inspect: 'Inspecionar',
+      manaCost: 'Custo de mana',
+      next: 'Proximo mercenario',
+      previous: 'Mercenario anterior',
+      statsEyebrow: 'Caracteristicas',
+      statsTitle: 'Perfil de jogo',
+      stats: {
+        deck: 'Baralho',
+        style: 'Estilo',
+        temper: 'Temperamento',
+      },
+      title: 'Mercenarios',
+      items: {
+        artemis: {
+          cards: {
+            lastWatch: {
+              description:
+                'Quando estiver com pouca vida, Artemis transforma defesa em compra e pressiona o fim da rodada.',
+              story:
+                'A ultima vigilia nasceu quando Artemis manteve a guarda mesmo depois que a noite parecia perdida.',
+              title: 'Ultima Vigilia',
+            },
+            moonGuard: {
+              description:
+                'Previne perda de vida e recompensa previsoes conservadoras com uma carta extra.',
+              story:
+                'Dizem que esta guarda so aparece para quem sabe esperar o momento certo de agir.',
+              title: 'Guarda da Lua',
+            },
+            silverOath: {
+              description:
+                'Marca um rival e reduz o valor de uma jogada decisiva quando Artemis acerta seu bid.',
+              story:
+                'O juramento prateado foi feito diante de uma lamina fria e nunca foi quebrado.',
+              title: 'Juramento Prateado',
+            },
+            forestSign: {
+              description:
+                'Fortalece uma linha defensiva e transforma protecao em vantagem quando a rodada fica longa.',
+              story:
+                'As marcas da floresta guiam Artemis quando todos os caminhos parecem fechados.',
+              title: 'Sinal da Floresta',
+            },
+            hunterGrace: {
+              description:
+                'Permite reposicionar a estrategia de Artemis sem perder o controle do ritmo da mesa.',
+              story:
+                'A graca da cacadora e silenciosa: quando o alvo percebe, a rodada ja mudou de direcao.',
+              title: 'Graca da Cacadora',
+            },
+          },
+          deck: 'Defesa lunar',
+          history:
+            'Artemis guarda as rotas antigas da mesa e joga como quem leu a rodada antes dela comecar. Sua historia e feita de juramentos, protecao e escolhas precisas: ela prefere vencer por controle, segurando riscos ate encontrar a janela perfeita.',
+          style: 'Controle',
+          subtitle: 'Guardia de juramentos e da ultima luz da rodada.',
+          temper: 'Paciente',
+          title: 'Artemis',
+        },
+        conjuruz: {
+          cards: {},
+          deck: 'Rituais e pressagios',
+          history:
+            'Conjuruz ainda e um mercenario cercado de misterio. Seu banner ja anuncia uma presenca arcana, mas suas cartas serao reveladas quando o baralho dele estiver pronto.',
+          style: 'Conjuracao',
+          subtitle: 'Um conjurador de sinais antigos e pactos instaveis.',
+          temper: 'Enigmatico',
+          title: 'Conjuruz',
+        },
+        gambler: {
+          cards: {
+            allIn: {
+              description:
+                'Aumenta a recompensa de uma previsao arriscada, mas cobra vida quando a aposta falha.',
+              story:
+                'Tudo ou Nada e a carta que o Gambler sorri antes de mostrar, mesmo quando a mesa inteira sabe o risco.',
+              title: 'Tudo ou Nada',
+            },
+            lastCoin: {
+              description:
+                'Se for a ultima chance, o Gambler troca estabilidade por uma jogada que pode virar a mesa.',
+              story:
+                'A ultima moeda dele ja comprou fugas, vitorias impossiveis e algumas dividas que ainda respiram.',
+              title: 'Ultima Moeda',
+            },
+            loadedDice: {
+              description:
+                'Manipula uma disputa curta e cria vantagem quando o jogador aceita um risco calculado.',
+              story:
+                'Os dados viciados nunca caem por acaso; eles caem onde o Gambler preparou a historia para terminar.',
+              title: 'Dados Viciados',
+            },
+          },
+          deck: 'Apostas e blefes',
+          history:
+            'O Gambler aprendeu a ouvir o barulho das cartas antes de apostar. Ele vive entre blefe e coragem, vendendo a ideia de caos enquanto calcula cada perda possivel. Quando entra na mesa, toda rodada parece ter uma segunda aposta escondida.',
+          style: 'Risco',
+          subtitle: 'Aposta alto, sorri cedo e paga caro quando erra.',
+          temper: 'Ousado',
+          title: 'Gambler',
+        },
+      },
+    },
     links: {
       createGame: {
         description: 'Crie uma partida e convide seus amigos para jogar.',
@@ -171,6 +291,10 @@ export const pt = {
       leaderboard: {
         description: 'Ranking global dos jogadores.',
         label: 'Ranking',
+      },
+      characters: {
+        description: 'Veja cartas e perfis dos mercenarios.',
+        label: 'Mercenarios',
       },
       playground: {
         description: 'Crie e salve cartas customizadas.',

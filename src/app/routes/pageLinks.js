@@ -1,4 +1,4 @@
-import { BookOpen, Crown, Play, Sparkles, Users } from 'lucide-react';
+import { BookOpen, Crown, Play, Sparkles, UserRound, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
@@ -24,6 +24,14 @@ export const pageLinks = [
     label: 'Leaderboard',
     labelKey: 'pages.links.leaderboard.label',
     path: '/leaderboard',
+  },
+  {
+    description: 'View mercenary profiles and cards.',
+    descriptionKey: 'pages.links.characters.description',
+    icon: UserRound,
+    label: 'Mercenaries',
+    labelKey: 'pages.links.characters.label',
+    path: '/mercenaries',
   },
   {
     description: 'Rules and game guide.',

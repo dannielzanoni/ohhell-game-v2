@@ -155,6 +155,126 @@ export const en = {
       description: 'A reserved page for rules, rounds, and scoring.',
       title: 'How To Play',
     },
+    characters: {
+      backToMercenaries: 'Back to mercenaries',
+      cardLabel: 'Mercenary',
+      cardsEyebrow: 'Mercenary cards',
+      cardsTitle: 'Featured cards',
+      cardInfo: 'View information for {{name}}',
+      cardStory: 'Card story',
+      carouselEyebrow: 'Selection',
+      carouselTitle: 'Mercenary carousel',
+      chooseCharacter: 'Select {{name}}',
+      description:
+        'Choose a mercenary to inspect their cards and abilities.',
+      eyebrow: 'Mercenaries',
+      emptyCardsDescription:
+        'When this mercenary has card images and data, they will appear here.',
+      emptyCardsTitle: 'Cards not added yet',
+      historyEyebrow: 'Story',
+      inspect: 'Inspect',
+      manaCost: 'Mana cost',
+      next: 'Next mercenary',
+      previous: 'Previous mercenary',
+      statsEyebrow: 'Traits',
+      statsTitle: 'Play profile',
+      stats: {
+        deck: 'Deck',
+        style: 'Style',
+        temper: 'Temper',
+      },
+      title: 'Mercenaries',
+      items: {
+        artemis: {
+          cards: {
+            lastWatch: {
+              description:
+                'When low on life, Artemis turns defense into card draw and pressures the end of the round.',
+              story:
+                'The last watch began when Artemis kept guard long after the night should have been lost.',
+              title: 'Last Watch',
+            },
+            moonGuard: {
+              description:
+                'Prevents life loss and rewards careful predictions with an extra card.',
+              story:
+                'They say this guard only appears to those who know how to wait for the right moment.',
+              title: 'Moon Guard',
+            },
+            silverOath: {
+              description:
+                'Marks a rival and softens a decisive play when Artemis hits her bid.',
+              story:
+                'The silver oath was sworn before a cold blade and has never been broken.',
+              title: 'Silver Oath',
+            },
+            forestSign: {
+              description:
+                'Strengthens a defensive line and turns protection into advantage when the round stretches long.',
+              story:
+                'The forest signs guide Artemis when every path at the table seems closed.',
+              title: 'Forest Sign',
+            },
+            hunterGrace: {
+              description:
+                'Lets Artemis reposition her plan without losing control over the table tempo.',
+              story:
+                'The hunter’s grace is quiet: by the time the target notices, the round has already turned.',
+              title: "Hunter's Grace",
+            },
+          },
+          deck: 'Lunar defense',
+          history:
+            'Artemis guards the old routes around the table and plays as if she read the round before it began. Her story is built on vows, protection, and precise choices: she prefers to win through control, holding risk until the perfect window appears.',
+          style: 'Control',
+          subtitle: 'Guardian of vows and the last light of the round.',
+          temper: 'Patient',
+          title: 'Artemis',
+        },
+        conjuruz: {
+          cards: {},
+          deck: 'Rituals and omens',
+          history:
+            'Conjuruz is still a mercenary surrounded by mystery. His banner already hints at an arcane presence, but his cards will be revealed when his deck is ready.',
+          style: 'Conjuration',
+          subtitle: 'A summoner of old signs and unstable pacts.',
+          temper: 'Enigmatic',
+          title: 'Conjuruz',
+        },
+        gambler: {
+          cards: {
+            allIn: {
+              description:
+                'Raises the reward for a risky prediction, but costs life when the bet fails.',
+              story:
+                'All In is the card the Gambler smiles before revealing, even when the whole table knows the risk.',
+              title: 'All In',
+            },
+            lastCoin: {
+              description:
+                'On the last chance, the Gambler trades stability for a play that can flip the table.',
+              story:
+                'His last coin has bought escapes, impossible wins, and a few debts that are still breathing.',
+              title: 'Last Coin',
+            },
+            loadedDice: {
+              description:
+                'Manipulates a short clash and creates advantage when the player accepts calculated risk.',
+              story:
+                'The loaded dice never land by chance; they land where the Gambler prepared the story to end.',
+              title: 'Loaded Dice',
+            },
+          },
+          deck: 'Bets and bluffs',
+          history:
+            'The Gambler learned to hear the sound of cards before placing a bet. He lives between bluff and courage, selling the idea of chaos while calculating every possible loss. When he sits at the table, every round seems to hide a second wager.',
+          style: 'Risk',
+          subtitle: 'Life isn\'t always a matter of good cards. Sometimes it\'s a good play with a bad hand.',
+          temper: 'Bold',
+          title: 'Gambler',
+        },
+      },
+    },
     links: {
       createGame: {
         description: 'Create a game and invite your friends to play.',
@@ -171,6 +291,10 @@ export const en = {
       leaderboard: {
         description: 'Player ranking.',
         label: 'Leaderboard',
+      },
+      characters: {
+        description: 'View mercenary profiles and cards.',
+        label: 'Mercenaries',
       },
       playground: {
         description: 'Create and save custom cards.',
