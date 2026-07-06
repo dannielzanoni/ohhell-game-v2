@@ -186,33 +186,33 @@ export const pt = {
       items: {
         artemis: {
           cards: {
-            lastWatch: {
+            madJustice: {
               description:
-                'Quando estiver com pouca vida, Artemis transforma defesa em compra e pressiona o fim da rodada.',
+                'Se você e mais um jogador, perderam pelo menos uma aposta nesse turno. Outro jogador alvo, que não perdeu uma aposta nesse turno, toma 5 de dano.',
               story:
                 'A ultima vigilia nasceu quando Artemis manteve a guarda mesmo depois que a noite parecia perdida.',
-              title: 'Ultima Vigilia',
+              title: 'Justiça furiosa',
             },
-            moonGuard: {
+            bloodTransfusion: {
               description:
-                'Previne perda de vida e recompensa previsoes conservadoras com uma carta extra.',
+                'O jogador alvo, que perdeu uma aposta nesta rodada, perde 5 pontos de vida. Você ganha 5 de vida.',
               story:
                 'Dizem que esta guarda so aparece para quem sabe esperar o momento certo de agir.',
-              title: 'Guarda da Lua',
+              title: 'Hemotransfusão',
             },
-            silverOath: {
+            deepRed: {
               description:
-                'Marca um rival e reduz o valor de uma jogada decisiva quando Artemis acerta seu bid.',
+                'Todos os jogadores que não perderam vida nesse turno tomam 10 de dano. Compre cartas do deck de magia para cada jogador que não perdeu vida dessa forma.',
               story:
                 'O juramento prateado foi feito diante de uma lamina fria e nunca foi quebrado.',
-              title: 'Juramento Prateado',
+              title: 'Vermelho profundo',
             },
-            forestSign: {
+            signInBlood: {
               description:
-                'Fortalece uma linha defensiva e transforma protecao em vantagem quando a rodada fica longa.',
+                'Escolhe um jogador para perder 5 pontos de vida e comprar 3 cartas',
               story:
                 'As marcas da floresta guiam Artemis quando todos os caminhos parecem fechados.',
-              title: 'Sinal da Floresta',
+              title: 'Assinar em sangue',
             },
             hunterGrace: {
               description:
@@ -226,7 +226,7 @@ export const pt = {
           history:
             'Artemis guarda as rotas antigas da mesa e joga como quem leu a rodada antes dela comecar. Sua historia e feita de juramentos, protecao e escolhas precisas: ela prefere vencer por controle, segurando riscos ate encontrar a janela perfeita.',
           style: 'Controle',
-          subtitle: 'Guardia de juramentos e da ultima luz da rodada.',
+          subtitle: 'O sangue das suas irmãs não foram o suficiente para saciar a fome do diabo que trouxe ela de volta à vida.',
           temper: 'Paciente',
           title: 'Artemis',
         },
@@ -268,7 +268,7 @@ export const pt = {
           history:
             'O Gambler aprendeu a ouvir o barulho das cartas antes de apostar. Ele vive entre blefe e coragem, vendendo a ideia de caos enquanto calcula cada perda possivel. Quando entra na mesa, toda rodada parece ter uma segunda aposta escondida.',
           style: 'Risco',
-          subtitle: 'Aposta alto, sorri cedo e paga caro quando erra.',
+          subtitle: 'A vida nem sempre é uma questão de ter boas cartas. Às vezes, trata-se de fazer uma boa jogada com uma mão ruim.',
           temper: 'Ousado',
           title: 'Gambler',
         },

@@ -193,26 +193,26 @@ export const en = {
                 'The last watch began when Artemis kept guard long after the night should have been lost.',
               title: 'Last Watch',
             },
-            moonGuard: {
+            bloodTransfusion: {
               description:
                 'Prevents life loss and rewards careful predictions with an extra card.',
               story:
                 'They say this guard only appears to those who know how to wait for the right moment.',
-              title: 'Moon Guard',
+              title: 'Blood Transfusion',
             },
-            silverOath: {
+            deepRed: {
               description:
-                'Marks a rival and softens a decisive play when Artemis hits her bid.',
+                'Every player that did not lost life this turn, takes 10 damage. Draw a magic card for each player that did not lose life this way.',
               story:
                 'The silver oath was sworn before a cold blade and has never been broken.',
-              title: 'Silver Oath',
+              title: 'Deep Red',
             },
-            forestSign: {
+            signInBlood: {
               description:
-                'Strengthens a defensive line and turns protection into advantage when the round stretches long.',
+                'Target a player to lose 5 life points and draw 3 cards.',
               story:
                 'The forest signs guide Artemis when every path at the table seems closed.',
-              title: 'Forest Sign',
+              title: 'Sign in Blood',
             },
             hunterGrace: {
               description:
