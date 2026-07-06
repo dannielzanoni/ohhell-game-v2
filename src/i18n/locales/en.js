@@ -283,6 +283,13 @@ export const en = {
                 'His last coin has bought escapes, impossible wins, and a few debts that are still breathing.',
               title: 'Is Rightfully Mine',
             },
+            giveItToMe: {
+              description:
+                'Manipulates a short clash and creates advantage when the player accepts calculated risk.',
+              story:
+                'The loaded dice never land by chance; they land where the Gambler prepared the story to end.',
+              title: 'Give It To Me',
+            },
             allIn: {
               description:
                 'Manipulates a short clash and creates advantage when the player accepts calculated risk.',

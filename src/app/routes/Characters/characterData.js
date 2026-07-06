@@ -9,6 +9,7 @@ import gamblerBanner from '@/assets/characters/gambler/banner.png';
 import gamblerCard1 from '@/assets/characters/gambler/cards/1.png'; 
 import gamblerCard2 from '@/assets/characters/gambler/cards/2.png';
 import gamblerCard3 from '@/assets/characters/gambler/cards/3.png';
+import gamblerCard4 from '@/assets/characters/gambler/cards/4.png';
 import gamblerCard5 from '@/assets/characters/gambler/cards/5.png';
 
 export const mercenaries = [
@@ -42,6 +43,7 @@ export const mercenaries = [
     cards: [
       { id: 'isRightfullyMine', image: gamblerCard1, manaCost: 2 },
       { id: 'allIn', image: gamblerCard2, manaCost: 5 },
+      { id: 'giveItToMe', image: gamblerCard3, manaCost: 4 },
       { id: 'crossYourFingers', image: gamblerCard4, manaCost: 3 },
       { id: 'guabiru', image: gamblerCard5, manaCost: 1 },
     ],

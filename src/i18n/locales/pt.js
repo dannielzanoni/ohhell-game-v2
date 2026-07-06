@@ -283,6 +283,13 @@ export const pt = {
                 'A ultima moeda dele ja comprou fugas, vitorias impossiveis e algumas dividas que ainda respiram.',
               title: 'É meu por direito',
             },
+            giveItToMe: {
+              description:
+                'Olha a mão de do jogador alvo. Você pode trocar uma carta clássica da sua mão com ele. Ganhe 5 de vida se a sua aposta for maior que a do oponente escolhido.',
+              story:
+                'The loaded dice never land by chance; they land where the Gambler prepared the story to end.',
+              title: 'Me dê isso',
+            },
             allIn: {
               description:
                 'Para cada ponto que você apostou que ia marcar, essa carta custa 1 a menos e dá +5 de vida.',
