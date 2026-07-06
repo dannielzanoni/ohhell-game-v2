@@ -30,6 +30,7 @@ import {
 import { decodeCurrentPlayerId, deckTypes } from './useGameController.js';
 import { DEFAULT_LIVES, isValidLives } from '@/domain/lives.js';
 import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence.js';
+import { reduceLifeLossEvents } from '@/domain/lifeLossReducer.js';
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
 import { createCardPlayGate } from './cardPlayGate.js';
@@ -57,7 +58,6 @@ const CURRENT_PLAYER_SEAT_LIFT = 2;
 const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
-const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
 const getCurrentPlayerId = decodeCurrentPlayerId;
 
 const getCardKey = getCardAssetKey;
@@ -276,24 +276,10 @@ function createGameEndSummary(lifesByPlayer, playersById, defaultLifes) {
 }
 
 function createLifeLossHighlight(lifesByPlayer, playersById, defaultLifes) {
-  for (const [playerId, currentLifes] of Object.entries(lifesByPlayer || {})) {
-    const player = playersById[playerId] || createFallbackPlayer(playerId, defaultLifes);
-    const previousLifes = Number(player.lifes ?? currentLifes);
-    const nextLifes = Number(currentLifes);
-    const lost = previousLifes - nextLifes;
-
-    if (Number.isFinite(lost) && lost >= LIFE_LOSS_HIGHLIGHT_THRESHOLD) {
-      return {
-        lost,
-        player: {
-          ...player,
-          lifes: currentLifes,
-        },
-      };
-    }
-  }
-
-  return null;
+  const event = reduceLifeLossEvents(playersById, lifesByPlayer)[0];
+  if (!event) return null;
+  const player = playersById[event.playerId] || createFallbackPlayer(event.playerId, defaultLifes);
+  return { ...event, player: { ...player, lifes: event.nextLifes } };
 }
 
 export function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
@@ -1114,7 +1100,7 @@ function GameEndedOverlay({ onBackToMenu, summary }) {
   );
 }
 
-function LifeLossPopup({ highlight }) {
+export function LifeLossPopup({ highlight }) {
   const { t } = useTranslation();
 
   if (!highlight) {
@@ -1143,7 +1129,7 @@ function LifeLossPopup({ highlight }) {
           {t('game.lifeLossEvent')}
         </span>
         <strong className="block truncate text-base font-black leading-tight text-white sm:text-lg">
-          {player.nickname || player.id || 'Guest'}
+          {player.nickname || player.id || t('game.unknownPlayer')}
         </strong>
         <small className="block text-xs font-bold text-red-100/85 sm:text-sm">
           {t('game.lostLives', { count: highlight.lost })}

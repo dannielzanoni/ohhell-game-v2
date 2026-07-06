@@ -333,7 +333,7 @@ select {
 .ohhell-life-loss-popup {
   position: fixed;
   left: 50%;
-  top: 1rem;
+  top: max(env(safe-area-inset-top), 0.75rem);
   z-index: 75;
   transform: translateX(-50%);
   animation: ohhell-life-loss-enter 0.38s cubic-bezier(0.2, 0.9, 0.2, 1.12) both;
@@ -350,7 +350,7 @@ select {
   animation: ohhell-life-loss-burst 1.25s ease-out infinite;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .ohhell-life-loss-popup {
     left: auto;
     right: 1.5rem;
