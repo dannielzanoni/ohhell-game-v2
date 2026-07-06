@@ -1034,6 +1034,7 @@ export function GameEndedOverlay({ onBackToMenu, summary }) {
   return (
     <div className="ohhell-game-ended-overlay fixed inset-0 z-[80] grid place-items-center px-4 py-6 text-white">
       <section
+        data-result={summary.noWinners ? 'no-winner' : 'winner'}
         className={`ohhell-game-ended-card relative w-[min(35rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-2 px-5 py-7 text-center shadow-2xl sm:px-8 sm:py-8 ${
           summary.noWinners ? 'ohhell-game-ended-card--empty' : ''
         }`}
