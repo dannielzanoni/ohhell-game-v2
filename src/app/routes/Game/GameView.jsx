@@ -80,18 +80,6 @@ function getAddedTurn(previousPile, nextPile) {
   });
 }
 
-function playGameSound(soundSrc, volume) {
-  const normalizedVolume = Math.max(0, Math.min(100, Number(volume) || 0));
-
-  if (!normalizedVolume) {
-    return;
-  }
-
-  const audio = new Audio(soundSrc);
-  audio.volume = normalizedVolume / 100;
-  audio.play().catch(() => {});
-}
-
 function getJokerLabel(upcard) {
   const jokerRank = nextRank[upcard?.rank];
 
@@ -1316,6 +1304,7 @@ function LobbyAuthGate({
 export function GameView({ controller }) {
   const {
     createGameSocket,
+    clearSoundSlot,
     copyText,
     confirmRoomEntry,
     consumeGameMessage,
@@ -1327,6 +1316,8 @@ export function GameView({ controller }) {
     isMissingAuthTokenError,
     joinLobby,
     playTurn,
+    playSound,
+    playSoundOnce,
     putBid,
     sendReady,
     shareRoomInvite,
@@ -1351,7 +1342,6 @@ export function GameView({ controller }) {
   const profileCardRef = useRef(null);
   const roundEndDelayTimeoutRef = useRef(null);
   const roundEndDelayActiveRef = useRef(false);
-  const turnPromptSoundRef = useRef('');
   const socketRef = useRef(null);
   const upcardRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
@@ -1482,22 +1472,21 @@ export function GameView({ controller }) {
   );
 
   const playConfiguredSound = (soundSrc) => {
-    playGameSound(soundSrc, gamePreferencesRef.current.volume);
+    playSound(soundSrc, gamePreferencesRef.current.volume);
   };
 
   const clearTurnPromptSound = () => {
-    turnPromptSoundRef.current = '';
+    clearSoundSlot('turn-prompt');
   };
 
   const playTurnPromptSound = (type, playerId) => {
     const soundKey = `${type}:${playerId}`;
-
-    if (turnPromptSoundRef.current === soundKey) {
-      return;
-    }
-
-    turnPromptSoundRef.current = soundKey;
-    playConfiguredSound(type === 'bid' ? bidTurnSound : playerTurnSound);
+    playSoundOnce(
+      'turn-prompt',
+      soundKey,
+      type === 'bid' ? bidTurnSound : playerTurnSound,
+      gamePreferencesRef.current.volume,
+    );
   };
 
   const clearActionTimer = useCallback(() => {
