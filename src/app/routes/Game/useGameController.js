@@ -71,6 +71,7 @@ export function useGameController() {
       getRoomInviteLink,
       isMissingAuthTokenError,
       joinLobby,
+      leaveGame: () => sessionRef.current.dispose(),
       playTurn,
       playSound: (src, volume) => audioRef.current.play(src, volume),
       playSoundOnce: (slot, eventId, src, volume) => audioRef.current.playOnce(slot, eventId, src, volume),

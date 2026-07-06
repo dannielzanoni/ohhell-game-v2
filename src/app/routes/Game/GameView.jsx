@@ -244,7 +244,7 @@ function mergeLifesIntoPlayers(playersById, lifesByPlayer, defaultLifes, overrid
   );
 }
 
-function createGameEndSummary(lifesByPlayer, playersById, defaultLifes) {
+export function createGameEndSummary(lifesByPlayer, playersById, defaultLifes) {
   const lifeEntries = Object.entries(lifesByPlayer || {})
     .map(([playerId, life]) => [playerId, Number(life)])
     .filter(([, life]) => Number.isFinite(life));
@@ -1024,7 +1024,7 @@ function PlayedCardAnimation({ card, cardBackSrc, deckType, onAnimationEnd }) {
   );
 }
 
-function GameEndedOverlay({ onBackToMenu, summary }) {
+export function GameEndedOverlay({ onBackToMenu, summary }) {
   const { t } = useTranslation();
 
   if (!summary) {
@@ -1064,6 +1064,7 @@ function GameEndedOverlay({ onBackToMenu, summary }) {
               {summary.winners.map((winner) => (
                 <div
                   key={winner.id}
+                  aria-label={t('game.winnerAvatar', { name: winner.nickname || winner.id })}
                   className="ohhell-winner-avatar grid size-20 place-items-center overflow-hidden rounded-full border-[3px] border-amber-300 bg-black shadow-2xl shadow-amber-500/20 sm:size-24"
                 >
                   {winner.avatarSrc ? (
@@ -1083,7 +1084,7 @@ function GameEndedOverlay({ onBackToMenu, summary }) {
               {summary.winnerNames}
             </h2>
             <p className="relative z-10 m-0 text-sm font-medium text-amber-50/80 sm:text-base">
-              {t('game.lastPlayerStanding')}
+              {t(summary.winners.length > 1 ? 'game.tiedWinners' : 'game.lastPlayerStanding')}
             </p>
           </>
         )}
@@ -1318,6 +1319,7 @@ export function GameView({ controller }) {
     getRoomInviteLink,
     isMissingAuthTokenError,
     joinLobby,
+    leaveGame,
     playTurn,
     playSound,
     playSoundOnce,
@@ -1532,8 +1534,9 @@ export function GameView({ controller }) {
   }, []);
 
   const handleBackToMenu = useCallback(() => {
+    leaveGame();
     navigate('/create-game');
-  }, [navigate]);
+  }, [leaveGame, navigate]);
 
   const startActionTimer = useCallback((type, cardCount) => {
     actionTimerControllerRef.current.start(type, cardCount);
