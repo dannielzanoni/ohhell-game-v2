@@ -36,6 +36,7 @@ import { createCardPlayGate } from './cardPlayGate.js';
 import { canSubmitBid, normalizePossibleBids } from './biddingModel.js';
 import { createActionTimerController } from './actionTimerController.js';
 import { classifyServerCommandError, commandErrorKey, commandErrorKinds } from './commandError.js';
+import { createRoundTransitionController } from './roundTransitionController.js';
 import {
   createPileVisualModel,
   getCardStrength,
@@ -1354,11 +1355,12 @@ export function GameView({ controller }) {
   const pileRef = useRef([]);
   const pendingBidOptionsRef = useRef([]);
   const lifeLossHighlightTimeoutRef = useRef(null);
-  const queuedRoundEndMessagesRef = useRef([]);
   const roundCardCountRef = useRef(0);
   const profileCardRef = useRef(null);
-  const roundEndDelayTimeoutRef = useRef(null);
-  const roundEndDelayActiveRef = useRef(false);
+  const roundTransitionRef = useRef(null);
+  if (!roundTransitionRef.current) {
+    roundTransitionRef.current = createRoundTransitionController();
+  }
   const socketRef = useRef(null);
   const upcardRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
@@ -1712,13 +1714,7 @@ export function GameView({ controller }) {
     };
 
     const clearRoundEndDelay = () => {
-      if (roundEndDelayTimeoutRef.current) {
-        window.clearTimeout(roundEndDelayTimeoutRef.current);
-      }
-
-      queuedRoundEndMessagesRef.current = [];
-      roundEndDelayTimeoutRef.current = null;
-      roundEndDelayActiveRef.current = false;
+      roundTransitionRef.current.cancel();
     };
 
     clearRoundEndDelay();
@@ -1832,8 +1828,6 @@ export function GameView({ controller }) {
         return;
       }
 
-      roundEndDelayTimeoutRef.current = null;
-      roundEndDelayActiveRef.current = false;
       clearPileElevation();
       updatePile([]);
       setRoundCardCount((currentCount) => {
@@ -1842,33 +1836,18 @@ export function GameView({ controller }) {
         return nextCount;
       });
 
-      const queuedMessages = queuedRoundEndMessagesRef.current;
-      queuedRoundEndMessagesRef.current = [];
-
-      for (let index = 0; index < queuedMessages.length; index += 1) {
-        if (roundEndDelayActiveRef.current) {
-          queuedRoundEndMessagesRef.current = queuedMessages.slice(index);
-          break;
-        }
-
-        processServerMessage(queuedMessages[index]);
-      }
     };
 
     const startRoundEndDelay = () => {
-      if (roundEndDelayTimeoutRef.current) {
-        window.clearTimeout(roundEndDelayTimeoutRef.current);
-      }
-
       const delayMs = pileElevationTimeoutRef.current
         ? PILE_WEAK_CARD_DELAY_MS + ROUND_END_DELAY_MS
         : ROUND_END_DELAY_MS;
 
-      roundEndDelayActiveRef.current = true;
-      roundEndDelayTimeoutRef.current = window.setTimeout(
-        completeRoundEndDelay,
+      roundTransitionRef.current.begin({
         delayMs,
-      );
+        onComplete: completeRoundEndDelay,
+        process: processServerMessage,
+      });
     };
 
     function processServerMessage(message) {
@@ -2229,11 +2208,8 @@ export function GameView({ controller }) {
         return;
       }
 
-      if (roundEndDelayActiveRef.current && message.type !== 'Error') {
-        queuedRoundEndMessagesRef.current = [
-          ...queuedRoundEndMessagesRef.current,
-          message,
-        ];
+      if (roundTransitionRef.current.isActive() && message.type !== 'Error') {
+        roundTransitionRef.current.enqueue(message);
         return;
       }
 
@@ -2246,10 +2222,7 @@ export function GameView({ controller }) {
         setIsReadySending(false);
         setPossibleBids([]);
         setTurnPlayerId(null);
-        queuedRoundEndMessagesRef.current = [
-          ...queuedRoundEndMessagesRef.current,
-          message,
-        ];
+        roundTransitionRef.current.enqueue(message);
         startRoundEndDelay();
         return;
       }
