@@ -24,11 +24,11 @@ export function createPowerDeck({ cardIds, description, name }) {
 }
 
 export function createCardDefinition({
+  cardType,
   description,
   imageBlob,
   life,
   name,
-  requiresTarget,
   scriptFileName = 'effect.lua',
   scriptText,
 }) {
@@ -36,7 +36,7 @@ export function createCardDefinition({
 
   form.set('name', name || 'Untitled card');
   form.set('description', description || '');
-  form.set('requires_target', requiresTarget ? 'true' : 'false');
+  form.set('type', cardType || 'instant');
 
   if (life !== undefined && life !== null && life !== '') {
     form.set('life', String(life));

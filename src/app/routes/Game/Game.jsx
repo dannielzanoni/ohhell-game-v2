@@ -938,7 +938,7 @@ function PlayerSeat({
   showReadyState = false,
 }) {
   const scaleClass = isCurrent ? 'scale-90' : 'scale-75';
-  const isPowerDropActive = canDropPowerCard && draggingPowerCard?.requires_target;
+  const isPowerDropActive = canDropPowerCard && draggingPowerCard?.type === 'targetable';
   const avatarBorderClass = isPowerDropActive
     ? 'border-violet-200 ring-4 ring-violet-300/55'
     : isTurnToPlay
@@ -1450,8 +1450,8 @@ function PowerCardHand({
   return (
     <div className="absolute bottom-[11.25rem] left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-2 overflow-x-auto px-2 pb-2 sm:bottom-[13.75rem] sm:max-w-[min(92vw,56rem)] sm:justify-center sm:overflow-visible sm:px-0">
       {cards.map((card, index) => {
-        const requiresTarget = Boolean(card.requires_target);
-        const canDrag = canUsePowerCards && requiresTarget;
+        const isTargetable = card.type === 'targetable';
+        const canDrag = canUsePowerCards && isTargetable;
 
         return (
           <button
@@ -1460,19 +1460,19 @@ function PowerCardHand({
             disabled={!canUsePowerCards}
             draggable={canDrag}
             title={
-              requiresTarget
+              isTargetable
                 ? t('game.powerCardDragToTarget')
                 : card.description || card.name
             }
             className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
               canUsePowerCards
-                ? requiresTarget
+                ? isTargetable
                   ? 'cursor-grab hover:-translate-y-1 hover:border-violet-200 active:cursor-grabbing active:translate-y-0'
                   : 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
                 : 'cursor-not-allowed opacity-70'
             }`}
             onClick={() => {
-              if (!requiresTarget) {
+              if (!isTargetable) {
                 onUsePowerCard(card);
               }
             }}
@@ -1497,7 +1497,7 @@ function PowerCardHand({
             <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
               {card.description}
             </small>
-            {requiresTarget ? (
+            {isTargetable ? (
               <span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
                 {t('game.dragToTarget')}
               </span>
@@ -2883,7 +2883,7 @@ export function Game() {
       return;
     }
 
-    if (card.requires_target && !targetPlayerId) {
+    if (card.type === 'targetable' && !targetPlayerId) {
       setJoinError(t('game.powerCardTargetError'));
       return;
     }
@@ -2971,7 +2971,7 @@ export function Game() {
             bid={player.bid}
             canDropPowerCard={
               canUsePowerCards &&
-              draggingPowerCard?.requires_target &&
+              draggingPowerCard?.type === 'targetable' &&
               Number(player.lifes ?? lifes) > 0
             }
             cardCount={cardCount}

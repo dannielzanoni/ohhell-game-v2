@@ -134,7 +134,7 @@ export const en = {
         'Allowed range: {{min}}-{{max}}. Round damage: {{roundDamage}}.',
       noOptions: 'No options found.',
       powerDeck: 'Fodinha Power deck',
-      powerDeckEmpty: 'No power decks are available yet. The API must seed or create one first.',
+      powerDeckEmpty: 'No power decks are available yet. Create a deck before starting Fodinha Power.',
       powerDeckHint:
         'Everyone in the lobby plays with the exact deck selected by the lobby creator.',
       powerDeckLoadError: 'Could not load power decks.',
@@ -157,8 +157,6 @@ export const en = {
       },
       life: '{{count}} life',
       loadError: 'Could not load community cards.',
-      noTarget: 'No target',
-      requiresTarget: 'Requires target',
       title: 'Community Cards',
     },
     github: {
@@ -362,10 +360,15 @@ export const en = {
       emptySavedTitle: 'No saved cards',
       eyebrow: 'Card playground',
       export: 'Export JSON',
+      cardTypes: {
+        instant: 'Instant',
+        interactive: 'Interactive',
+        targetable: 'Targetable',
+      },
       fields: {
+        cardType: 'Card type',
         description: 'Description',
         life: 'Life',
-        requiresTarget: 'Lua effect requires a target player',
         title: 'Title',
       },
       imageError: 'Could not import the image.',
@@ -431,12 +434,17 @@ export const en = {
       deckCardCount: '{{count}} cards',
       description:
         'Build named Fodinha Power decks from official cards and cards published by the community.',
-      emptyCardsDescription: 'Publish cards from the playground or seed official cards in the API.',
+      emptyCardsDescription: 'Publish cards from the playground before creating decks.',
       emptyCardsTitle: 'No cards available',
       eyebrow: 'Fodinha Power',
       fields: {
         description: 'Description',
         name: 'Deck name',
+      },
+      cardTypes: {
+        instant: 'Instant',
+        interactive: 'Interactive',
+        targetable: 'Targetable',
       },
       kind: {
         community: 'Community',
@@ -445,9 +453,7 @@ export const en = {
       loadError: 'Could not load power decks.',
       nameRequired: 'Enter a deck name.',
       noDecks: 'No decks created yet.',
-      noTarget: 'No target',
       officialCreator: 'Official',
-      requiresTarget: 'Requires target',
       savedEyebrow: 'Saved decks',
       savedTitle: 'Decks: {{count}}',
       selectedCards: '{{count}} selected cards',

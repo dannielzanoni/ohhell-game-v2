@@ -51,6 +51,7 @@ function createDefaultImageLayout() {
 }
 
 const emptyDraft = {
+  cardType: 'instant',
   description: 'Ao entrar em jogo, recupere 1 vida e compre uma carta.',
   image: '',
   imageLayout: createDefaultImageLayout(),
@@ -58,7 +59,6 @@ const emptyDraft = {
   life: 7,
   luaScript: '',
   luaScriptName: '',
-  requiresTarget: false,
   template: '',
   title: 'Artemis Guard',
 };
@@ -77,7 +77,9 @@ function normalizeCard(card) {
   delete cleanedCard.cost;
   delete cleanedCard.power;
   delete cleanedCard.rarity;
-  delete cleanedCard.type;
+  const cardType = ['instant', 'targetable', 'interactive'].includes(cleanedCard.cardType)
+    ? cleanedCard.cardType
+    : 'instant';
 
   const sourceLayout = cleanedCard.layout || {};
   const layout = {};
@@ -99,7 +101,7 @@ function normalizeCard(card) {
     luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
     luaScriptName:
       typeof cleanedCard.luaScriptName === 'string' ? cleanedCard.luaScriptName : '',
-    requiresTarget: Boolean(cleanedCard.requiresTarget),
+    cardType,
   };
 }
 
@@ -822,11 +824,11 @@ export function Playground() {
     try {
       const imageBlob = await renderCardToBlob(draft);
       const card = await createCardDefinition({
+        cardType: draft.cardType,
         description: draft.description,
         imageBlob,
         life: normalizeNumber(draft.life, emptyDraft.life),
         name: draft.title.trim() || t('pages.playground.untitled'),
-        requiresTarget: draft.requiresTarget,
         scriptFileName: draft.luaScriptName || `${slugifyFileName(draft.title)}.lua`,
         scriptText: draft.luaScript,
       });
@@ -944,16 +946,17 @@ export function Playground() {
                   />
                 </label>
 
-                <label className="flex items-center gap-3 rounded-lg border border-border bg-background/45 px-3 py-2 text-sm font-semibold sm:col-span-2">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-primary"
-                    checked={Boolean(draft.requiresTarget)}
-                    onChange={(event) =>
-                      updateDraft('requiresTarget', event.target.checked)
-                    }
-                  />
-                  {t('pages.playground.fields.requiresTarget')}
+                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
+                  {t('pages.playground.fields.cardType')}
+                  <select
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={draft.cardType}
+                    onChange={(event) => updateDraft('cardType', event.target.value)}
+                  >
+                    <option value="instant">{t('pages.playground.cardTypes.instant')}</option>
+                    <option value="targetable">{t('pages.playground.cardTypes.targetable')}</option>
+                    <option value="interactive">{t('pages.playground.cardTypes.interactive')}</option>
+                  </select>
                 </label>
               </div>
 

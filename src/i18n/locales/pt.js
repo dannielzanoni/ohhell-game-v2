@@ -134,7 +134,7 @@ export const pt = {
         'Faixa permitida: {{min}}-{{max}}. Dano por rodada: {{roundDamage}}.',
       noOptions: 'Nenhuma opção encontrada.',
       powerDeck: 'Deck do Fodinha Power',
-      powerDeckEmpty: 'Nenhum deck de poder disponivel ainda. A API precisa criar ou seedar um primeiro.',
+      powerDeckEmpty: 'Nenhum deck de poder disponivel ainda. Crie um deck antes de iniciar Fodinha Power.',
       powerDeckHint:
         'Todos na lobby jogam com o deck exato selecionado pelo criador da sala.',
       powerDeckLoadError: 'Nao foi possivel carregar os decks de poder.',
@@ -157,8 +157,6 @@ export const pt = {
       },
       life: '{{count}} vida',
       loadError: 'Nao foi possivel carregar as cartas comunitarias.',
-      noTarget: 'Sem alvo',
-      requiresTarget: 'Requer alvo',
       title: 'Cartas comunitarias',
     },
     github: {
@@ -362,10 +360,15 @@ export const pt = {
       emptySavedTitle: 'Nenhuma carta salva',
       eyebrow: 'Playground de cartas',
       export: 'Exportar JSON',
+      cardTypes: {
+        instant: 'Instantanea',
+        interactive: 'Interativa',
+        targetable: 'Com alvo',
+      },
       fields: {
+        cardType: 'Tipo da carta',
         description: 'Descricao',
         life: 'Vida',
-        requiresTarget: 'Efeito Lua requer um player alvo',
         title: 'Titulo',
       },
       imageError: 'Nao foi possivel importar a imagem.',
@@ -431,12 +434,17 @@ export const pt = {
       deckCardCount: '{{count}} cartas',
       description:
         'Monte decks nomeados do Fodinha Power com cartas oficiais e cartas publicadas pela comunidade.',
-      emptyCardsDescription: 'Publique cartas pelo playground ou cadastre cartas oficiais na API.',
+      emptyCardsDescription: 'Publique cartas pelo playground antes de criar decks.',
       emptyCardsTitle: 'Nenhuma carta disponivel',
       eyebrow: 'Fodinha Power',
       fields: {
         description: 'Descricao',
         name: 'Nome do deck',
+      },
+      cardTypes: {
+        instant: 'Instantanea',
+        interactive: 'Interativa',
+        targetable: 'Com alvo',
       },
       kind: {
         community: 'Comunidade',
@@ -445,9 +453,7 @@ export const pt = {
       loadError: 'Nao foi possivel carregar os decks de poder.',
       nameRequired: 'Informe o nome do deck.',
       noDecks: 'Nenhum deck criado ainda.',
-      noTarget: 'Sem alvo',
       officialCreator: 'Oficial',
-      requiresTarget: 'Requer alvo',
       savedEyebrow: 'Decks salvos',
       savedTitle: 'Decks: {{count}}',
       selectedCards: '{{count}} cartas selecionadas',

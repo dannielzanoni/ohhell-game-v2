@@ -49,6 +49,10 @@ function getKindLabelKey(kind) {
     : 'pages.powerDecks.kind.community';
 }
 
+function getCardTypeLabelKey(cardType) {
+  return `pages.powerDecks.cardTypes.${cardType || 'instant'}`;
+}
+
 function formatDate(value) {
   const timestamp = Number(value);
 
@@ -340,9 +344,7 @@ export function PowerDecks() {
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1">
                               <Target className="size-3.5" />
-                              {card.requires_target
-                                ? t('pages.powerDecks.requiresTarget')
-                                : t('pages.powerDecks.noTarget')}
+                              {t(getCardTypeLabelKey(card.type))}
                             </span>
                           </div>
 
