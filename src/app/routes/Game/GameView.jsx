@@ -33,6 +33,7 @@ import { MAX_LOBBY_PLAYERS, reducePlayerPresence } from '@/domain/playerPresence
 import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
 import { createCardPlayGate } from './cardPlayGate.js';
+import { canSubmitBid, normalizePossibleBids } from './biddingModel.js';
 import {
   createPileVisualModel,
   getCardStrength,
@@ -901,17 +902,29 @@ export function TableCenter({
   );
 }
 
-function BidControls({ onBid, possibleBids }) {
-  if (!possibleBids.length) {
+export function BidControls({ onBid, pendingBid = null, possibleBids }) {
+  const { t } = useTranslation();
+  const allowedBids = normalizePossibleBids(possibleBids);
+
+  if (pendingBid !== null) {
+    return (
+      <p role="status" className="absolute bottom-40 left-1/2 z-40 min-h-11 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-black/85 px-4 py-3 text-sm font-bold text-amber-100 shadow-xl sm:bottom-73">
+        {t('game.bidAwaitingServer', { number: pendingBid })}
+      </p>
+    );
+  }
+
+  if (!allowedBids.length) {
     return null;
   }
 
   return (
     <div className="absolute bottom-40 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-3 shadow-2xl shadow-black/50 backdrop-blur sm:bottom-73">
-      {possibleBids.map((bid) => (
+      {allowedBids.map((bid) => (
         <button
           key={bid}
           type="button"
+          aria-label={t('game.placeBid', { number: bid })}
           className="size-12 cursor-pointer rounded-xl border border-amber-300/50 bg-amber-400 text-base font-black text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-amber-300"
           onClick={() => onBid(bid)}
         >
@@ -1428,6 +1441,7 @@ export function GameView({ controller }) {
   const [playerDeck, setPlayerDeck] = useState([]);
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
   const [possibleBids, setPossibleBids] = useState([]);
+  const [pendingBid, setPendingBid] = useState(null);
   const [roundCardCount, setRoundCardCount] = useState(0);
   const [turnPlayerId, setTurnPlayerId] = useState(null);
   const [upcard, setUpcard] = useState(null);
@@ -1694,6 +1708,7 @@ export function GameView({ controller }) {
     setPlayerDeck([]);
     setPlayedCardAnimation(null);
     setPossibleBids([]);
+    setPendingBid(null);
     setRoundCardCount(0);
     setTurnPlayerId(null);
     upcardRef.current = null;
@@ -1801,6 +1816,7 @@ export function GameView({ controller }) {
       const localPlayerId = localPlayerIds[0] || null;
 
       setIsReadySending(false);
+      setPendingBid(null);
       setMatchPhase('playing');
       updateUpcard(gameInfo.upcard || null);
       setTurnPlayerId(gameInfo.current_player || null);
@@ -1819,7 +1835,7 @@ export function GameView({ controller }) {
         gameInfo.stage?.type === 'Bidding' &&
         localPlayerIds.includes(gameInfo.current_player)
       ) {
-        setPossibleBids(gameInfo.stage.data?.possible_bids || []);
+        setPossibleBids(normalizePossibleBids(gameInfo.stage.data?.possible_bids));
         startActionTimer(
           'bid',
           getActionCardCount(
@@ -1897,6 +1913,7 @@ export function GameView({ controller }) {
             setGameEndSummary(null);
             clearLifeLossHighlight();
             setPossibleBids([]);
+            setPendingBid(null);
             updateRoundCardCount(0);
             setTurnPlayerId(null);
             updateUpcard(null);
@@ -1959,6 +1976,7 @@ export function GameView({ controller }) {
           setGameStage('bidding');
           setMatchPhase('playing');
           setPossibleBids([]);
+          setPendingBid(null);
           setPlayersById((previousPlayers) => {
             const playerId = message.data.player_id;
             const existing =
@@ -2000,12 +2018,13 @@ export function GameView({ controller }) {
           startRoundEndDelay();
           break;
         case 'PlayerBiddingTurn':
+          setPendingBid(null);
           setIsReadySending(false);
           setGameStage('bidding');
           setMatchPhase('playing');
           setTurnPlayerId(message.data.player_id);
           if (isLocalPlayerId(message.data.player_id)) {
-            setPossibleBids(message.data.possible_bids || []);
+            setPossibleBids(normalizePossibleBids(message.data.possible_bids));
             startActionTimer(
               'bid',
               getActionCardCount(Math.max(...(message.data.possible_bids || [0]))),
@@ -2460,10 +2479,12 @@ export function GameView({ controller }) {
   };
 
   const sendBid = (bid) => {
-    if (!socketRef.current || !possibleBids.includes(bid)) {
+    if (!socketRef.current || pendingBid !== null || !canSubmitBid(possibleBids, bid)) {
       return;
     }
 
+    const allowedBids = possibleBids;
+    setPendingBid(bid);
     setPossibleBids([]);
     clearTurnPromptSound();
     clearActionTimer();
@@ -2484,6 +2505,8 @@ export function GameView({ controller }) {
     try {
       putBid(socketRef.current, bid);
     } catch (error) {
+      setPendingBid(null);
+      setPossibleBids(allowedBids);
       setJoinError(error.message || t('game.bidError'));
     }
   };
@@ -2646,7 +2669,11 @@ export function GameView({ controller }) {
         );
       })}
 
-      <BidControls onBid={sendBid} possibleBids={hasGameSocket ? possibleBids : []} />
+      <BidControls
+        onBid={sendBid}
+        pendingBid={pendingBid}
+        possibleBids={hasGameSocket ? possibleBids : []}
+      />
       <PlayerHand
         canPlayCards={canPlayCards}
         cardBackSrc={selectedCardBackSrc}
