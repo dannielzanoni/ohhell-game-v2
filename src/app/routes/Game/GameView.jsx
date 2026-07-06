@@ -34,6 +34,7 @@ import { joinRoomErrorKey } from '../Rooms/roomNavigation.js';
 import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './reconnectPolicy.js';
 import { createCardPlayGate } from './cardPlayGate.js';
 import { canSubmitBid, normalizePossibleBids } from './biddingModel.js';
+import { createActionTimerController } from './actionTimerController.js';
 import {
   createPileVisualModel,
   getCardStrength,
@@ -935,53 +936,13 @@ export function BidControls({ onBid, pendingBid = null, possibleBids }) {
   );
 }
 
-function ActionTimer({ onExpire, timer }) {
+export function ActionTimer({ timer }) {
   const { t } = useTranslation();
-  const [now, setNow] = useState(() => Date.now());
-  const expiredTimerIdRef = useRef('');
-
-  useEffect(() => {
-    if (!timer) {
-      return undefined;
-    }
-
-    setNow(Date.now());
-    const interval = window.setInterval(() => {
-      setNow(Date.now());
-    }, 200);
-
-    return () => window.clearInterval(interval);
-  }, [timer]);
-
-  useEffect(() => {
-    expiredTimerIdRef.current = '';
-  }, [timer?.id]);
-
-  useEffect(() => {
-    if (!timer) {
-      return;
-    }
-
-    const remainingMs = timer.durationMs - Math.max(0, now - timer.startedAt);
-
-    if (remainingMs > 0 || expiredTimerIdRef.current === timer.id) {
-      return;
-    }
-
-    expiredTimerIdRef.current = timer.id;
-    onExpire?.(timer);
-  }, [now, onExpire, timer]);
 
   if (!timer) {
     return null;
   }
 
-  const elapsedMs = Math.max(0, now - timer.startedAt);
-  const remainingMs = Math.max(0, timer.durationMs - elapsedMs);
-  const progress = timer.durationMs
-    ? Math.max(0, Math.min(100, (remainingMs / timer.durationMs) * 100))
-    : 0;
-  const seconds = Math.ceil(remainingMs / 1000);
   const label =
     timer.type === 'bid'
       ? t('game.timerBid')
@@ -996,12 +957,12 @@ function ActionTimer({ onExpire, timer }) {
     >
       <div className="mb-1 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-wide">
         <span>{label}</span>
-        <span>{seconds}s</span>
+        <span>{timer.seconds}s</span>
       </div>
       <div className="relative h-2 overflow-hidden rounded-full bg-white/15">
         <span
           className="absolute bottom-0 right-0 top-0 rounded-full bg-amber-300 transition-[width] duration-200 ease-linear"
-          style={{ width: `${progress}%` }}
+          style={{ width: `${timer.progress}%` }}
         />
       </div>
     </div>
@@ -1395,7 +1356,11 @@ export function GameView({ controller }) {
   const upcardRef = useRef(null);
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
-  const [actionTimer, setActionTimer] = useState(null);
+  const actionTimerControllerRef = useRef(null);
+  if (!actionTimerControllerRef.current) {
+    actionTimerControllerRef.current = createActionTimerController();
+  }
+  const [actionTimer, setActionTimer] = useState(() => actionTimerControllerRef.current.getState());
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
   );
@@ -1536,7 +1501,7 @@ export function GameView({ controller }) {
   };
 
   const clearActionTimer = useCallback(() => {
-    setActionTimer(null);
+    actionTimerControllerRef.current.clear();
   }, []);
 
   const clearLifeLossHighlight = useCallback(() => {
@@ -1575,19 +1540,7 @@ export function GameView({ controller }) {
   }, [navigate]);
 
   const startActionTimer = useCallback((type, cardCount) => {
-    const normalizedCardCount = Math.max(
-      0,
-      Math.trunc(Number(cardCount) || 0),
-    );
-    const durationMs = (7 + normalizedCardCount) * 1000;
-
-    setActionTimer({
-      cardCount: normalizedCardCount,
-      durationMs,
-      id: `${type}-${Date.now()}`,
-      startedAt: Date.now(),
-      type,
-    });
+    actionTimerControllerRef.current.start(type, cardCount);
   }, []);
 
   const clearPileElevation = useCallback(() => {
@@ -1628,6 +1581,15 @@ export function GameView({ controller }) {
   }), []);
 
   useEffect(() => subscribeGameState(setSharedGameState), []);
+
+  useEffect(() => {
+    const timerController = actionTimerControllerRef.current;
+    const unsubscribe = timerController.subscribe(setActionTimer);
+    return () => {
+      unsubscribe();
+      timerController.destroy();
+    };
+  }, []);
 
   const handleProfileStateChange = useCallback((state) => {
     setProfileGateState((previousState) => {
@@ -2580,6 +2542,10 @@ export function GameView({ controller }) {
     clearActionTimer();
   };
 
+  useEffect(() => {
+    actionTimerControllerRef.current.setOnExpire(handleActionTimerExpire);
+  }, [handleActionTimerExpire]);
+
   return (
     <main
       data-game-phase={sharedGameState.phase}
@@ -2600,7 +2566,7 @@ export function GameView({ controller }) {
         upcard={upcard}
       />
 
-      <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
+      <ActionTimer timer={actionTimer} />
 
       {isWaitingForReady && lobbyId ? (
         <RoomLinkCopy copyText={copyText} getRoomInviteLink={getRoomInviteLink} lobbyId={lobbyId} shareRoomInvite={shareRoomInvite} />
