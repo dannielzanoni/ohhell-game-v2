@@ -83,15 +83,12 @@ export const pt = {
     waitTurn: 'Aguarde sua vez para jogar.',
   },
   gameTypes: {
-    continue: 'Continuar',
-    description: 'Escolha as regras do jogo de cartas desta sessão antes de entrar no hub.',
     eyebrow: 'Tipo de jogo',
     fodinhaClassic: 'Fodinha Clássico',
     fodinhaClassicDescription: 'As regras atuais de Fodinha/Oh Hell com vazas e bids.',
     fodinhaPower: 'Fodinha Power',
     fodinhaPowerDescription:
       'Fodinha com 50 vidas, perda 10x maior e cartas de poder em Lua.',
-    title: 'Escolha um jogo',
   },
   leaderboard: {
     averageBid: 'Bid médio',
@@ -129,9 +126,11 @@ export const pt = {
       createError: 'Não foi possível criar a sala.',
       creating: 'Criando...',
       enablePublicRoom: 'Ativar sala pública',
-      lifeType: 'vida',
       liveTable: 'Mesa ao vivo',
       livesNumber: 'Número de vidas',
+      livesRangeError: 'Informe um número inteiro de {{min}} a {{max}}.',
+      livesRangeHint:
+        'Faixa permitida: {{min}}-{{max}}. Dano por rodada: {{roundDamage}}.',
       noOptions: 'Nenhuma opção encontrada.',
       publicRoom: 'Sala pública',
     },

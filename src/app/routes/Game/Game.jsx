@@ -40,7 +40,6 @@ import {
 import {
   gameTypes,
   getGameTypeOption,
-  getSelectedGameType,
 } from '@/services/gameTypesService.js';
 import { joinLobby } from '@/services/lobbyService.js';
 
@@ -389,7 +388,7 @@ function getLobbyGameType(lobbyId, routeGameType) {
     }
   }
 
-  return getSelectedGameType() || gameTypes.FODINHA_CLASSIC;
+  return gameTypes.FODINHA_CLASSIC;
 }
 
 function getClaimsPlayerId(player) {

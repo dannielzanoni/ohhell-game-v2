@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { CharacterProfile } from './routes/Characters/CharacterProfile.jsx';
 import { Mercenaries } from './routes/Characters/Characters.jsx';
-import { GameTypeGate } from './GameTypeGate.jsx';
+import { AppLayout } from '@/components/layout/AppLayout.jsx';
 import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
 import { Github } from './routes/Github/Github.jsx';
@@ -15,7 +15,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<GameTypeGate />}>
+        <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/create-game" element={<CreateGame />} />
           <Route path="/game" element={<Navigate to="/create-game" replace />} />

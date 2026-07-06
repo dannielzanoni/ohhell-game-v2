@@ -83,15 +83,12 @@ export const en = {
     waitTurn: 'Wait for your turn.',
   },
   gameTypes: {
-    continue: 'Continue',
-    description: 'Choose the card game rules for this session before entering the hub.',
     eyebrow: 'Game type',
     fodinhaClassic: 'Fodinha Classic',
     fodinhaClassicDescription: 'The current Oh Hell/Fodinha trick-taking rules.',
     fodinhaPower: 'Fodinha Power',
     fodinhaPowerDescription:
       'Fodinha with 50 lives, 10x life loss, and Lua-powered power cards.',
-    title: 'Pick a game',
   },
   leaderboard: {
     averageBid: 'Avg bid',
@@ -129,9 +126,11 @@ export const en = {
       createError: 'Could not create the room.',
       creating: 'Creating...',
       enablePublicRoom: 'Enable public room',
-      lifeType: 'life',
       liveTable: 'Live table',
       livesNumber: 'Number of Lives',
+      livesRangeError: 'Enter a whole number from {{min}} to {{max}}.',
+      livesRangeHint:
+        'Allowed range: {{min}}-{{max}}. Round damage: {{roundDamage}}.',
       noOptions: 'No options found.',
       publicRoom: 'Public room',
     },

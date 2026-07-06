@@ -1,6 +1,6 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
-import { gameTypes, getSelectedGameType } from './gameTypesService.js';
+import { gameTypes } from './gameTypesService.js';
 
 const pendingCommandsBySocket = new WeakMap();
 export const WAITING_LOBBY_INACTIVITY_CLOSE_CODE = 4001;
@@ -75,7 +75,7 @@ export function sendGameCommand(socket, command) {
   socket.send(JSON.stringify(command));
 }
 
-function buildGameCommand(command, gameType = getSelectedGameType()) {
+function buildGameCommand(command, gameType = gameTypes.FODINHA_CLASSIC) {
   return {
     type: 'GameCommand',
     data: {

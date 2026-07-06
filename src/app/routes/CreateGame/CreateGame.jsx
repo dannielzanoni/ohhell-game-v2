@@ -13,34 +13,68 @@ import {
   ComboboxTrigger,
 } from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
-import {
-  gameTypeOptions,
-  gameTypes,
-  getSelectedGameType,
-  setSelectedGameType,
-} from '@/services/gameTypesService.js';
+import { Input } from '@/components/ui/input.jsx';
+import { gameTypeOptions, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
-const lifeOptions = [1, 2, 3, 4, 5, 50].map((life) => ({
-  label: String(life),
-  value: String(life),
-}));
+const lifeSettingsByGameType = {
+  [gameTypes.FODINHA_CLASSIC]: {
+    defaultValue: 5,
+    max: 10,
+    min: 1,
+    roundDamage: 1,
+  },
+  [gameTypes.FODINHA_POWER]: {
+    defaultValue: 50,
+    max: 100,
+    min: 10,
+    roundDamage: 10,
+  },
+};
+
+function getLifeSettings(gameType) {
+  return lifeSettingsByGameType[gameType] || lifeSettingsByGameType[gameTypes.FODINHA_CLASSIC];
+}
+
+function createDefaultLivesByGameType() {
+  return Object.fromEntries(
+    Object.entries(lifeSettingsByGameType).map(([gameType, settings]) => [
+      gameType,
+      String(settings.defaultValue),
+    ]),
+  );
+}
 
 function getDefaultLives(gameType) {
-  return gameType === gameTypes.FODINHA_POWER ? '50' : '5';
+  return String(getLifeSettings(gameType).defaultValue);
+}
+
+function getLivesValidationError(value, settings) {
+  const selectedLives = Number(value);
+
+  if (
+    !Number.isInteger(selectedLives) ||
+    selectedLives < settings.min ||
+    selectedLives > settings.max
+  ) {
+    return {
+      key: 'pages.createGame.livesRangeError',
+      values: { max: settings.max, min: settings.min },
+    };
+  }
+
+  return null;
 }
 
 export function CreateGame() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [gameType, setGameType] = useState(
-    () => getSelectedGameType() || gameTypes.FODINHA_CLASSIC,
-  );
-  const [lives, setLives] = useState(() =>
-    getDefaultLives(getSelectedGameType() || gameTypes.FODINHA_CLASSIC),
-  );
+  const [gameType, setGameType] = useState(gameTypes.FODINHA_CLASSIC);
+  const [livesByGameType, setLivesByGameType] = useState(createDefaultLivesByGameType);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const selectedLifeSettings = getLifeSettings(gameType);
+  const lives = livesByGameType[gameType] ?? getDefaultLives(gameType);
   const selectedGameTypeOption = gameTypeOptions.find(
     (option) => option.value === gameType,
   );
@@ -55,18 +89,35 @@ export function CreateGame() {
     }
 
     setGameType(nextGameType);
-    setSelectedGameType(nextGameType);
-    setLives(getDefaultLives(nextGameType));
+  };
+
+  const handleLivesChange = (event) => {
+    const { value } = event.target;
+
+    setLivesByGameType((current) => ({
+      ...current,
+      [gameType]: value,
+    }));
   };
 
   const handleCreateGame = async () => {
-    setIsCreating(true);
     setCreateError('');
 
+    const selectedGameType = gameType || gameTypes.FODINHA_CLASSIC;
+    const selectedLives = Number(lives);
+    const validationError = getLivesValidationError(
+      lives,
+      getLifeSettings(selectedGameType),
+    );
+
+    if (validationError) {
+      setCreateError(t(validationError.key, validationError.values));
+      return;
+    }
+
+    setIsCreating(true);
+
     try {
-      const selectedLives = Number(lives);
-      const selectedGameType = gameType || gameTypes.FODINHA_CLASSIC;
-      setSelectedGameType(selectedGameType);
       const lobby = await createLobby({
         gameType: selectedGameType,
         lifes: selectedLives,
@@ -164,30 +215,23 @@ export function CreateGame() {
               <span className="text-sm font-semibold text-foreground">
                 {t('pages.createGame.livesNumber')}
               </span>
-              <Combobox
-                data={lifeOptions}
-                type={t('pages.createGame.lifeType')}
+              <Input
+                className="mt-3 h-11 rounded-full border-input bg-background px-4 text-sm text-foreground"
+                inputMode="numeric"
+                max={selectedLifeSettings.max}
+                min={selectedLifeSettings.min}
+                step={1}
+                type="number"
                 value={lives}
-                onValueChange={setLives}
-              >
-                <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
-                <ComboboxContent className="rounded-xl border-border bg-popover">
-                  <ComboboxList>
-                    <ComboboxEmpty>{t('pages.createGame.noOptions')}</ComboboxEmpty>
-                    <ComboboxGroup>
-                      {lifeOptions.map((option) => (
-                        <ComboboxItem
-                          key={option.value}
-                          value={option.value}
-                          data-checked={lives === option.value}
-                        >
-                          {option.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxGroup>
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
+                onChange={handleLivesChange}
+              />
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {t('pages.createGame.livesRangeHint', {
+                  max: selectedLifeSettings.max,
+                  min: selectedLifeSettings.min,
+                  roundDamage: selectedLifeSettings.roundDamage,
+                })}
+              </p>
             </div>
 
             <div className="flex w-full min-w-0 flex-col items-start gap-3 rounded-lg border border-border bg-background/55 p-4 sm:flex-row sm:items-center sm:justify-between">
