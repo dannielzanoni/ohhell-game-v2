@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { CharacterProfile } from './routes/Characters/CharacterProfile.jsx';
 import { Mercenaries } from './routes/Characters/Characters.jsx';
-import { AppLayout } from '@/components/layout/AppLayout.jsx';
 import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
 import { Github } from './routes/Github/Github.jsx';
@@ -10,6 +9,7 @@ import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
 import { Playground } from './routes/Playground/Playground.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
+import { AppLayout } from '@/components/layout/AppLayout.jsx';
 
 export function AppRouter() {
   return (
