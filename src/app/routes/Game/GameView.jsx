@@ -35,6 +35,7 @@ import { reconnectDelay, RECONNECT_DELAYS_MS, reconnectWithSnapshot } from './re
 import { createCardPlayGate } from './cardPlayGate.js';
 import { canSubmitBid, normalizePossibleBids } from './biddingModel.js';
 import { createActionTimerController } from './actionTimerController.js';
+import { classifyServerCommandError, commandErrorKey, commandErrorKinds } from './commandError.js';
 import {
   createPileVisualModel,
   getCardStrength,
@@ -1151,7 +1152,7 @@ function LifeLossPopup({ highlight }) {
   );
 }
 
-export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
+export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, isPending = false, onPlayCard, resetKey = 0 }) {
   const { t } = useTranslation();
   const playGateRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -1163,6 +1164,10 @@ export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayC
       setSelectedIndex(null);
     }
   }, [canPlayCards]);
+
+  useEffect(() => {
+    playGateRef.current.reset();
+  }, [resetKey]);
 
   useEffect(() => {
     if (selectedIndex !== null && !cards[selectedIndex]) setSelectedIndex(null);
@@ -1206,7 +1211,7 @@ export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayC
           <button
             key={`${getCardKey(card)}-${index}`}
             type="button"
-            disabled={!canPlayCards}
+            disabled={!canPlayCards || isPending}
             aria-pressed={selectedIndex === index}
             aria-label={t('game.selectCardLabel', { card: getCardLabel(card, t) })}
             title={getCardLabel(card, t)}
@@ -1229,15 +1234,26 @@ export function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayC
     </div>
     <button
       type="button"
-      disabled={!canPlayCards || !selectedCard}
+      disabled={!canPlayCards || !selectedCard || isPending}
       className="absolute bottom-[calc(env(safe-area-inset-bottom)+11.5rem)] right-3 z-50 min-h-11 rounded-xl border border-amber-200 bg-amber-400 px-4 py-2 text-sm font-black text-zinc-950 shadow-xl disabled:cursor-not-allowed disabled:opacity-50 md:bottom-44 md:right-6"
       onClick={playSelectedCard}
     >
-      {selectedCard
+      {isPending
+        ? t('game.cardAwaitingServer')
+        : selectedCard
         ? t('game.playSelectedCard', { card: getCardLabel(selectedCard, t) })
         : t('game.selectCard')}
     </button>
     </>
+  );
+}
+
+export function CommandErrorBanner({ message }) {
+  if (!message) return null;
+  return (
+    <div role="alert" data-placement="non-blocking-mobile" className="pointer-events-none absolute right-3 top-[max(env(safe-area-inset-top),0.75rem)] z-60 w-[min(22rem,calc(100vw-1.5rem))] rounded-lg border border-destructive/50 bg-background/95 px-4 py-3 text-center text-sm text-destructive shadow-lg backdrop-blur md:right-6 md:top-6">
+      {message}
+    </div>
   );
 }
 
@@ -1336,6 +1352,7 @@ export function GameView({ controller }) {
   const playerDeckCountRef = useRef(0);
   const pileElevationTimeoutRef = useRef(null);
   const pileRef = useRef([]);
+  const pendingBidOptionsRef = useRef([]);
   const lifeLossHighlightTimeoutRef = useRef(null);
   const queuedRoundEndMessagesRef = useRef([]);
   const roundCardCountRef = useRef(0);
@@ -1397,6 +1414,8 @@ export function GameView({ controller }) {
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
   const [possibleBids, setPossibleBids] = useState([]);
   const [pendingBid, setPendingBid] = useState(null);
+  const [pendingCardKey, setPendingCardKey] = useState('');
+  const [playCommandResetKey, setPlayCommandResetKey] = useState(0);
   const [roundCardCount, setRoundCardCount] = useState(0);
   const [turnPlayerId, setTurnPlayerId] = useState(null);
   const [upcard, setUpcard] = useState(null);
@@ -1660,6 +1679,7 @@ export function GameView({ controller }) {
     setPlayedCardAnimation(null);
     setPossibleBids([]);
     setPendingBid(null);
+    setPendingCardKey('');
     setRoundCardCount(0);
     setTurnPlayerId(null);
     upcardRef.current = null;
@@ -1768,6 +1788,7 @@ export function GameView({ controller }) {
 
       setIsReadySending(false);
       setPendingBid(null);
+      setPendingCardKey('');
       setMatchPhase('playing');
       updateUpcard(gameInfo.upcard || null);
       setTurnPlayerId(gameInfo.current_player || null);
@@ -1865,6 +1886,8 @@ export function GameView({ controller }) {
             clearLifeLossHighlight();
             setPossibleBids([]);
             setPendingBid(null);
+            setPendingCardKey('');
+            pendingBidOptionsRef.current = [];
             updateRoundCardCount(0);
             setTurnPlayerId(null);
             updateUpcard(null);
@@ -1928,6 +1951,7 @@ export function GameView({ controller }) {
           setMatchPhase('playing');
           setPossibleBids([]);
           setPendingBid(null);
+          pendingBidOptionsRef.current = [];
           setPlayersById((previousPlayers) => {
             const playerId = message.data.player_id;
             const existing =
@@ -2007,6 +2031,7 @@ export function GameView({ controller }) {
           startActionTimer('cards', (message.data || []).length);
           break;
         case 'PlayerTurn':
+          setPendingCardKey('');
           setIsReadySending(false);
           setGameStage('dealing');
           setMatchPhase('playing');
@@ -2033,6 +2058,7 @@ export function GameView({ controller }) {
           });
           break;
         case 'TurnPlayed':
+          setPendingCardKey('');
           clearTurnPromptSound();
           clearActionTimer();
           setIsReadySending(false);
@@ -2078,6 +2104,14 @@ export function GameView({ controller }) {
 
           (message.data?.pile || []).forEach((turn) => {
             if (isLocalPlayerId(turn.player_id)) {
+              const cardEventKey = `pile:${(message.data?.pile || []).map(getTurnKey).join('|')}`;
+              playSoundOnce(
+                'card-play',
+                cardEventKey,
+                cardAnimationSound,
+                gamePreferencesRef.current.volume,
+              );
+              setPlayedCardAnimation({ card: turn.card, id: cardEventKey });
               setPlayerDeck((currentDeck) => {
                 const nextDeck = removeCardFromDeck(currentDeck, turn.card);
                 playerDeckCountRef.current = nextDeck.length;
@@ -2178,7 +2212,12 @@ export function GameView({ controller }) {
           break;
         case 'Error':
           setIsReadySending(false);
-          setJoinError(message.data.msg || 'Erro na conexao da sala.');
+          setPossibleBids(pendingBidOptionsRef.current);
+          pendingBidOptionsRef.current = [];
+          setPendingBid(null);
+          setPendingCardKey('');
+          setPlayCommandResetKey((key) => key + 1);
+          setJoinError(translateRef.current(commandErrorKey(classifyServerCommandError(message.data?.msg))));
           break;
         default:
           break;
@@ -2435,6 +2474,7 @@ export function GameView({ controller }) {
     }
 
     const allowedBids = possibleBids;
+    pendingBidOptionsRef.current = allowedBids;
     setPendingBid(bid);
     setPossibleBids([]);
     clearTurnPromptSound();
@@ -2457,6 +2497,7 @@ export function GameView({ controller }) {
       putBid(socketRef.current, bid);
     } catch (error) {
       setPendingBid(null);
+      pendingBidOptionsRef.current = [];
       setPossibleBids(allowedBids);
       setJoinError(error.message || t('game.bidError'));
     }
@@ -2464,49 +2505,29 @@ export function GameView({ controller }) {
 
   const handlePlayCard = (card) => {
     if (!socketRef.current) {
-      setJoinError(t('game.connectionNotReady'));
+      setJoinError(t(commandErrorKey(commandErrorKinds.CONNECTION)));
       return;
     }
 
     if (gameStage !== 'dealing') {
-      setJoinError(t('game.waitDeal'));
+      setJoinError(t(commandErrorKey(commandErrorKinds.PHASE)));
       return;
     }
 
     if (!isCurrentPlayerTurn) {
-      setJoinError(t('game.waitTurn'));
+      setJoinError(t(commandErrorKey(commandErrorKinds.TURN)));
       return;
     }
 
     try {
       setJoinError('');
+      setPendingCardKey(getCardKey(card));
       clearTurnPromptSound();
       clearActionTimer();
-      playConfiguredSound(cardAnimationSound);
-      setPlayedCardAnimation({
-        card,
-        id: `${Date.now()}-${getCardKey(card)}`,
-      });
       playTurn(socketRef.current, card);
-      setPlayerDeck((currentDeck) => {
-        const nextDeck = removeCardFromDeck(currentDeck, card);
-        playerDeckCountRef.current = nextDeck.length;
-        return nextDeck;
-      });
-      setPlayersById((previousPlayers) => {
-        if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
-          return previousPlayers;
-        }
-
-        return {
-          ...previousPlayers,
-          [resolvedCurrentPlayerId]: {
-            ...previousPlayers[resolvedCurrentPlayerId],
-            turnToPlay: false,
-          },
-        };
-      });
     } catch (error) {
+      setPendingCardKey('');
+      setPlayCommandResetKey((key) => key + 1);
       setJoinError(error.message || t('game.playCardError'));
     }
   };
@@ -2634,7 +2655,9 @@ export function GameView({ controller }) {
         cardBackSrc={selectedCardBackSrc}
         cards={playerDeck}
         deckType={gamePreferences.deckType}
+        isPending={Boolean(pendingCardKey)}
         onPlayCard={handlePlayCard}
+        resetKey={playCommandResetKey}
       />
       <PlayedCardAnimation
         key={playedCardAnimation?.id}
@@ -2649,11 +2672,7 @@ export function GameView({ controller }) {
         summary={gameEndSummary}
       />
 
-      {joinError ? (
-        <div role="alert" className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-destructive/50 bg-background/90 px-4 py-3 text-center text-sm text-destructive shadow-lg backdrop-blur">
-          {joinError}
-        </div>
-      ) : null}
+      <CommandErrorBanner message={joinError} />
 
       {isOffline && !joinError ? (
         <div role="status" className="absolute left-1/2 top-6 z-20 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-orange-300/40 bg-black/85 px-4 py-3 text-center text-sm font-semibold text-orange-100 shadow-lg backdrop-blur">
