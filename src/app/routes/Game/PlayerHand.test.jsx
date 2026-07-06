@@ -49,4 +49,14 @@ describe('PlayerHand web interaction', () => {
     expect(cardButton).toHaveClass('ring-4');
     expect(screen.getByRole('button', { name: 'Play 3 of clubs' })).toBeEnabled();
   });
+
+  it('keeps the selected card visible but disables commands while awaiting confirmation', () => {
+    const { rerender } = render(<PlayerHand canPlayCards cardBackSrc="back.png" cards={[card]} deckType="spanish" onPlayCard={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select 3 of clubs' }));
+
+    rerender(<PlayerHand canPlayCards cardBackSrc="back.png" cards={[card]} deckType="spanish" isPending onPlayCard={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'Select 3 of clubs' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Card sent. Waiting for the server…' })).toBeDisabled();
+  });
 });
