@@ -269,26 +269,33 @@ export const pt = {
         },
         gambler: {
           cards: {
-            allIn: {
+            crossYourFingers: {
               description:
-                'Aumenta a recompensa de uma previsao arriscada, mas cobra vida quando a aposta falha.',
+                'Gira uma roleta entre todos os jogadores, o sorteado ganha 20 de vida, todos os outros perdem 5 vida, Gambler tem +30% de chance se for a que estiver com maior aposta',
               story:
-                'Tudo ou Nada e a carta que o Gambler sorri antes de mostrar, mesmo quando a mesa inteira sabe o risco.',
-              title: 'Tudo ou Nada',
+                'Gambler já perdeu um dente em um jogo de roleta.',
+              title: 'Cruze os dedos',
             },
-            lastCoin: {
+            isRightfullyMine: {
               description:
-                'Se for a ultima chance, o Gambler troca estabilidade por uma jogada que pode virar a mesa.',
+                'No fim da rodada, compre uma carta para cada aposta acertada sua e descarte uma carta para cada aposta errada',
               story:
                 'A ultima moeda dele ja comprou fugas, vitorias impossiveis e algumas dividas que ainda respiram.',
-              title: 'Ultima Moeda',
+              title: 'É meu por direito',
             },
-            loadedDice: {
+            allIn: {
               description:
-                'Manipula uma disputa curta e cria vantagem quando o jogador aceita um risco calculado.',
+                'Para cada ponto que você apostou que ia marcar, essa carta custa 1 a menos e dá +5 de vida.',
               story:
-                'Os dados viciados nunca caem por acaso; eles caem onde o Gambler preparou a historia para terminar.',
-              title: 'Dados Viciados',
+                'O Gambler tem uma história de vitorias e derrotas, mas sempre encontra uma forma de continuar jogando.',
+              title: 'Tudo ou Nada',
+            },
+            guabiru: {
+              description:
+                'Jogador alvo tem +2 em apostas no turno',
+              story:
+                'Assim como Gambler, Guabiru gosta de uma boa aposta.',
+              title: 'Guabiru',
             },
           },
           deck: 'Apostas e blefes',

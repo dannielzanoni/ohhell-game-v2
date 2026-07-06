@@ -6,6 +6,7 @@ import artemisCard4 from '@/assets/characters/artemis/cards/4.png';
 import artemisCard5 from '@/assets/characters/artemis/cards/5.png';
 import conjuruzBanner from '@/assets/characters/conjuruz/banner.png';
 import gamblerBanner from '@/assets/characters/gambler/banner.png';
+import gamblerCard1 from '@/assets/characters/gambler/cards/1.png'; 
 import gamblerCard2 from '@/assets/characters/gambler/cards/2.png';
 import gamblerCard3 from '@/assets/characters/gambler/cards/3.png';
 import gamblerCard5 from '@/assets/characters/gambler/cards/5.png';
@@ -39,9 +40,10 @@ export const mercenaries = [
     accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
     banner: gamblerBanner,
     cards: [
-      { id: 'loadedDice', image: gamblerCard2, manaCost: 2 },
-      { id: 'allIn', image: gamblerCard3, manaCost: 5 },
-      { id: 'lastCoin', image: gamblerCard5, manaCost: 1 },
+      { id: 'isRightfullyMine', image: gamblerCard1, manaCost: 2 },
+      { id: 'allIn', image: gamblerCard2, manaCost: 5 },
+      { id: 'crossYourFingers', image: gamblerCard4, manaCost: 3 },
+      { id: 'guabiru', image: gamblerCard5, manaCost: 1 },
     ],
     markerClass: 'bg-red-500',
     path: '/mercenaries/Gambler',

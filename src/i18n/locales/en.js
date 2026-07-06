@@ -269,26 +269,33 @@ export const en = {
         },
         gambler: {
           cards: {
-            allIn: {
+            crossYourFingers: {
               description:
                 'Raises the reward for a risky prediction, but costs life when the bet fails.',
               story:
                 'All In is the card the Gambler smiles before revealing, even when the whole table knows the risk.',
               title: 'All In',
             },
-            lastCoin: {
+            isRightfullyMine: {
               description:
-                'On the last chance, the Gambler trades stability for a play that can flip the table.',
+                'No fim da rodada, compre uma carta para cada aposta acertada sua e descarte uma carta para cada aposta errada',
               story:
                 'His last coin has bought escapes, impossible wins, and a few debts that are still breathing.',
-              title: 'Last Coin',
+              title: 'Is Rightfully Mine',
             },
-            loadedDice: {
+            allIn: {
               description:
                 'Manipulates a short clash and creates advantage when the player accepts calculated risk.',
               story:
                 'The loaded dice never land by chance; they land where the Gambler prepared the story to end.',
               title: 'Loaded Dice',
+            },
+            guabiru: {
+              description:
+                'Jogador alvo tem +2 em apostas no turno',
+              story:
+                '',
+              title: 'Guabiru',
             },
           },
           deck: 'Bets and bluffs',
