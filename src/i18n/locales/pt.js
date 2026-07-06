@@ -48,6 +48,8 @@ export const pt = {
     bidDone: 'Bid {{number}} feito',
     bidError: 'Não foi possível enviar o bid.',
     bidPending: 'Bid {{number}} pendente',
+    bidAwaitingServer: 'Bid {{number}} enviado. Aguardando o servidor…',
+    placeBid: 'Fazer bid {{number}}',
     bidAndPoints: 'Bid {{bid}} · {{points}} pontos',
     chosenBid: 'Bid escolhido',
     confirmProfile: 'Confirme seu nick e avatar antes de entrar na lobby.',
