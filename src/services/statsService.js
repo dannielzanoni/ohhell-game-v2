@@ -1,8 +1,9 @@
 import { apiRequest } from './apiClient.js';
 
-export function getLeaderboard({ limit } = {}) {
+export function getLeaderboard({ limit, signal } = {}) {
   return apiRequest('/stats', {
     query: { limit },
+    signal,
   });
 }
 

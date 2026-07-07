@@ -134,6 +134,8 @@ export const pt = {
     loadError: 'Não foi possível carregar o ranking.',
     noRounds: 'Sem rounds',
     player: 'Player',
+    refreshing: 'Atualizando...',
+    refreshingWithPrevious: 'Atualizando ranking sem apagar os dados atuais.',
     rounds: 'Rounds',
     title: 'Ranking',
     trumps: 'Trunfos',

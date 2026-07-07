@@ -66,7 +66,15 @@ function PlayerAvatar({ player }) {
 
 export function LeaderboardView({ controller }) {
   const { t } = useTranslation();
-  const { error, isLoading, leaderboard, refresh } = controller;
+  const {
+    error,
+    isInitialLoading,
+    isLoading,
+    isRefreshing,
+    leaderboard,
+    refresh,
+    status,
+  } = controller;
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
@@ -87,9 +95,10 @@ export function LeaderboardView({ controller }) {
             className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
             disabled={isLoading}
             onClick={() => void refresh()}
+            aria-busy={isLoading}
           >
             <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {t('common.refresh')}
+            {isRefreshing ? t('leaderboard.refreshing') : t('common.refresh')}
           </Button>
         </div>
 
@@ -100,13 +109,19 @@ export function LeaderboardView({ controller }) {
           </div>
         ) : null}
 
-        {isLoading ? (
+        {isRefreshing && leaderboard.length ? (
+          <p className="rounded-lg border border-border bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
+            {t('leaderboard.refreshingWithPrevious')}
+          </p>
+        ) : null}
+
+        {isInitialLoading ? (
           <div className="grid gap-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
-        ) : leaderboard.length ? (
+        ) : status !== 'empty' && leaderboard.length ? (
           <>
             <div className="grid gap-3 md:hidden">
               {leaderboard.map((stats, index) => (
@@ -222,7 +237,7 @@ export function LeaderboardView({ controller }) {
               </div>
             </div>
           </>
-        ) : (
+        ) : status === 'empty' ? (
           <div className="grid min-h-72 place-items-center rounded-lg border border-border bg-card px-4 py-10 text-center shadow-sm">
             <div>
               <Trophy className="mx-auto size-10 text-muted-foreground" />
@@ -234,7 +249,7 @@ export function LeaderboardView({ controller }) {
               </p>
             </div>
           </div>
-        )}
+        ) : null}
       </section>
     </main>
   );

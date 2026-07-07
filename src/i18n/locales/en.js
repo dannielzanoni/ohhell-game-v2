@@ -134,6 +134,8 @@ export const en = {
     loadError: 'Could not load the leaderboard.',
     noRounds: 'No rounds',
     player: 'Player',
+    refreshing: 'Refreshing...',
+    refreshingWithPrevious: 'Refreshing the leaderboard without clearing current data.',
     rounds: 'Rounds',
     title: 'Leaderboard',
     trumps: 'Trumps',
