@@ -108,7 +108,7 @@ export function LeaderboardView({ controller }) {
           </div>
         ) : leaderboard.length ? (
           <>
-            <div className="grid gap-3 md:hidden">
+            <div className="grid gap-3 md:hidden" data-testid="leaderboard-mobile-cards">
               {leaderboard.map((stats, index) => (
                 <article
                   key={stats.player_id}
@@ -130,24 +130,36 @@ export function LeaderboardView({ controller }) {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                    <span className="rounded-md bg-muted px-3 py-2">
-                      {t('leaderboard.games')}{' '}
-                      <strong>{stats.games_played}</strong>
-                    </span>
-                    <span className="rounded-md bg-muted px-3 py-2">
-                      {t('leaderboard.rounds')}{' '}
-                      <strong>{stats.rounds_won}</strong>
-                    </span>
-                    <span className="rounded-md bg-muted px-3 py-2">
-                      {t('leaderboard.bid')}{' '}
-                      <strong>{formatPercent(stats.bid_accuracy)}</strong>
-                    </span>
-                    <span className="rounded-md bg-muted px-3 py-2">
-                      {t('leaderboard.averageBid')}{' '}
-                      <strong>{formatNumber(stats.average_bid, 2)}</strong>
-                    </span>
-                  </div>
+                  <details className="group mt-4 rounded-md border border-border bg-muted/50">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                      <span>{t('leaderboard.secondaryMetrics')}</span>
+                      <span className="text-xs text-muted-foreground group-open:hidden">
+                        {t('leaderboard.expand')}
+                      </span>
+                      <span className="hidden text-xs text-muted-foreground group-open:inline">
+                        {t('leaderboard.collapse')}
+                      </span>
+                    </summary>
+
+                    <div className="grid grid-cols-2 gap-2 border-t border-border p-3 text-sm">
+                      <span className="rounded-md bg-background px-3 py-2">
+                        {t('leaderboard.games')}{' '}
+                        <strong>{stats.games_played}</strong>
+                      </span>
+                      <span className="rounded-md bg-background px-3 py-2">
+                        {t('leaderboard.rounds')}{' '}
+                        <strong>{stats.rounds_won}</strong>
+                      </span>
+                      <span className="rounded-md bg-background px-3 py-2">
+                        {t('leaderboard.bid')}{' '}
+                        <strong>{formatPercent(stats.bid_accuracy)}</strong>
+                      </span>
+                      <span className="rounded-md bg-background px-3 py-2">
+                        {t('leaderboard.averageBid')}{' '}
+                        <strong>{formatNumber(stats.average_bid, 2)}</strong>
+                      </span>
+                    </div>
+                  </details>
                 </article>
               ))}
             </div>
