@@ -453,6 +453,7 @@ function normalizePlayer({ bid = null, fallbackId, lifes, player, ready }) {
     bid,
     id,
     lifes,
+    mana: null,
     nickname: getClaimsNickname(player, id) || savedPlayer.nickname,
     points: 0,
     ready: Boolean(ready),
@@ -471,6 +472,7 @@ function createFallbackPlayer(id, lifes) {
     bid: null,
     id,
     lifes,
+    mana: null,
     nickname: savedPlayer.nickname || id || 'Guest',
     points: 0,
     ready: false,
@@ -675,6 +677,7 @@ function applyGameInfo(playersById, gameInfo, defaultLifes) {
       ...existing,
       bid: info.bid,
       lifes: info.lifes,
+      mana: info.mana ?? existing.mana ?? null,
       points: info.rounds ?? existing.points ?? 0,
       ready: true,
       turnToPlay: info.id === gameInfo.current_player,
@@ -924,6 +927,33 @@ function LifeHearts({ lifes }) {
   );
 }
 
+function ManaPool({ mana }) {
+  const { t } = useTranslation();
+  const current = Math.max(0, Math.trunc(Number(mana?.current) || 0));
+  const max = Math.max(0, Math.trunc(Number(mana?.max) || 0));
+
+  if (!max) {
+    return null;
+  }
+
+  return (
+    <div
+      className="mt-1 flex items-center gap-1"
+      aria-label={t('game.manaValue', { current, max })}
+    >
+      <span className="h-2 w-16 overflow-hidden rounded-full bg-sky-950/80 ring-1 ring-sky-200/20">
+        <span
+          className="block h-full rounded-full bg-gradient-to-r from-sky-300 to-cyan-200"
+          style={{ width: `${max ? Math.min(100, (current / max) * 100) : 0}%` }}
+        />
+      </span>
+      <span className="text-[0.65rem] font-black uppercase tracking-wide text-sky-100">
+        {current}/{max}
+      </span>
+    </div>
+  );
+}
+
 function PlayerSeat({
   avatarSrc,
   cardBackSrc,
@@ -935,6 +965,7 @@ function PlayerSeat({
   isReady = false,
   isTurnToPlay = false,
   lifes,
+  mana,
   nickname,
   onPowerCardDrop = null,
   position,
@@ -999,6 +1030,7 @@ function PlayerSeat({
               {nickname}
             </p>
             <LifeHearts lifes={lifes} />
+            <ManaPool mana={mana} />
             <BidProgress bid={bid} points={points} />
           </div>
 
@@ -1502,6 +1534,9 @@ function PowerCardHand({
             <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
               {card.description}
             </small>
+            <span className="mt-2 inline-flex rounded-full border border-sky-200/30 bg-sky-300/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.18em] text-sky-100">
+              {t('game.mana')}: {card.mana_cost ?? card.manaCost ?? 0}
+            </span>
             {isTargetable ? (
               <span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
                 {t('game.dragToTarget')}
@@ -2261,6 +2296,24 @@ export function Game() {
             };
           });
           break;
+        case 'PlayersManaChanged':
+          setPlayersById((previousPlayers) => {
+            const nextPlayers = { ...previousPlayers };
+
+            Object.entries(message.data || {}).forEach(([playerId, mana]) => {
+              const existing =
+                nextPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
+
+              nextPlayers[playerId] = {
+                ...existing,
+                mana,
+              };
+            });
+
+            playersByIdRef.current = nextPlayers;
+            return nextPlayers;
+          });
+          break;
         case 'RoundEnded':
           clearTurnPromptSound();
           clearActionTimer();
@@ -2560,6 +2613,10 @@ export function Game() {
         case 'Error':
           setIsReadySending(false);
           setJoinError(message.data.msg || 'Erro na conexao da sala.');
+          showToast({
+            message: message.data.msg || 'Erro na conexao da sala.',
+            variant: 'error',
+          });
           break;
         default:
           break;
@@ -2909,11 +2966,6 @@ export function Game() {
       setJoinError('');
       usePowerCard(socketRef.current, card.id, targetPlayerId);
       setDraggingPowerCard(null);
-      setPowerCards((currentCards) => {
-        const nextCards = removePowerCardFromHand(currentCards, card.id);
-        powerCardCountRef.current = nextCards.length;
-        return nextCards;
-      });
     } catch (error) {
       setJoinError(error.message || t('game.powerCardUseError'));
     }
@@ -2997,6 +3049,7 @@ export function Game() {
             isReady={player.ready}
             isTurnToPlay={player.turnToPlay || player.id === turnPlayerId}
             lifes={player.lifes ?? lifes}
+            mana={player.mana}
             nickname={player.nickname}
             onPowerCardDrop={() => handlePowerCardDrop(player.id)}
             position={getSeatPosition(

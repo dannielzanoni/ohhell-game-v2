@@ -66,6 +66,8 @@ export const en = {
     powerCardDragToTarget: 'Drag this power card onto a player avatar.',
     powerCardTargetError: 'No valid target for this power card.',
     powerCardUseError: 'Could not use the power card.',
+    mana: 'Mana',
+    manaValue: '{{current}}/{{max}} mana',
     playersReady: '{{readyCount}}/{{totalPlayers}} players ready',
     ready: 'Ready',
     readyError: 'Could not update ready state.',
@@ -401,6 +403,7 @@ export const en = {
       drafting: 'Drafting',
       emptySavedDescription: 'Fill the form and save the first backend card.',
       emptySavedTitle: 'No cards available',
+      editCard: 'Edit card',
       eyebrow: 'Card playground',
       export: 'Export JSON',
       cardTypes: {
@@ -411,7 +414,7 @@ export const en = {
       fields: {
         cardType: 'Card type',
         description: 'Description',
-        life: 'Life',
+        manaCost: 'Mana cost',
         title: 'Title',
       },
       imageError: 'Could not import the image.',
@@ -461,6 +464,8 @@ export const en = {
       templateImage: 'Card template',
       title: 'Card generator',
       untitled: 'Untitled card',
+      updateCard: 'Update card',
+      updateSuccess: '{{name}} was updated.',
       viewCommunityCards: 'Create a power deck',
     },
     powerDecks: {
@@ -493,6 +498,8 @@ export const en = {
         official: 'Official',
       },
       loadError: 'Could not load power decks.',
+      luaScript: 'Lua effect script',
+      manaCost: 'Mana cost',
       nameRequired: 'Enter a deck name.',
       noDecks: 'No decks created yet.',
       officialCreator: 'Official',

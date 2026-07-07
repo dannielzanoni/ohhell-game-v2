@@ -3,6 +3,7 @@ import {
   AlertCircle,
   Download,
   ImagePlus,
+  Pencil,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -18,10 +19,11 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { cn } from '@/lib/utils.js';
-import { isCurrentUserAdmin } from '@/services/authService.js';
+import { getAuthPlayer, isCurrentUserAdmin } from '@/services/authService.js';
 import {
   createCardDefinition,
   getCardDefinitions,
+  updateCardDefinition,
   uploadCardDefinitionAsset,
 } from '@/services/cardDefinitionsService.js';
 
@@ -33,12 +35,12 @@ const EXPORT_TEXT_Y_OFFSET_RATIO = 0.22;
 const textFieldOptions = [
   { key: 'title' },
   { key: 'description' },
-  { key: 'life' },
+  { key: 'manaCost' },
 ];
 
 const defaultFieldLayout = {
   description: { case: 'none', color: '#1c1917', size: 15, width: 73, x: 12, y: 81.5 },
-  life: { case: 'none', color: '#fff7ed', size: 20, width: 16, x: 77.5, y: 91.8 },
+  manaCost: { case: 'none', color: '#fff7ed', size: 20, width: 16, x: 77.5, y: 91.8 },
   title: { case: 'upper', color: '#fff7ed', size: 26, width: 62, x: 18, y: 5.7 },
 };
 
@@ -63,15 +65,17 @@ const emptyDraft = {
   image: '',
   imageLayout: createDefaultImageLayout(),
   layout: createDefaultLayout(),
-  life: '',
   luaScript: '',
+  manaCost: '',
   template: '',
   title: '',
 };
 
 function normalizeCard(card) {
   const cleanedCard = { ...card };
+  const manaCost = cleanedCard.manaCost ?? cleanedCard.mana_cost ?? cleanedCard.life ?? '';
   delete cleanedCard.cost;
+  delete cleanedCard.mana_cost;
   delete cleanedCard.luaScriptName;
   delete cleanedCard.power;
   delete cleanedCard.rarity;
@@ -97,6 +101,7 @@ function normalizeCard(card) {
     },
     layout,
     luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
+    manaCost,
     cardType,
   };
 }
@@ -199,8 +204,8 @@ function getCardAssetFingerprint(card) {
     image: normalizedCard.image,
     imageLayout: normalizedCard.imageLayout,
     layout: normalizedCard.layout,
-    life: normalizedCard.life,
     luaScript: normalizedCard.luaScript,
+    manaCost: normalizedCard.manaCost,
     template: normalizedCard.template,
     title: normalizedCard.title,
   });
@@ -212,6 +217,32 @@ function getCreatorName(item, t) {
   }
 
   return item?.creator_id || '';
+}
+
+function getAuthPlayerId(player) {
+  if (player?.type === 'Anonymous') {
+    return player.data?.id || null;
+  }
+
+  if (player?.type === 'Google') {
+    return player.data?.email || null;
+  }
+
+  return player?.id || player?.email || null;
+}
+
+function createDraftFromDefinition(card) {
+  return normalizeCard({
+    cardType: card.type,
+    description: card.description || '',
+    image: '',
+    imageLayout: createDefaultImageLayout(),
+    layout: createDefaultLayout(),
+    luaScript: card.script || '',
+    manaCost: card.mana_cost ?? card.manaCost ?? '',
+    template: '',
+    title: card.name || '',
+  });
 }
 
 function getKindLabelKey(kind) {
@@ -338,7 +369,7 @@ async function renderCardToBlob(card) {
     const rawValue = normalizedCard[field.key] ?? field.defaultValue ?? '';
     const text = applyTextCase(rawValue || field.defaultValue, layout.case);
     const isDescription = field.key === 'description';
-    const isCentered = field.key === 'title' || field.key === 'life';
+    const isCentered = field.key === 'title' || field.key === 'manaCost';
     const fontSize = layout.size * textScale;
     const lineHeight = fontSize * (isDescription ? 1.08 : 1);
     const x = (layout.x / 100) * canvas.width;
@@ -388,7 +419,7 @@ function CardTextField({ card, compact, fieldKey }) {
   const field = textFieldOptions.find((item) => item.key === fieldKey);
   const rawValue = card[fieldKey] ?? field?.defaultValue ?? '';
   const isDescription = fieldKey === 'description';
-  const isNumber = fieldKey === 'life';
+  const isNumber = fieldKey === 'manaCost';
   const fontScale = compact ? 0.42 : 1;
 
   return (
@@ -631,6 +662,7 @@ export function Playground() {
   const [cards, setCards] = useState([]);
   const [draft, setDraft] = useState(() => normalizeCard(emptyDraft));
   const [cardsError, setCardsError] = useState('');
+  const [editingCardId, setEditingCardId] = useState(null);
   const [imageError, setImageError] = useState('');
   const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [isOfficialCard, setIsOfficialCard] = useState(false);
@@ -639,6 +671,7 @@ export function Playground() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [stagedAsset, setStagedAsset] = useState(null);
   const canCreateOfficial = isCurrentUserAdmin();
+  const currentUserId = getAuthPlayerId(getAuthPlayer());
   const draftAssetFingerprint = getCardAssetFingerprint(draft);
 
   const loadCards = async () => {
@@ -662,7 +695,7 @@ export function Playground() {
   useEffect(() => {
     const normalizedDraft = normalizeCard(draft);
 
-    if (!normalizedDraft.template || !normalizedDraft.luaScript.trim()) {
+    if (editingCardId || !normalizedDraft.template || !normalizedDraft.luaScript.trim()) {
       assetUploadRef.current = null;
       setStagedAsset(null);
       return undefined;
@@ -716,7 +749,7 @@ export function Playground() {
       window.clearTimeout(timeoutId);
       abortController.abort();
     };
-  }, [draftAssetFingerprint]);
+  }, [draftAssetFingerprint, editingCardId]);
 
   const updateDraft = (field, value) => {
     setDraft((current) => ({
@@ -804,6 +837,7 @@ export function Playground() {
     assetUploadRef.current = null;
     setStagedAsset(null);
     setDraft(normalizeCard(emptyDraft));
+    setEditingCardId(null);
     setIsOfficialCard(false);
     setImageError('');
     setPublishError('');
@@ -813,6 +847,18 @@ export function Playground() {
   const saveCard = async (event) => {
     event.preventDefault();
     await publishCommunityCard();
+  };
+
+  const editCard = (card) => {
+    assetUploadRef.current?.abortController?.abort();
+    assetUploadRef.current = null;
+    setStagedAsset(null);
+    setDraft(createDraftFromDefinition(card));
+    setEditingCardId(card.id);
+    setIsOfficialCard(card.kind === 'official');
+    setImageError('');
+    setPublishError('');
+    setPublishSuccess('');
   };
 
   const exportCards = () => {
@@ -849,7 +895,7 @@ export function Playground() {
   };
 
   const publishCommunityCard = async () => {
-    if (!draft.template) {
+    if (!editingCardId && !draft.template) {
       setPublishError(t('pages.playground.templateRequired'));
       return;
     }
@@ -864,12 +910,13 @@ export function Playground() {
     setPublishSuccess('');
 
     try {
-      const life = draft.life === '' ? '' : normalizeNumber(draft.life, 0);
+      const manaCost = draft.manaCost === '' ? '' : normalizeNumber(draft.manaCost, 0);
       const fingerprint = draftAssetFingerprint;
-      let assetId =
-        stagedAsset?.fingerprint === fingerprint ? stagedAsset.asset_id : null;
+      let assetId = !editingCardId && stagedAsset?.fingerprint === fingerprint
+        ? stagedAsset.asset_id
+        : null;
 
-      if (!assetId && assetUploadRef.current?.fingerprint === fingerprint) {
+      if (!editingCardId && !assetId && assetUploadRef.current?.fingerprint === fingerprint) {
         try {
           const asset = await assetUploadRef.current.promise;
           assetId = asset?.asset_id || null;
@@ -878,31 +925,40 @@ export function Playground() {
         }
       }
 
-      const imageBlob = assetId ? null : await renderCardToBlob(draft);
-      const card = await createCardDefinition({
+      const imageBlob = assetId || !draft.template ? null : await renderCardToBlob(draft);
+      const cardPayload = {
         assetId,
         cardType: draft.cardType,
         description: draft.description,
         imageBlob,
         kind: canCreateOfficial && isOfficialCard ? 'official' : 'community',
-        life,
+        manaCost,
         name: draft.title.trim() || t('pages.playground.untitled'),
         scriptFileName: `${slugifyFileName(draft.title)}.lua`,
         scriptText: draft.luaScript,
-      });
+      };
+      const card = editingCardId
+        ? await updateCardDefinition({
+            ...cardPayload,
+            cardId: editingCardId,
+          })
+        : await createCardDefinition(cardPayload);
 
       setCards((current) => [
         card,
         ...current.filter((currentCard) => currentCard.id !== card.id),
       ]);
       setDraft(normalizeCard(emptyDraft));
+      setEditingCardId(null);
       setIsOfficialCard(false);
       setStagedAsset(null);
       assetUploadRef.current = null;
       setImageError('');
 
       setPublishSuccess(
-        t('pages.playground.publishSuccess', { name: card.name || draft.title }),
+        t(editingCardId ? 'pages.playground.updateSuccess' : 'pages.playground.publishSuccess', {
+          name: card.name || draft.title,
+        }),
       );
     } catch (error) {
       setPublishError(error.message || t('pages.playground.publishError'));
@@ -1002,12 +1058,12 @@ export function Playground() {
                 </label>
 
                 <label className="grid gap-2 text-sm font-semibold">
-                  {t('pages.playground.fields.life')}
+                  {t('pages.playground.fields.manaCost')}
                   <Input
                     min="0"
                     type="number"
-                    value={draft.life}
-                    onChange={(event) => updateDraft('life', event.target.value)}
+                    value={draft.manaCost}
+                    onChange={(event) => updateDraft('manaCost', event.target.value)}
                   />
                 </label>
 
@@ -1188,7 +1244,9 @@ export function Playground() {
                   )}
                   {isPublishing
                     ? t('pages.playground.publishing')
-                    : t('pages.playground.saveCard')}
+                    : editingCardId
+                      ? t('pages.playground.updateCard')
+                      : t('pages.playground.saveCard')}
                 </Button>
                 <Button
                   type="button"
@@ -1253,6 +1311,7 @@ export function Playground() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {cards.map((card) => {
                     const isOfficial = card.kind === 'official';
+                    const canEditCard = currentUserId && card.creator_id === currentUserId;
 
                     return (
                       <article
@@ -1312,7 +1371,20 @@ export function Playground() {
                               <Target className="size-3.5" />
                               {t(getCardTypeLabelKey(card.type))}
                             </span>
+                            <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-2.5 py-1 text-sky-700 dark:text-sky-200">
+                              {t('pages.playground.fields.manaCost')}: {card.mana_cost ?? 0}
+                            </span>
                           </div>
+                          {card.script ? (
+                            <details className="rounded-lg border border-border bg-muted/35 p-2 text-xs">
+                              <summary className="cursor-pointer font-black">
+                                {t('pages.playground.luaScript')}
+                              </summary>
+                              <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap rounded-md bg-background p-2 font-mono text-[0.68rem] leading-5 text-muted-foreground">
+                                {card.script}
+                              </pre>
+                            </details>
+                          ) : null}
                           <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
                             <UserRound className="size-4 shrink-0" />
                             <span className="min-w-0 flex-1 truncate">
@@ -1321,6 +1393,17 @@ export function Playground() {
                               })}
                             </span>
                           </div>
+                          {canEditCard ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-9 w-full cursor-pointer gap-2"
+                              onClick={() => editCard(card)}
+                            >
+                              <Pencil className="size-4" />
+                              {t('pages.playground.editCard')}
+                            </Button>
+                          ) : null}
                         </div>
                       </article>
                     );

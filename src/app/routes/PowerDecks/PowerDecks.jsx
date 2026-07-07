@@ -404,7 +404,21 @@ export function PowerDecks() {
                               <Target className="size-3.5" />
                               {t(getCardTypeLabelKey(card.type))}
                             </span>
+                            <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-2.5 py-1 text-sky-700 dark:text-sky-200">
+                              {t('pages.powerDecks.manaCost')}: {card.mana_cost ?? 0}
+                            </span>
                           </div>
+
+                          {card.script ? (
+                            <details className="rounded-lg border border-border bg-muted/35 p-2 text-xs">
+                              <summary className="cursor-pointer font-black">
+                                {t('pages.powerDecks.luaScript')}
+                              </summary>
+                              <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap rounded-md bg-background p-2 font-mono text-[0.68rem] leading-5 text-muted-foreground">
+                                {card.script}
+                              </pre>
+                            </details>
+                          ) : null}
 
                           <div className="flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
                             <UserRound className="size-4 shrink-0" />

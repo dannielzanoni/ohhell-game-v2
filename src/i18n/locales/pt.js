@@ -66,6 +66,8 @@ export const pt = {
     powerCardDragToTarget: 'Arraste esta carta de poder até o avatar de um jogador.',
     powerCardTargetError: 'Nenhum alvo válido para esta carta de poder.',
     powerCardUseError: 'Não foi possível usar a carta de poder.',
+    mana: 'Mana',
+    manaValue: '{{current}}/{{max}} mana',
     playersReady: '{{readyCount}}/{{totalPlayers}} jogadores prontos',
     ready: 'Ready',
     readyError: 'Não foi possível marcar ready.',
@@ -401,6 +403,7 @@ export const pt = {
       drafting: 'Rascunho',
       emptySavedDescription: 'Preencha o formulario e salve a primeira carta no backend.',
       emptySavedTitle: 'Nenhuma carta disponivel',
+      editCard: 'Editar carta',
       eyebrow: 'Playground de cartas',
       export: 'Exportar JSON',
       cardTypes: {
@@ -411,7 +414,7 @@ export const pt = {
       fields: {
         cardType: 'Tipo da carta',
         description: 'Descricao',
-        life: 'Vida',
+        manaCost: 'Custo de mana',
         title: 'Titulo',
       },
       imageError: 'Nao foi possivel importar a imagem.',
@@ -461,6 +464,8 @@ export const pt = {
       templateImage: 'Template da carta',
       title: 'Gerador de cartas',
       untitled: 'Carta sem titulo',
+      updateCard: 'Atualizar carta',
+      updateSuccess: '{{name}} foi atualizada.',
       viewCommunityCards: 'Criar deck de poder',
     },
     powerDecks: {
@@ -493,6 +498,8 @@ export const pt = {
         official: 'Oficial',
       },
       loadError: 'Nao foi possivel carregar os decks de poder.',
+      luaScript: 'Script Lua do efeito',
+      manaCost: 'Custo de mana',
       nameRequired: 'Informe o nome do deck.',
       noDecks: 'Nenhum deck criado ainda.',
       officialCreator: 'Oficial',
