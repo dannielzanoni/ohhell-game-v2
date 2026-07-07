@@ -188,11 +188,14 @@ export const en = {
     howToPlay: {
       description: 'Learn the implemented flow: goal, cards, trump, bids, points and lives before joining the table.',
       eyebrow: 'Essential guide',
+      exampleLabel: 'Example',
       indexTitle: 'In this guide',
+      mobileSections: 'Guide sections',
       sections: [
         {
           id: 'goal',
           title: 'Goal',
+          example: 'If you received 3 cards and expect to win 1 trick, bid 1 before play starts.',
           description: 'Oh Hell is a trick-taking game: each round you try to hit exactly the bid you declared.',
           items: [
             'Join a room, mark yourself ready and wait for the server to start the match.',
@@ -203,6 +206,7 @@ export const en = {
         {
           id: 'cards',
           title: 'Cards and order',
+          example: 'When it is your turn, play one valid card and wait for the server confirmation.',
           description: 'The table shows your hand, opponent piles and played cards in the order sent by the server.',
           items: [
             'A card leaves your hand only after the server confirms the play.',
@@ -213,6 +217,7 @@ export const en = {
         {
           id: 'trump',
           title: 'Trump and joker card',
+          example: 'Changing from Spanish to French deck changes images only; the server still decides the trick.',
           description: 'The revealed card in the center defines the visual trump/joker reference for that round.',
           items: [
             'The interface preserves the real pile order received from the backend.',
@@ -223,6 +228,7 @@ export const en = {
         {
           id: 'bid',
           title: 'Bid',
+          example: 'If the server offers bids 0 and 1, the UI blocks any other value.',
           description: 'Before cards are played, each player declares how many tricks they expect to win.',
           items: [
             'Valid bid options come from the server to prevent illegal actions.',
@@ -233,6 +239,7 @@ export const en = {
         {
           id: 'score',
           title: 'Points and lives',
+          example: 'If you miss your bid, the life-loss event appears visually and remains represented in the scoreboard.',
           description: 'At the end of the round, the server sends points and, when needed, updated lives.',
           items: [
             'The scoreboard shows each player’s points during the match.',
