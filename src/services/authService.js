@@ -126,6 +126,10 @@ function getPlayerPicture(player) {
   return player?.data?.picture || player?.picture || '';
 }
 
+function getPlayerRole(player) {
+  return player?.data?.role || 'Player';
+}
+
 export function isMissingAuthTokenError(error) {
   return (
     error?.status === 401 &&
@@ -332,6 +336,10 @@ export function getAuthPlayer() {
   return parseAuthPlayer();
 }
 
+export function isCurrentUserAdmin() {
+  return String(getPlayerRole(getAuthPlayer())).toLowerCase() === 'admin';
+}
+
 export function getCurrentProfile() {
   const player = getAuthPlayer();
 
@@ -340,6 +348,7 @@ export function getCurrentProfile() {
     nickname: getPlayerNickname(player),
     picture: getPlayerPicture(player),
     player,
+    role: getPlayerRole(player),
   };
 }
 

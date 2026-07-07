@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { cn } from '@/lib/utils.js';
+import { isCurrentUserAdmin } from '@/services/authService.js';
 import {
   createCardDefinition,
   getCardDefinitions,
@@ -232,6 +233,12 @@ function getKindLabelKey(kind) {
 
 function getCardTypeLabelKey(cardType) {
   return `pages.powerDecks.cardTypes.${cardType || 'instant'}`;
+}
+
+function getKindBadgeClass(kind) {
+  return kind === 'official'
+    ? 'border-amber-400/60 bg-amber-400/15 text-amber-700 dark:text-amber-300'
+    : 'border-primary/40 bg-primary/10 text-primary';
 }
 
 function drawCoverImage(context, image, x, y, width, height) {
@@ -637,9 +644,11 @@ export function Playground() {
   const [cardsError, setCardsError] = useState('');
   const [imageError, setImageError] = useState('');
   const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [isOfficialCard, setIsOfficialCard] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [publishSuccess, setPublishSuccess] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
+  const canCreateOfficial = isCurrentUserAdmin();
 
   const loadCards = async () => {
     setIsLoadingCards(true);
@@ -767,6 +776,7 @@ export function Playground() {
 
   const resetDraft = () => {
     setDraft(normalizeCard(emptyDraft));
+    setIsOfficialCard(false);
     setImageError('');
     setPublishError('');
     setPublishSuccess('');
@@ -832,6 +842,7 @@ export function Playground() {
         cardType: draft.cardType,
         description: draft.description,
         imageBlob,
+        kind: canCreateOfficial && isOfficialCard ? 'official' : 'community',
         life,
         name: draft.title.trim() || t('pages.playground.untitled'),
         scriptFileName: draft.luaScriptName || `${slugifyFileName(draft.title)}.lua`,
@@ -843,6 +854,7 @@ export function Playground() {
         ...current.filter((currentCard) => currentCard.id !== card.id),
       ]);
       setDraft(normalizeCard(emptyDraft));
+      setIsOfficialCard(false);
       setImageError('');
 
       setPublishSuccess(
@@ -978,6 +990,25 @@ export function Playground() {
                     <option value="interactive">{t('pages.playground.cardTypes.interactive')}</option>
                   </select>
                 </label>
+
+                {canCreateOfficial ? (
+                  <label className="flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      className="mt-1 size-4 cursor-pointer accent-amber-500"
+                      checked={isOfficialCard}
+                      onChange={(event) => setIsOfficialCard(event.target.checked)}
+                    />
+                    <span>
+                      <span className="font-black">
+                        {t('pages.playground.officialCard')}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                        {t('pages.playground.officialCardHint')}
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
               </div>
 
               <FieldLayoutControls
@@ -1193,59 +1224,80 @@ export function Playground() {
                 </div>
               ) : cards.length ? (
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {cards.map((card) => (
-                    <article
-                      key={card.id}
-                      className="overflow-hidden rounded-lg border border-border bg-background shadow-sm"
-                    >
-                      <div className="aspect-[768/1344] bg-muted">
-                        {card.image_url ? (
-                          <img
-                            src={card.image_url}
-                            alt={card.name}
-                            className="size-full object-cover"
-                          />
-                        ) : (
-                          <div className="grid size-full place-items-center bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60 p-6 text-center text-white">
-                            <div>
-                              <Sparkles className="mx-auto size-9 text-violet-100" />
-                              <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-violet-100/80">
-                                {t(getKindLabelKey(card.kind))}
-                              </p>
-                              <p className="mt-2 line-clamp-3 text-lg font-black leading-tight">
-                                {card.name}
-                              </p>
-                            </div>
-                          </div>
+                  {cards.map((card) => {
+                    const isOfficial = card.kind === 'official';
+
+                    return (
+                      <article
+                        key={card.id}
+                        className={cn(
+                          'overflow-hidden rounded-lg border bg-background shadow-sm',
+                          isOfficial
+                            ? 'border-amber-400/70 bg-amber-400/5 shadow-amber-950/10'
+                            : 'border-border',
                         )}
-                      </div>
-                      <div className="grid gap-3 p-3">
-                        <div>
-                          <p className="line-clamp-1 text-sm font-black">{card.name}</p>
-                          <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
-                            {card.description}
-                          </p>
+                      >
+                        <div className="aspect-[768/1344] bg-muted">
+                          {card.image_url ? (
+                            <img
+                              src={card.image_url}
+                              alt={card.name}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className={cn(
+                                'grid size-full place-items-center p-6 text-center text-white',
+                                isOfficial
+                                  ? 'bg-gradient-to-br from-amber-900 via-slate-950 to-yellow-600/70'
+                                  : 'bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60',
+                              )}
+                            >
+                              <div>
+                                <Sparkles className="mx-auto size-9 text-violet-100" />
+                                <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-violet-100/80">
+                                  {t(getKindLabelKey(card.kind))}
+                                </p>
+                                <p className="mt-2 line-clamp-3 text-lg font-black leading-tight">
+                                  {card.name}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                          <span className="rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-primary">
-                            {t(getKindLabelKey(card.kind))}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1">
-                            <Target className="size-3.5" />
-                            {t(getCardTypeLabelKey(card.type))}
-                          </span>
+                        <div className="grid gap-3 p-3">
+                          <div>
+                            <p className="line-clamp-1 text-sm font-black">{card.name}</p>
+                            <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                              {card.description}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                            <span
+                              className={cn(
+                                'rounded-full border px-2.5 py-1',
+                                getKindBadgeClass(card.kind),
+                              )}
+                            >
+                              {t(getKindLabelKey(card.kind))}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1">
+                              <Target className="size-3.5" />
+                              {t(getCardTypeLabelKey(card.type))}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+                            <UserRound className="size-4 shrink-0" />
+                            <span className="min-w-0 flex-1 truncate">
+                              {t('pages.powerDecks.createdBy', {
+                                name: getCreatorName(card, t),
+                              })}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
-                          <UserRound className="size-4 shrink-0" />
-                          <span className="min-w-0 flex-1 truncate">
-                            {t('pages.powerDecks.createdBy', {
-                              name: getCreatorName(card, t),
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-5 grid min-h-48 place-items-center rounded-lg border border-dashed border-border bg-background/60 px-4 py-8 text-center">

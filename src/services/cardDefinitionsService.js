@@ -9,13 +9,14 @@ export function getPowerDecks() {
   return withAuthRetry(() => apiRequest('/power-decks', { auth: true }));
 }
 
-export function createPowerDeck({ cardIds, description, name }) {
+export function createPowerDeck({ cardIds, description, kind = 'community', name }) {
   return withAuthRetry(() =>
     apiRequest('/power-decks', {
       auth: true,
       body: {
         card_ids: cardIds,
         description,
+        kind,
         name,
       },
       method: 'POST',
@@ -27,6 +28,7 @@ export function createCardDefinition({
   cardType,
   description,
   imageBlob,
+  kind = 'community',
   life,
   name,
   scriptFileName = 'effect.lua',
@@ -36,6 +38,7 @@ export function createCardDefinition({
 
   form.set('name', name || 'Untitled card');
   form.set('description', description || '');
+  form.set('kind', kind || 'community');
   form.set('type', cardType || 'instant');
 
   if (life !== undefined && life !== null && life !== '') {

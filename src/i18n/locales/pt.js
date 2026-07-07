@@ -407,6 +407,9 @@ export const pt = {
         width: 'Largura',
       },
       newCard: 'Nova carta',
+      officialCard: 'Criar como carta oficial',
+      officialCardHint:
+        'Somente admins podem salvar cartas oficiais. As demais cartas sao da comunidade.',
       publish: 'Publicar',
       publishError: 'Nao foi possivel salvar a carta comunitaria.',
       publishing: 'Salvando...',
@@ -459,6 +462,9 @@ export const pt = {
       nameRequired: 'Informe o nome do deck.',
       noDecks: 'Nenhum deck criado ainda.',
       officialCreator: 'Oficial',
+      officialDeck: 'Criar como deck oficial',
+      officialDeckHint:
+        'Somente admins podem salvar decks oficiais. Os demais decks sao da comunidade.',
       savedEyebrow: 'Decks salvos',
       savedTitle: 'Decks: {{count}}',
       selectedCards: '{{count}} cartas selecionadas',

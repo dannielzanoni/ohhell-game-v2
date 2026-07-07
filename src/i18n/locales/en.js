@@ -407,6 +407,9 @@ export const en = {
         width: 'Width',
       },
       newCard: 'New card',
+      officialCard: 'Create as official card',
+      officialCardHint:
+        'Only admin users can save official cards. Other cards are community cards.',
       publish: 'Publish',
       publishError: 'Could not save the community card.',
       publishing: 'Saving...',
@@ -459,6 +462,9 @@ export const en = {
       nameRequired: 'Enter a deck name.',
       noDecks: 'No decks created yet.',
       officialCreator: 'Official',
+      officialDeck: 'Create as official deck',
+      officialDeckHint:
+        'Only admin users can save official decks. Other decks are community decks.',
       savedEyebrow: 'Saved decks',
       savedTitle: 'Decks: {{count}}',
       selectedCards: '{{count}} selected cards',

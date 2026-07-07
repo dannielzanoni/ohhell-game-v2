@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
+import { isCurrentUserAdmin } from '@/services/authService.js';
 import {
   createPowerDeck,
   getCardDefinitions,
@@ -53,6 +54,12 @@ function getCardTypeLabelKey(cardType) {
   return `pages.powerDecks.cardTypes.${cardType || 'instant'}`;
 }
 
+function getKindBadgeClass(kind) {
+  return kind === 'official'
+    ? 'border-amber-400/60 bg-amber-400/15 text-amber-700 dark:text-amber-300'
+    : 'border-primary/40 bg-primary/10 text-primary';
+}
+
 function formatDate(value) {
   const timestamp = Number(value);
 
@@ -72,10 +79,12 @@ export function PowerDecks() {
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [deckName, setDeckName] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
+  const [deckKind, setDeckKind] = useState('community');
   const [error, setError] = useState('');
   const [createError, setCreateError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const canCreateOfficial = isCurrentUserAdmin();
 
   const loadData = async () => {
     setIsLoading(true);
@@ -128,11 +137,13 @@ export function PowerDecks() {
       await createPowerDeck({
         cardIds: selectedCardIds,
         description: deckDescription,
+        kind: canCreateOfficial ? deckKind : 'community',
         name: deckName,
       });
 
       setDeckName('');
       setDeckDescription('');
+      setDeckKind('community');
       setSelectedCardIds([]);
       await loadData();
     } catch (requestError) {
@@ -202,6 +213,26 @@ export function PowerDecks() {
                     onChange={(event) => setDeckDescription(event.target.value)}
                   />
                 </label>
+                {canCreateOfficial ? (
+                  <label className="flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1 size-4 cursor-pointer accent-amber-500"
+                      checked={deckKind === 'official'}
+                      onChange={(event) =>
+                        setDeckKind(event.target.checked ? 'official' : 'community')
+                      }
+                    />
+                    <span>
+                      <span className="font-black">
+                        {t('pages.powerDecks.officialDeck')}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                        {t('pages.powerDecks.officialDeckHint')}
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
               </div>
 
               <div className="mt-4 rounded-lg border border-border bg-background/50 p-3 text-sm">
@@ -243,8 +274,26 @@ export function PowerDecks() {
 
               <div className="mt-4 grid gap-3">
                 {decks.map((deck) => (
-                  <article key={deck.id} className="rounded-lg border border-border p-3">
-                    <p className="font-black">{deck.name}</p>
+                  <article
+                    key={deck.id}
+                    className={cn(
+                      'rounded-lg border p-3',
+                      deck.kind === 'official'
+                        ? 'border-amber-400/60 bg-amber-400/10'
+                        : 'border-border',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-black">{deck.name}</p>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full border px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-wide',
+                          getKindBadgeClass(deck.kind),
+                        )}
+                      >
+                        {t(getKindLabelKey(deck.kind))}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {t('pages.powerDecks.deckCardCount', {
                         count: deck.card_count,
@@ -291,6 +340,7 @@ export function PowerDecks() {
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {cards.map((card) => {
                   const isSelected = selectedCardIds.includes(card.id);
+                  const isOfficial = card.kind === 'official';
                   const SelectIcon = isSelected ? CheckSquare : Square;
 
                   return (
@@ -298,7 +348,13 @@ export function PowerDecks() {
                       key={card.id}
                       className={cn(
                         'overflow-hidden rounded-lg border bg-background shadow-sm transition',
-                        isSelected ? 'border-primary ring-2 ring-primary/40' : 'border-border',
+                        isSelected
+                          ? isOfficial
+                            ? 'border-amber-400 ring-2 ring-amber-400/40'
+                            : 'border-primary ring-2 ring-primary/40'
+                          : isOfficial
+                            ? 'border-amber-400/70 bg-amber-400/5'
+                            : 'border-border',
                       )}
                     >
                       <button
@@ -314,7 +370,14 @@ export function PowerDecks() {
                               className="size-full object-cover"
                             />
                           ) : (
-                            <div className="grid size-full place-items-center bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60 p-6 text-center text-white">
+                            <div
+                              className={cn(
+                                'grid size-full place-items-center p-6 text-center text-white',
+                                isOfficial
+                                  ? 'bg-gradient-to-br from-amber-900 via-slate-950 to-yellow-600/70'
+                                  : 'bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60',
+                              )}
+                            >
                               <div>
                                 <Sparkles className="mx-auto size-10 text-violet-100" />
                                 <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-violet-100/80">
@@ -335,11 +398,21 @@ export function PowerDecks() {
                                 {card.description}
                               </p>
                             </div>
-                            <SelectIcon className="mt-0.5 size-5 shrink-0 text-primary" />
+                            <SelectIcon
+                              className={cn(
+                                'mt-0.5 size-5 shrink-0',
+                                isOfficial ? 'text-amber-500' : 'text-primary',
+                              )}
+                            />
                           </div>
 
                           <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                            <span className="rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-primary">
+                            <span
+                              className={cn(
+                                'rounded-full border px-2.5 py-1',
+                                getKindBadgeClass(card.kind),
+                              )}
+                            >
                               {t(getKindLabelKey(card.kind))}
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1">
