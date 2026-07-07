@@ -6,9 +6,10 @@ export function getLeaderboard({ limit } = {}) {
   });
 }
 
-export function getMyStats() {
+export function getMyStats({ signal } = {}) {
   return apiRequest('/stats/me', {
     auth: true,
+    signal,
   });
 }
 

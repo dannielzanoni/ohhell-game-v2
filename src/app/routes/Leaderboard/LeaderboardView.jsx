@@ -64,7 +64,77 @@ function PlayerAvatar({ player }) {
   );
 }
 
-export function LeaderboardView({ controller }) {
+function MyStatsPanel({ controller }) {
+  const { t } = useTranslation();
+
+  if (!controller?.enabled) {
+    return null;
+  }
+
+  const stats = controller.stats || {};
+
+  return (
+    <aside className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            {t('leaderboard.myStatsEyebrow')}
+          </p>
+          <h2 className="text-xl font-black">{t('leaderboard.myStatsTitle')}</h2>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 w-full cursor-pointer gap-2 sm:w-auto"
+          disabled={controller.isLoading}
+          onClick={() => void controller.refresh()}
+        >
+          <RefreshCw className={`size-4 ${controller.isLoading ? 'animate-spin' : ''}`} />
+          {t('common.refresh')}
+        </Button>
+      </div>
+
+      {controller.status === 'initial-loading' ? (
+        <p className="mt-3 text-sm text-muted-foreground">{t('common.loading')}</p>
+      ) : null}
+
+      {controller.status === 'empty' ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t('leaderboard.myStatsEmpty')}
+        </p>
+      ) : null}
+
+      {controller.status === 'error' ? (
+        <p className="mt-3 text-sm text-destructive">
+          {controller.error?.message || t('leaderboard.myStatsError')}
+        </p>
+      ) : null}
+
+      {controller.status === 'ready' ? (
+        <dl className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+          <div className="rounded-md bg-muted px-3 py-2">
+            <dt className="text-muted-foreground">{t('leaderboard.games')}</dt>
+            <dd className="font-black">{formatNumber(stats.games_played)}</dd>
+          </div>
+          <div className="rounded-md bg-muted px-3 py-2">
+            <dt className="text-muted-foreground">{t('leaderboard.wins')}</dt>
+            <dd className="font-black">{formatNumber(stats.matches_won)}</dd>
+          </div>
+          <div className="rounded-md bg-muted px-3 py-2">
+            <dt className="text-muted-foreground">{t('leaderboard.winRate')}</dt>
+            <dd className="font-black">{formatPercent(stats.win_rate)}</dd>
+          </div>
+          <div className="rounded-md bg-muted px-3 py-2">
+            <dt className="text-muted-foreground">{t('leaderboard.favorite')}</dt>
+            <dd className="font-black">{getCardLabel(stats.favorite_card, t)}</dd>
+          </div>
+        </dl>
+      ) : null}
+    </aside>
+  );
+}
+
+export function LeaderboardView({ controller, myStatsController }) {
   const { t } = useTranslation();
   const { error, isLoading, leaderboard, refresh } = controller;
 
@@ -99,6 +169,8 @@ export function LeaderboardView({ controller }) {
             {error.message || t('leaderboard.loadError')}
           </div>
         ) : null}
+
+        <MyStatsPanel controller={myStatsController} />
 
         {isLoading ? (
           <div className="grid gap-3">
