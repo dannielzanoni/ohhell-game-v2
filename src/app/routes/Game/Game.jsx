@@ -168,8 +168,9 @@ function decodeTokenPayload(token) {
 
 function getCurrentPlayerId() {
   const payload = decodeTokenPayload(getAuthToken());
+  const user = payload?.user || payload;
 
-  return payload?.id || payload?.email || null;
+  return getClaimsPlayerId(user) || payload?.id || payload?.email || null;
 }
 
 function getCardKey(card) {
