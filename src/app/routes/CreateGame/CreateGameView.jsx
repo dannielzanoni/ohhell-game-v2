@@ -1,29 +1,42 @@
 import { Home, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import gamePoster from '@/assets/backgrounds/game-table-bg.png';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
+import { useOptionalMedia } from '@/platform/useOptionalMedia.js';
 import { LivesSelector } from './LivesSelector.jsx';
 import { routePaths } from '../routeContract.js';
 
 export function CreateGameView({ controller }) {
   const { t } = useTranslation();
+  const { shouldLoadOptionalMedia } = useOptionalMedia();
   const { createGame, error, isCreating, lives, setLives } = controller;
   const createError = error?.message || (error ? t('pages.createGame.createError') : '');
 
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0 -z-20 overflow-hidden bg-black">
-        <video
-          className="h-full w-full object-cover opacity-45"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        >
-          <source src={gameBg} type="video/mp4" />
-        </video>
+        {shouldLoadOptionalMedia ? (
+          <video
+            className="h-full w-full object-cover opacity-45"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={gamePoster}
+            preload="metadata"
+          >
+            <source src={gameBg} type="video/mp4" />
+          </video>
+        ) : (
+          <img
+            alt=""
+            className="h-full w-full object-cover opacity-45"
+            decoding="async"
+            src={gamePoster}
+          />
+        )}
       </div>
       <div className="absolute inset-0 -z-10 bg-background/80 backdrop-blur-[2px]" />
 

@@ -8,6 +8,7 @@
     "e2e": "playwright test",
     "e2e:check": "node scripts/verify-e2e-coverage.mjs",
     "lazy:check": "node scripts/verify-lazy-loading.mjs",
+    "media:check": "node scripts/verify-media-budgets.mjs",
     "observability:check": "node scripts/verify-frontend-observability.mjs",
     "quality:controllers": "node scripts/verify-controller-integration.mjs",
     "quality:unit": "node scripts/verify-unit-quality.mjs",
