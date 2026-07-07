@@ -207,21 +207,6 @@ function getCreatorName(item, t) {
     return t('pages.powerDecks.officialCreator');
   }
 
-  const creator = item?.creator;
-
-  if (creator?.type === 'Anonymous') {
-    return creator.data?.data?.nickname || creator.data?.id || item.creator_id;
-  }
-
-  if (creator?.type === 'Google') {
-    return (
-      creator.data?.nickname ||
-      creator.data?.name ||
-      creator.data?.email ||
-      item.creator_id
-    );
-  }
-
   return item?.creator_id || '';
 }
 
