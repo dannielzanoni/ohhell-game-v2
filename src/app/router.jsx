@@ -1,27 +1,49 @@
+import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
-import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
-import { Game } from './routes/Game/Game.jsx';
-import { Github } from './routes/Github/Github.jsx';
-import { Home } from './routes/Home/Home.jsx';
-import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
-import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
-import { Rooms } from './routes/Rooms/Rooms.jsx';
 import { routePaths } from './routes/routeContract.js';
+
+const Home = lazy(() => import('./routes/Home/Home.jsx').then((module) => ({ default: module.Home })));
+const CreateGame = lazy(() => import('./routes/CreateGame/CreateGame.jsx').then((module) => ({ default: module.CreateGame })));
+const Game = lazy(() => import('./routes/Game/Game.jsx').then((module) => ({ default: module.Game })));
+const Rooms = lazy(() => import('./routes/Rooms/Rooms.jsx').then((module) => ({ default: module.Rooms })));
+const Leaderboard = lazy(() => import('./routes/Leaderboard/Leaderboard.jsx').then((module) => ({ default: module.Leaderboard })));
+const HowToPlay = lazy(() => import('./routes/HowToPlay/HowToPlay.jsx').then((module) => ({ default: module.HowToPlay })));
+const Github = lazy(() => import('./routes/Github/Github.jsx').then((module) => ({ default: module.Github })));
+
+function RouteLoadingFallback() {
+  const { t } = useTranslation();
+
+  return (
+    <main
+      aria-busy="true"
+      className="grid min-h-screen place-items-center px-6 py-8 text-muted-foreground"
+    >
+      <p className="rounded-md border border-border bg-card px-4 py-3 text-sm font-semibold shadow-sm">
+        {t('common.loading')}
+      </p>
+    </main>
+  );
+}
+
+function LazyRoute({ children }) {
+  return <Suspense fallback={<RouteLoadingFallback />}>{children}</Suspense>;
+}
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path={routePaths.home} element={<Home />} />
-          <Route path={routePaths.createGame} element={<CreateGame />} />
+          <Route path={routePaths.home} element={<LazyRoute><Home /></LazyRoute>} />
+          <Route path={routePaths.createGame} element={<LazyRoute><CreateGame /></LazyRoute>} />
           <Route path={routePaths.game} element={<Navigate to={routePaths.createGame} replace />} />
-          <Route path={`${routePaths.game}/:lobbyId`} element={<Game />} />
-          <Route path={routePaths.rooms} element={<Rooms />} />
-          <Route path={routePaths.leaderboard} element={<Leaderboard />} />
-          <Route path={routePaths.howToPlay} element={<HowToPlay />} />
-          <Route path={routePaths.github} element={<Github />} />
+          <Route path={`${routePaths.game}/:lobbyId`} element={<LazyRoute><Game /></LazyRoute>} />
+          <Route path={routePaths.rooms} element={<LazyRoute><Rooms /></LazyRoute>} />
+          <Route path={routePaths.leaderboard} element={<LazyRoute><Leaderboard /></LazyRoute>} />
+          <Route path={routePaths.howToPlay} element={<LazyRoute><HowToPlay /></LazyRoute>} />
+          <Route path={routePaths.github} element={<LazyRoute><Github /></LazyRoute>} />
         </Route>
         <Route path="*" element={<Navigate to={routePaths.home} replace />} />
       </Routes>
