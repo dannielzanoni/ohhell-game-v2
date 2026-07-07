@@ -74,6 +74,7 @@ export const pt = {
     readySending: 'Enviando...',
     reconnecting: 'Reconectando na partida...',
     roomLink: 'Link da sala',
+    selectMercenaryTitle: 'Selecione um mercenário antes de marcar ready',
     socketError: 'Erro na conexão em tempo real da sala.',
     tableAria: 'Mesa do Oh Hell',
     timerBid: 'Bid',
@@ -236,7 +237,9 @@ export const pt = {
       historyEyebrow: 'Historia',
       inspect: 'Inspecionar',
       manaCost: 'Custo de mana',
+      loadError: 'Nao foi possivel carregar os mercenarios do backend; mostrando os mercenarios embutidos.',
       next: 'Proximo mercenario',
+      passiveScript: 'Script Lua passivo',
       previous: 'Mercenario anterior',
       statsEyebrow: 'Caracteristicas',
       statsTitle: 'Perfil de jogo',
@@ -246,6 +249,22 @@ export const pt = {
         temper: 'Temperamento',
       },
       title: 'Mercenarios',
+      admin: {
+        banner: 'Imagem do banner',
+        bannerRequired: 'Selecione uma imagem de banner.',
+        createError: 'Nao foi possivel salvar o mercenario.',
+        description: 'Descricao',
+        eyebrow: 'Ferramentas admin',
+        id: 'ID do mercenario',
+        idNameRequired: 'Informe o ID e o nome do mercenario.',
+        name: 'Nome',
+        passiveRequired: 'Digite um script Lua passivo.',
+        passiveScript: 'Script Lua passivo',
+        save: 'Salvar mercenario',
+        saving: 'Salvando...',
+        subtitle: 'Subtitulo',
+        title: 'Criar mercenario',
+      },
       items: {
         artemis: {
           cards: {
@@ -469,6 +488,8 @@ export const pt = {
       viewCommunityCards: 'Criar deck de poder',
     },
     powerDecks: {
+      bucket: 'Grupo de cartas',
+      bucketHint: '{{generic}} genericas selecionadas. {{mercenary}} selecionadas no grupo ativo.',
       cardsEyebrow: 'Definicoes de cartas',
       cardsRequired: 'Selecione pelo menos uma carta.',
       cardsTitle: 'Cartas oficiais e da comunidade',
@@ -488,6 +509,7 @@ export const pt = {
         description: 'Descricao',
         name: 'Nome do deck',
       },
+      genericBucket: 'Cartas genericas',
       cardTypes: {
         instant: 'Instantanea',
         interactive: 'Interativa',
@@ -508,8 +530,15 @@ export const pt = {
         'Somente admins podem salvar decks oficiais. Os demais decks sao da comunidade.',
       savedEyebrow: 'Decks salvos',
       savedTitle: 'Decks: {{count}}',
+      saveAsDraft: 'Salvar como rascunho',
+      saveAsDraftHint:
+        'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
       selectedCards: '{{count}} cartas selecionadas',
       selectedHint: 'As cartas selecionadas viram o pool de cartas de poder deste deck.',
+      status: {
+        draft: 'Rascunho',
+        valid: 'Jogavel',
+      },
       title: 'Decks de poder',
     },
     rooms: {

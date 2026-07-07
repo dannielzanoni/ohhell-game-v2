@@ -61,6 +61,73 @@ export const mercenaries = [
   },
 ];
 
-export function findMercenary(id) {
-  return mercenaries.find((mercenary) => mercenary.id === id);
+const fallbackAccentClasses = [
+  'from-emerald-500/25 via-black/25 to-amber-500/20',
+  'from-violet-500/25 via-black/25 to-cyan-500/20',
+  'from-red-500/25 via-black/25 to-yellow-500/20',
+  'from-sky-500/25 via-black/25 to-fuchsia-500/20',
+];
+
+const fallbackMarkerClasses = [
+  'bg-emerald-500',
+  'bg-violet-500',
+  'bg-red-500',
+  'bg-sky-500',
+];
+
+export function getMercenaryTitle(mercenary, t) {
+  if (mercenary?.name) {
+    return mercenary.name;
+  }
+
+  return t(`pages.characters.items.${mercenary.id}.title`);
+}
+
+export function getMercenarySubtitle(mercenary, t) {
+  if (mercenary?.subtitle) {
+    return mercenary.subtitle;
+  }
+
+  return t(`pages.characters.items.${mercenary.id}.subtitle`);
+}
+
+export function mergeMercenaries(remoteMercenaries = []) {
+  const merged = new Map(mercenaries.map((mercenary) => [mercenary.id, mercenary]));
+
+  remoteMercenaries.forEach((remoteMercenary, index) => {
+    const id = remoteMercenary.id;
+
+    if (!id) {
+      return;
+    }
+
+    const existing = merged.get(id) || {};
+
+    merged.set(id, {
+      ...existing,
+      id,
+      accentClass:
+        existing.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
+      banner: remoteMercenary.banner_url || existing.banner,
+      cards: existing.cards || [],
+      deck: remoteMercenary.deck || existing.deck,
+      description: remoteMercenary.description || existing.description,
+      markerClass:
+        existing.markerClass || fallbackMarkerClasses[index % fallbackMarkerClasses.length],
+      name: remoteMercenary.name || existing.name,
+      passiveScript: remoteMercenary.passive_script || existing.passiveScript,
+      path: `/mercenaries/${id}`,
+      style: remoteMercenary.style || existing.style,
+      subtitle: remoteMercenary.subtitle || existing.subtitle,
+      temper: remoteMercenary.temper || existing.temper,
+    });
+  });
+
+  return Array.from(merged.values());
+}
+
+export function findMercenary(id, source = mercenaries) {
+  const normalizedId = String(id || '').toLowerCase();
+
+  return source.find((mercenary) => mercenary.id.toLowerCase() === normalizedId);
 }

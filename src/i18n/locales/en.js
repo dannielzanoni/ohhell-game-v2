@@ -74,6 +74,7 @@ export const en = {
     readySending: 'Sending...',
     reconnecting: 'Reconnecting to the match...',
     roomLink: 'Room link',
+    selectMercenaryTitle: 'Select a mercenary before readying up',
     socketError: 'Room realtime connection error.',
     tableAria: 'Oh Hell game table',
     timerBid: 'Bid',
@@ -236,7 +237,9 @@ export const en = {
       historyEyebrow: 'Story',
       inspect: 'Inspect',
       manaCost: 'Mana cost',
+      loadError: 'Could not load backend mercenaries; showing bundled mercenaries.',
       next: 'Next mercenary',
+      passiveScript: 'Passive Lua script',
       previous: 'Previous mercenary',
       statsEyebrow: 'Traits',
       statsTitle: 'Play profile',
@@ -246,6 +249,22 @@ export const en = {
         temper: 'Temper',
       },
       title: 'Mercenaries',
+      admin: {
+        banner: 'Banner image',
+        bannerRequired: 'Select a banner image.',
+        createError: 'Could not save the mercenary.',
+        description: 'Description',
+        eyebrow: 'Admin tools',
+        id: 'Mercenary ID',
+        idNameRequired: 'Enter a mercenary ID and name.',
+        name: 'Name',
+        passiveRequired: 'Enter a passive Lua script.',
+        passiveScript: 'Passive Lua script',
+        save: 'Save mercenary',
+        saving: 'Saving...',
+        subtitle: 'Subtitle',
+        title: 'Create mercenary',
+      },
       items: {
         artemis: {
           cards: {
@@ -469,6 +488,8 @@ export const en = {
       viewCommunityCards: 'Create a power deck',
     },
     powerDecks: {
+      bucket: 'Card bucket',
+      bucketHint: '{{generic}} generic selected. {{mercenary}} selected in the active bucket.',
       cardsEyebrow: 'Card definitions',
       cardsRequired: 'Select at least one card.',
       cardsTitle: 'Official and community cards',
@@ -488,6 +509,7 @@ export const en = {
         description: 'Description',
         name: 'Deck name',
       },
+      genericBucket: 'Generic cards',
       cardTypes: {
         instant: 'Instant',
         interactive: 'Interactive',
@@ -508,8 +530,15 @@ export const en = {
         'Only admin users can save official decks. Other decks are community decks.',
       savedEyebrow: 'Saved decks',
       savedTitle: 'Decks: {{count}}',
+      saveAsDraft: 'Save as draft',
+      saveAsDraftHint:
+        'Drafts are visible only to you and cannot be used to start a match.',
       selectedCards: '{{count}} selected cards',
       selectedHint: 'Selected cards become the power-card pool for this deck.',
+      status: {
+        draft: 'Draft',
+        valid: 'Playable',
+      },
       title: 'Power Decks',
     },
     rooms: {

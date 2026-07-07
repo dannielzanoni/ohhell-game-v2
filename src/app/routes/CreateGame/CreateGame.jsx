@@ -114,7 +114,9 @@ export function CreateGame() {
         const decks = await getPowerDecks();
 
         if (isActive) {
-          const nextDecks = Array.isArray(decks) ? decks : [];
+          const nextDecks = (Array.isArray(decks) ? decks : []).filter(
+            (deck) => (deck.status || 'valid') === 'valid',
+          );
           setPowerDecks(nextDecks);
           setPowerDeckId((current) => {
             if (nextDecks.some((deck) => deck.id === current)) {

@@ -19,6 +19,7 @@ import {
   getCardDefinitions,
   getPowerDecks,
 } from '@/services/cardDefinitionsService.js';
+import { getMercenaries } from '@/services/mercenariesService.js';
 import { cn } from '@/lib/utils.js';
 
 function getCreatorName(item, t) {
@@ -61,28 +62,44 @@ export function PowerDecks() {
   const { t } = useTranslation();
   const [cards, setCards] = useState([]);
   const [decks, setDecks] = useState([]);
-  const [selectedCardIds, setSelectedCardIds] = useState([]);
+  const [mercenaries, setMercenaries] = useState([]);
+  const [activeBucket, setActiveBucket] = useState('generic');
+  const [selectedGenericCardIds, setSelectedGenericCardIds] = useState([]);
+  const [selectedMercenaryCardIds, setSelectedMercenaryCardIds] = useState({});
   const [deckName, setDeckName] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
   const [deckKind, setDeckKind] = useState('community');
+  const [deckStatus, setDeckStatus] = useState('valid');
   const [error, setError] = useState('');
   const [createError, setCreateError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const canCreateOfficial = isCurrentUserAdmin();
+  const activeSelectedCardIds =
+    activeBucket === 'generic'
+      ? selectedGenericCardIds
+      : selectedMercenaryCardIds[activeBucket] || [];
+  const totalSelectedCount =
+    selectedGenericCardIds.length +
+    Object.values(selectedMercenaryCardIds).reduce(
+      (total, cardIds) => total + cardIds.length,
+      0,
+    );
 
   const loadData = async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      const [cardResponse, deckResponse] = await Promise.all([
+      const [cardResponse, deckResponse, mercenaryResponse] = await Promise.all([
         getCardDefinitions(),
         getPowerDecks(),
+        getMercenaries(),
       ]);
 
       setCards(Array.isArray(cardResponse) ? cardResponse : []);
       setDecks(Array.isArray(deckResponse) ? deckResponse : []);
+      setMercenaries(Array.isArray(mercenaryResponse) ? mercenaryResponse : []);
     } catch (requestError) {
       setError(requestError.message || t('pages.powerDecks.loadError'));
     } finally {
@@ -95,11 +112,26 @@ export function PowerDecks() {
   }, []);
 
   const toggleCard = (cardId) => {
-    setSelectedCardIds((current) =>
-      current.includes(cardId)
-        ? current.filter((id) => id !== cardId)
-        : [...current, cardId],
-    );
+    if (activeBucket === 'generic') {
+      setSelectedGenericCardIds((current) =>
+        current.includes(cardId)
+          ? current.filter((id) => id !== cardId)
+          : [...current, cardId],
+      );
+      return;
+    }
+
+    setSelectedMercenaryCardIds((current) => {
+      const bucketCardIds = current[activeBucket] || [];
+      const nextBucketCardIds = bucketCardIds.includes(cardId)
+        ? bucketCardIds.filter((id) => id !== cardId)
+        : [...bucketCardIds, cardId];
+
+      return {
+        ...current,
+        [activeBucket]: nextBucketCardIds,
+      };
+    });
   };
 
   const handleCreateDeck = async (event) => {
@@ -111,7 +143,7 @@ export function PowerDecks() {
       return;
     }
 
-    if (!selectedCardIds.length) {
+    if (!totalSelectedCount) {
       setCreateError(t('pages.powerDecks.cardsRequired'));
       return;
     }
@@ -120,16 +152,21 @@ export function PowerDecks() {
 
     try {
       await createPowerDeck({
-        cardIds: selectedCardIds,
+        cardIds: [],
         description: deckDescription,
+        genericCardIds: selectedGenericCardIds,
         kind: canCreateOfficial ? deckKind : 'community',
+        mercenaryCardIds: selectedMercenaryCardIds,
         name: deckName,
+        status: deckStatus,
       });
 
       setDeckName('');
       setDeckDescription('');
       setDeckKind('community');
-      setSelectedCardIds([]);
+      setDeckStatus('valid');
+      setSelectedGenericCardIds([]);
+      setSelectedMercenaryCardIds({});
       await loadData();
     } catch (requestError) {
       setCreateError(requestError.message || t('pages.powerDecks.createError'));
@@ -218,16 +255,48 @@ export function PowerDecks() {
                     </span>
                   </label>
                 ) : null}
+                <label className="grid gap-2 text-sm font-semibold">
+                  {t('pages.powerDecks.bucket')}
+                  <select
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={activeBucket}
+                    onChange={(event) => setActiveBucket(event.target.value)}
+                  >
+                    <option value="generic">{t('pages.powerDecks.genericBucket')}</option>
+                    {mercenaries.map((mercenary) => (
+                      <option key={mercenary.id} value={mercenary.id}>
+                        {mercenary.name || mercenary.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-start gap-3 rounded-lg border border-border bg-background/50 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-4 cursor-pointer accent-primary"
+                    checked={deckStatus === 'draft'}
+                    onChange={(event) => setDeckStatus(event.target.checked ? 'draft' : 'valid')}
+                  />
+                  <span>
+                    <span className="font-black">{t('pages.powerDecks.saveAsDraft')}</span>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                      {t('pages.powerDecks.saveAsDraftHint')}
+                    </span>
+                  </span>
+                </label>
               </div>
 
               <div className="mt-4 rounded-lg border border-border bg-background/50 p-3 text-sm">
                 <p className="font-semibold">
                   {t('pages.powerDecks.selectedCards', {
-                    count: selectedCardIds.length,
+                    count: totalSelectedCount,
                   })}
                 </p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {t('pages.powerDecks.selectedHint')}
+                  {t('pages.powerDecks.bucketHint', {
+                    generic: selectedGenericCardIds.length,
+                    mercenary: activeSelectedCardIds.length,
+                  })}
                 </p>
               </div>
 
@@ -284,6 +353,14 @@ export function PowerDecks() {
                         count: deck.card_count,
                       })}
                     </p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                      {t(`pages.powerDecks.status.${deck.status || 'valid'}`)}
+                    </p>
+                    {deck.validation_errors?.length ? (
+                      <p className="mt-2 text-xs leading-5 text-destructive">
+                        {deck.validation_errors.join(' · ')}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {t('pages.powerDecks.createdBy', {
                         name: getCreatorName(deck, t),
@@ -324,7 +401,7 @@ export function PowerDecks() {
             ) : cards.length ? (
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {cards.map((card) => {
-                  const isSelected = selectedCardIds.includes(card.id);
+                  const isSelected = activeSelectedCardIds.includes(card.id);
                   const isOfficial = card.kind === 'official';
                   const SelectIcon = isSelected ? CheckSquare : Square;
 

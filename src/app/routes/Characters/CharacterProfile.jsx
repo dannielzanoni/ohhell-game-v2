@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Info } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +12,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog.jsx';
 import { cn } from '@/lib/utils.js';
-import { findMercenary } from './characterData.js';
+import { getMercenaries } from '@/services/mercenariesService.js';
+import {
+  findMercenary,
+  getMercenarySubtitle,
+  getMercenaryTitle,
+  mercenaries,
+  mergeMercenaries,
+} from './characterData.js';
 
 function CardArtwork({ card, title, markerClass, className }) {
   return (
@@ -112,13 +120,46 @@ function AbilityCard({ card, characterId, markerClass, t }) {
 
 export function CharacterProfile({ characterId }) {
   const { t } = useTranslation();
-  const character = findMercenary(characterId);
+  const [characters, setCharacters] = useState(mercenaries);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadMercenaries() {
+      try {
+        const response = await getMercenaries();
+
+        if (isActive) {
+          setCharacters(mergeMercenaries(Array.isArray(response) ? response : []));
+        }
+      } catch {
+        if (isActive) {
+          setCharacters(mercenaries);
+        }
+      }
+    }
+
+    void loadMercenaries();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const character = findMercenary(characterId, characters);
 
   if (!character) {
     return <Navigate to="/mercenaries" replace />;
   }
 
-  const title = t(`pages.characters.items.${character.id}.title`);
+  const title = getMercenaryTitle(character, t);
+  const subtitle = getMercenarySubtitle(character, t);
+  const history = character.description || t(`pages.characters.items.${character.id}.history`);
+  const statRows = [
+    [t('pages.characters.stats.deck'), character.deck || t(`pages.characters.items.${character.id}.deck`)],
+    [t('pages.characters.stats.style'), character.style || t(`pages.characters.items.${character.id}.style`)],
+    [t('pages.characters.stats.temper'), character.temper || t(`pages.characters.items.${character.id}.temper`)],
+  ];
 
   return (
     <main className="min-h-screen bg-background px-4 py-5 text-foreground md:px-6">
@@ -156,12 +197,51 @@ export function CharacterProfile({ characterId }) {
                   {title}
                 </h1>
                 <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/78">
-                  {t(`pages.characters.items.${character.id}.subtitle`)}
+                  {subtitle}
                 </p>
               </div>
             </div>
           </div>
         </header>
+
+        <section className="grid gap-5 lg:grid-cols-[1fr_24rem]">
+          <article className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              {t('pages.characters.historyEyebrow')}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              {history}
+            </p>
+          </article>
+          <aside className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              {t('pages.characters.statsEyebrow')}
+            </p>
+            <h2 className="mt-1 text-xl font-black">
+              {t('pages.characters.statsTitle')}
+            </h2>
+            <div className="mt-4 grid gap-3">
+              {statRows.map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-border bg-background p-3">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    {label}
+                  </p>
+                  <p className="mt-1 font-black">{value}</p>
+                </div>
+              ))}
+            </div>
+            {character.passiveScript ? (
+              <details className="mt-4 rounded-lg border border-border bg-muted/35 p-3 text-xs">
+                <summary className="cursor-pointer font-black">
+                  {t('pages.characters.passiveScript')}
+                </summary>
+                <pre className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md bg-background p-2 font-mono text-[0.68rem] leading-5 text-muted-foreground">
+                  {character.passiveScript}
+                </pre>
+              </details>
+            ) : null}
+          </aside>
+        </section>
 
         <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
           <p className="text-xs font-semibold uppercase text-muted-foreground">

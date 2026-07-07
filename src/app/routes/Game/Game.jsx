@@ -29,6 +29,7 @@ import {
   isWaitingLobbyInactiveClose,
   playTurn,
   putBid,
+  selectMercenary,
   setPlayerReady,
   usePowerCard,
 } from '@/services/gameSocketService.js';
@@ -396,6 +397,18 @@ function getLobbyGameType(lobbyId, routeGameType) {
   return gameTypes.FODINHA_CLASSIC;
 }
 
+function getLobbyCharacterId(lobbyId, routeCharacterId) {
+  if (routeCharacterId) {
+    return routeCharacterId;
+  }
+
+  if (lobbyId) {
+    return localStorage.getItem(`ohhell_lobby_character_${lobbyId}`) || '';
+  }
+
+  return '';
+}
+
 function getClaimsPlayerId(player) {
   if (!player) {
     return null;
@@ -441,7 +454,7 @@ function getClaimsPicture(player) {
   return player?.data?.picture || player?.picture || '';
 }
 
-function normalizePlayer({ bid = null, fallbackId, lifes, player, ready }) {
+function normalizePlayer({ bid = null, fallbackId, lifes, mercenaryId, player, ready }) {
   const id = getClaimsPlayerId(player) || fallbackId;
   const isCurrentPlayer = id && id === getCurrentPlayerId();
   const savedPlayer = isCurrentPlayer
@@ -454,6 +467,7 @@ function normalizePlayer({ bid = null, fallbackId, lifes, player, ready }) {
     id,
     lifes,
     mana: null,
+    mercenaryId: mercenaryId || null,
     nickname: getClaimsNickname(player, id) || savedPlayer.nickname,
     points: 0,
     ready: Boolean(ready),
@@ -473,6 +487,7 @@ function createFallbackPlayer(id, lifes) {
     id,
     lifes,
     mana: null,
+    mercenaryId: null,
     nickname: savedPlayer.nickname || id || 'Guest',
     points: 0,
     ready: false,
@@ -559,10 +574,12 @@ function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
       lifes: previous?.lifes ?? lifes,
       player: status.player,
       ready: status.ready,
+      mercenaryId: status.mercenary_id,
     });
 
     players[nextPlayer.id] = {
       ...nextPlayer,
+      mercenaryId: status.mercenary_id || previous?.mercenaryId || null,
       points: previous?.points ?? nextPlayer.points,
       turnToPlay: previous?.turnToPlay ?? nextPlayer.turnToPlay,
     };
@@ -777,19 +794,25 @@ function ReadyControls({
   hasEnoughPlayers,
   isPending,
   isReady,
+  needsMercenarySelection,
   onToggleReady,
   readyCount,
   totalPlayers,
 }) {
   const { t } = useTranslation();
   const buttonLabel = isPending ? t('game.readySending') : t('game.ready');
+  const disabledTitle = !hasEnoughPlayers
+    ? t('game.waitingForPlayersTitle')
+    : needsMercenarySelection
+    ? t('game.selectMercenaryTitle')
+    : undefined;
 
   return (
     <div className="flex w-full flex-col items-stretch justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-2 shadow-2xl shadow-black/50 backdrop-blur sm:w-auto sm:flex-row sm:items-center">
       <button
         type="button"
         disabled={!canToggleReady}
-        title={!hasEnoughPlayers ? t('game.waitingForPlayersTitle') : undefined}
+        title={disabledTitle}
         className={`h-11 rounded-xl border px-7 text-sm font-semibold shadow-lg transition sm:h-10 sm:rounded-full ${
           isReady
             ? 'border-emerald-400/70 bg-emerald-500 text-emerald-950 enabled:hover:bg-emerald-400'
@@ -1653,6 +1676,10 @@ export function Game() {
   const [gameType, setGameType] = useState(() =>
     getLobbyGameType(lobbyId, location.state?.gameType),
   );
+  const selectedMercenaryId = useMemo(
+    () => getLobbyCharacterId(lobbyId, location.state?.characterId),
+    [lobbyId, location.state?.characterId],
+  );
   const [playersById, setPlayersById] = useState(() => {
     const playerId = getCurrentPlayerId();
 
@@ -1767,10 +1794,16 @@ export function Game() {
       powerCards.length,
   );
   const hasEnoughPlayers = totalPlayers > 1;
+  const needsMercenarySelection = Boolean(
+    gameType === gameTypes.FODINHA_POWER &&
+      !currentPlayer?.mercenaryId &&
+      !selectedMercenaryId,
+  );
   const canToggleReady = Boolean(
     hasGameSocket &&
       isWaitingForReady &&
       hasEnoughPlayers &&
+      !needsMercenarySelection &&
       !isReadySending,
   );
 
@@ -1962,6 +1995,7 @@ export function Game() {
   useEffect(() => {
     const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
     const nextGameType = getLobbyGameType(lobbyId, location.state?.gameType);
+    const nextCharacterId = selectedMercenaryId;
     const nextCurrentPlayerId = getCurrentPlayerId();
     const token = getAuthToken();
 
@@ -2270,6 +2304,21 @@ export function Game() {
               [playerId]: {
                 ...existing,
                 ready: message.data.ready,
+              },
+            };
+          });
+          break;
+        case 'PlayerMercenarySelected':
+          setPlayersById((previousPlayers) => {
+            const playerId = message.data.player_id;
+            const existing =
+              previousPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
+
+            return {
+              ...previousPlayers,
+              [playerId]: {
+                ...existing,
+                mercenaryId: message.data.mercenary_id,
               },
             };
           });
@@ -2761,6 +2810,14 @@ export function Game() {
             setHasGameSocket(true);
             setIsReconnecting(false);
             setJoinError('');
+
+            if (nextGameType === gameTypes.FODINHA_POWER && nextCharacterId) {
+              try {
+                selectMercenary(nextSocket, nextCharacterId);
+              } catch {
+                // The lobby can still run with legacy decks when no mercenary is required.
+              }
+            }
           },
           token: latestToken,
         });
@@ -2847,6 +2904,7 @@ export function Game() {
     location.state?.lifes,
     location.state?.gameType,
     navigate,
+    selectedMercenaryId,
     showToast,
     showLifeLossHighlight,
     startActionTimer,
@@ -3064,7 +3122,8 @@ export function Game() {
                   canToggleReady={canToggleReady}
                   hasEnoughPlayers={hasEnoughPlayers}
                   isPending={isReadySending}
-                  isReady={player.ready} 
+                  isReady={player.ready}
+                  needsMercenarySelection={needsMercenarySelection}
                   onToggleReady={toggleReady}
                   readyCount={readyCount}
                   totalPlayers={totalPlayers}

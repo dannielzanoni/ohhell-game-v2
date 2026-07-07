@@ -22,7 +22,13 @@ import { gameTypes } from '@/services/gameTypesService.js';
 import { getGamePreferences } from '@/services/gamePreferencesService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
 import { createLobby } from '@/services/lobbyService.js';
-import { mercenaries } from '../Characters/characterData.js';
+import { getMercenaries } from '@/services/mercenariesService.js';
+import {
+  getMercenarySubtitle,
+  getMercenaryTitle,
+  mercenaries,
+  mergeMercenaries,
+} from '../Characters/characterData.js';
 
 const hellHandDefaultLives = 50;
 
@@ -77,8 +83,8 @@ function playLockCharacterSound() {
 }
 
 function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect, t }) {
-  const title = t(`pages.characters.items.${character.id}.title`);
-  const subtitle = t(`pages.characters.items.${character.id}.subtitle`);
+  const title = getMercenaryTitle(character, t);
+  const subtitle = getMercenarySubtitle(character, t);
   const xOffset =
     offset === 0
       ? '0rem'
@@ -159,6 +165,7 @@ export function HellHandGame() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeCharacterIndex, setActiveCharacterIndex] = useState(0);
+  const [characters, setCharacters] = useState(mercenaries);
   const [selectedCharacterId, setSelectedCharacterId] = useState('');
   const [powerDeckId, setPowerDeckId] = useState('');
   const [powerDecks, setPowerDecks] = useState([]);
@@ -176,6 +183,30 @@ export function HellHandGame() {
   useEffect(() => {
     let isActive = true;
 
+    async function loadMercenaries() {
+      try {
+        const response = await getMercenaries();
+
+        if (isActive) {
+          setCharacters(mergeMercenaries(Array.isArray(response) ? response : []));
+        }
+      } catch {
+        if (isActive) {
+          setCharacters(mercenaries);
+        }
+      }
+    }
+
+    void loadMercenaries();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
     async function loadPowerDecks() {
       setIsLoadingPowerDecks(true);
       setPowerDeckError('');
@@ -184,7 +215,11 @@ export function HellHandGame() {
         const decks = await getPowerDecks();
 
         if (isActive) {
-          setPowerDecks(Array.isArray(decks) ? decks : []);
+          setPowerDecks(
+            (Array.isArray(decks) ? decks : []).filter(
+              (deck) => (deck.status || 'valid') === 'valid',
+            ),
+          );
           setPowerDeckId('');
         }
       } catch (error) {
@@ -216,7 +251,7 @@ export function HellHandGame() {
 
     playSwitchCardSound();
     setActiveCharacterIndex((current) =>
-      current === 0 ? mercenaries.length - 1 : current - 1,
+      current === 0 ? characters.length - 1 : current - 1,
     );
   };
 
@@ -226,7 +261,7 @@ export function HellHandGame() {
     }
 
     playSwitchCardSound();
-    setActiveCharacterIndex((current) => (current + 1) % mercenaries.length);
+    setActiveCharacterIndex((current) => (current + 1) % characters.length);
   };
 
   const handleCharacterDotSelect = (index) => {
@@ -245,7 +280,7 @@ export function HellHandGame() {
     }
 
     playLockCharacterSound();
-    setSelectedCharacterId(mercenaries[activeCharacterIndex]?.id || '');
+    setSelectedCharacterId(characters[activeCharacterIndex]?.id || '');
   };
 
   const handlePowerDeckChange = (event) => {
@@ -348,12 +383,12 @@ export function HellHandGame() {
             </div>
 
             <div className="flex gap-2 rounded-lg border border-red-200/12 bg-black/50 p-2">
-              {mercenaries.map((character, index) => (
+              {characters.map((character, index) => (
                 <button
                   key={character.id}
                   type="button"
                   aria-label={t('pages.characters.chooseCharacter', {
-                    name: t(`pages.characters.items.${character.id}.title`),
+                    name: getMercenaryTitle(character, t),
                   })}
                   disabled={isCharacterLocked}
                   className={cn(
@@ -407,11 +442,11 @@ export function HellHandGame() {
               </div>
 
               <div className="relative mt-3 h-[25rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/65 lg:h-[17rem] xl:h-[19rem]">
-                {mercenaries.map((character, index) => {
+                {characters.map((character, index) => {
                   const offset = getCarouselOffset(
                     index,
                     activeCharacterIndex,
-                    mercenaries.length,
+                    characters.length,
                   );
 
                   return (

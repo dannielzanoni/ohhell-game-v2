@@ -9,15 +9,26 @@ export function getPowerDecks() {
   return withAuthRetry(() => apiRequest('/power-decks', { auth: true }));
 }
 
-export function createPowerDeck({ cardIds, description, kind = 'community', name }) {
+export function createPowerDeck({
+  cardIds,
+  description,
+  genericCardIds,
+  kind = 'community',
+  mercenaryCardIds,
+  name,
+  status,
+}) {
   return withAuthRetry(() =>
     apiRequest('/power-decks', {
       auth: true,
       body: {
         card_ids: cardIds,
         description,
+        generic_card_ids: genericCardIds,
         kind,
+        mercenary_card_ids: mercenaryCardIds,
         name,
+        status,
       },
       method: 'POST',
     }),

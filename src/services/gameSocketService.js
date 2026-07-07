@@ -122,12 +122,24 @@ export function setPlayerReady(socket, ready) {
   });
 }
 
+export function selectMercenary(socket, mercenaryId) {
+  if (!mercenaryId) {
+    return;
+  }
+
+  sendGameCommand(socket, {
+    type: 'SelectMercenary',
+    data: { mercenary_id: mercenaryId },
+  });
+}
+
 export const gameSocketService = {
   createGameSocket,
   getGameSocketUrl,
   isWaitingLobbyInactiveClose,
   playTurn,
   putBid,
+  selectMercenary,
   sendGameCommand,
   setPlayerReady,
   usePowerCard,
