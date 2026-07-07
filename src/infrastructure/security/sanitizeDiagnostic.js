@@ -1,5 +1,5 @@
 const REDACTED = '[REDACTED]';
-const SENSITIVE_KEY = /authorization|credential|jwt|password|refresh.?token|access.?token|(^|_)token($|_)/i;
+const SENSITIVE_KEY = /authorization|credential|jwt|password|refresh.?token|access.?token|(^|_)token($|_)|nick.?name|(^|_)nick($|_)|player.?name/i;
 const AUTHENTICATED_URL = /\b(?:wss?|https?):\/\/[^\s]+[?&](?:token|access_token|authorization)=[^\s&]+/gi;
 const BEARER = /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi;
 const JWT = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;

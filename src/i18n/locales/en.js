@@ -35,6 +35,9 @@ export const en = {
     appNameShort: 'Oh Hell',
     appNameShort2: 'Game',
   },
+  errors: {
+    render: 'The interface could not be rendered safely. Please reload and try again.',
+  },
   cards: {
     label: '{{rank}} of {{suit}}',
     ranks: {

@@ -35,6 +35,9 @@ export const pt = {
     appNameShort: 'Fodinha',
     appNameShort2: '',
   },
+  errors: {
+    render: 'A interface não pôde ser renderizada com segurança. Recarregue e tente novamente.',
+  },
   cards: {
     label: '{{rank}} de {{suit}}',
     ranks: {
