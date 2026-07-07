@@ -184,7 +184,60 @@ export const en = {
         'Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!',
     },
     howToPlay: {
-      description: 'A reserved page for rules, rounds, and scoring.',
+      description: 'Learn the implemented flow: goal, cards, trump, bids, points and lives before joining the table.',
+      eyebrow: 'Essential guide',
+      sections: [
+        {
+          id: 'goal',
+          title: 'Goal',
+          description: 'Oh Hell is a trick-taking game: each round you try to hit exactly the bid you declared.',
+          items: [
+            'Join a room, mark yourself ready and wait for the server to start the match.',
+            'Each player starts with the lives configured for the room.',
+            'The strongest result belongs to the player who loses fewer lives across sets.',
+          ],
+        },
+        {
+          id: 'cards',
+          title: 'Cards and order',
+          description: 'The table shows your hand, opponent piles and played cards in the order sent by the server.',
+          items: [
+            'A card leaves your hand only after the server confirms the play.',
+            'The round advances by turns; when it is not your turn, the action is blocked.',
+            'Rank and suit names follow the language selected in the app.',
+          ],
+        },
+        {
+          id: 'trump',
+          title: 'Trump and joker card',
+          description: 'The revealed card in the center defines the visual trump/joker reference for that round.',
+          items: [
+            'The interface preserves the real pile order received from the backend.',
+            'Changing deck type or card back only changes your local appearance.',
+            'The trick result is decided by the server and reflected in the score.',
+          ],
+        },
+        {
+          id: 'bid',
+          title: 'Bid',
+          description: 'Before cards are played, each player declares how many tricks they expect to win.',
+          items: [
+            'Valid bid options come from the server to prevent illegal actions.',
+            'After sending, the bid stays pending until the server confirms it.',
+            'The turn panel tells you whether to bid, play or wait.',
+          ],
+        },
+        {
+          id: 'score',
+          title: 'Points and lives',
+          description: 'At the end of the round, the server sends points and, when needed, updated lives.',
+          items: [
+            'The scoreboard shows each player’s points during the match.',
+            'Life losses appear as a shared visual event across mobile and web.',
+            'When a player or tie wins, the end screen shows the result.',
+          ],
+        },
+      ],
       title: 'How To Play',
     },
     links: {

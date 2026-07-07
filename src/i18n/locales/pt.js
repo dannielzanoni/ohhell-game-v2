@@ -184,7 +184,60 @@ export const pt = {
         'Fodinha, também conhecido como Oh Hell, é um jogo clássico de cartas originário do Truco. Preveja suas vitórias, supere seus amigos e divirta-se online!',
     },
     howToPlay: {
-      description: 'Página reservada para explicar regras, rodadas e pontuação.',
+      description: 'Entenda o fluxo implementado: objetivo, cartas, trunfo, bids, pontos e vidas antes de entrar na mesa.',
+      eyebrow: 'Guia essencial',
+      sections: [
+        {
+          id: 'goal',
+          title: 'Objetivo',
+          description: 'Fodinha é um jogo de vazas: em cada rodada você tenta cumprir exatamente o bid que declarou.',
+          items: [
+            'Entre em uma sala, marque ready e aguarde o servidor iniciar a partida.',
+            'Cada jogador começa com as vidas configuradas na sala.',
+            'Permanece melhor quem perde menos vidas ao longo dos sets.',
+          ],
+        },
+        {
+          id: 'cards',
+          title: 'Cartas e sequência',
+          description: 'A mesa mostra sua mão, o monte dos oponentes e as cartas já jogadas em ordem enviada pelo servidor.',
+          items: [
+            'A carta só sai da sua mão quando o servidor confirma a jogada.',
+            'A rodada avança por turnos; quando não for sua vez, a ação fica bloqueada.',
+            'Os nomes de rank e naipe seguem o idioma escolhido no app.',
+          ],
+        },
+        {
+          id: 'trump',
+          title: 'Trunfo e carta joker',
+          description: 'A carta virada no centro define a referência visual de trunfo/joker daquela rodada.',
+          items: [
+            'A interface preserva a ordem real do monte recebida do backend.',
+            'Trocar o tipo de baralho ou verso muda apenas sua aparência local.',
+            'O resultado da vaza é decidido pelo servidor e refletido no placar.',
+          ],
+        },
+        {
+          id: 'bid',
+          title: 'Bid',
+          description: 'Antes das cartas serem jogadas, cada jogador declara quantas vazas pretende ganhar.',
+          items: [
+            'As opções válidas de bid vêm do servidor para evitar jogadas ilegais.',
+            'Depois de enviar, o bid fica pendente até a confirmação do servidor.',
+            'O painel de turno indica se você deve apostar, jogar ou aguardar.',
+          ],
+        },
+        {
+          id: 'score',
+          title: 'Pontos e vidas',
+          description: 'Ao fim da rodada, o servidor envia os pontos e, quando necessário, a atualização de vidas.',
+          items: [
+            'O placar mostra pontos por jogador durante a partida.',
+            'Perdas de vida aparecem como evento visual compartilhado entre mobile e web.',
+            'Quando uma pessoa ou empate vence, a tela final mostra o resultado.',
+          ],
+        },
+      ],
       title: 'Como jogar',
     },
     links: {
