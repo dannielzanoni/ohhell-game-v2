@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, Image as ImageIcon, Layers, Volume2 } from 'lucide-react';
+import { Check, Image as ImageIcon, Layers, Volume2, VolumeX } from 'lucide-react';
 import { Translate01 as TranslateIcon } from '@untitledui/icons/Translate01';
 import { useTranslation } from 'react-i18next';
 import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
@@ -15,6 +15,7 @@ import { LanguagePanel } from '@/components/i18n/LanguageSwitcher.jsx';
 import { cn } from '@/lib/utils.js';
 import {
   deckTypes,
+  defaultGamePreferences,
   getGamePreferences,
   setGamePreferences,
 } from '@/services/gamePreferencesService.js';
@@ -80,15 +81,30 @@ const cardBackOptions = Object.entries(cardBackImages)
   })
   .sort((first, second) => first.sort - second.sort);
 
-export function GameSettingsModal({ onOpenChange, open }) {
+export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('sounds');
   const [activeDeckSettingsTab, setActiveDeckSettingsTab] = useState('deckType');
   const [preferences, setPreferences] = useState(getGamePreferences);
+  const [previousVolumes, setPreviousVolumes] = useState(() => ({
+    hellHandHomeMusicVolume: defaultGamePreferences.hellHandHomeMusicVolume,
+    volume: defaultGamePreferences.volume,
+  }));
+  const isHellHand = variant === 'hellHand';
 
   useEffect(() => {
     if (open) {
-      setPreferences(getGamePreferences());
+      const nextPreferences = getGamePreferences();
+
+      setPreferences(nextPreferences);
+      setPreviousVolumes((currentVolumes) => ({
+        hellHandHomeMusicVolume:
+          nextPreferences.hellHandHomeMusicVolume > 0
+            ? nextPreferences.hellHandHomeMusicVolume
+            : currentVolumes.hellHandHomeMusicVolume,
+        volume:
+          nextPreferences.volume > 0 ? nextPreferences.volume : currentVolumes.volume,
+      }));
     }
   }, [open]);
 
@@ -96,16 +112,65 @@ export function GameSettingsModal({ onOpenChange, open }) {
     setPreferences(setGamePreferences(nextPreferences));
   };
 
+  const updateVolumePreference = (preferenceKey, value) => {
+    const nextVolume = Number(value);
+
+    if (nextVolume > 0) {
+      setPreviousVolumes((currentVolumes) => ({
+        ...currentVolumes,
+        [preferenceKey]: nextVolume,
+      }));
+    }
+
+    updatePreferences({ [preferenceKey]: nextVolume });
+  };
+
+  const toggleVolume = (preferenceKey) => {
+    const currentVolume = Number(preferences[preferenceKey]) || 0;
+
+    if (currentVolume > 0) {
+      setPreviousVolumes((currentVolumes) => ({
+        ...currentVolumes,
+        [preferenceKey]: currentVolume,
+      }));
+      updatePreferences({ [preferenceKey]: 0 });
+      return;
+    }
+
+    updatePreferences({
+      [preferenceKey]:
+        previousVolumes[preferenceKey] || defaultGamePreferences[preferenceKey],
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[54dvh] max-w-[calc(100vw-1rem)] flex-col overflow-hidden p-0 sm:h-auto sm:max-h-[46vh] sm:max-w-2xl">
-        <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
-          <DialogTitle>{t('settings.title')}</DialogTitle>
+      <DialogContent
+        className={cn(
+          'flex h-[54dvh] max-w-[calc(100vw-1rem)] flex-col overflow-hidden p-0 sm:h-auto sm:max-h-[46vh] sm:max-w-2xl',
+          isHellHand &&
+            'border-red-300/20 bg-black text-stone-100 ring-red-900/70 shadow-2xl shadow-red-950/40',
+        )}
+      >
+        <DialogHeader
+          className={cn(
+            'border-b border-border px-4 py-4 sm:px-5',
+            isHellHand &&
+              'border-red-300/15 bg-gradient-to-r from-red-950/80 via-black to-black',
+          )}
+        >
+          <DialogTitle className={cn(isHellHand && 'text-amber-100')}>
+            {t('settings.title')}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-0 overflow-hidden sm:grid-cols-[12rem_1fr] sm:grid-rows-1">
           <div
-            className="flex gap-2 overflow-x-auto border-b border-border bg-muted/40 p-2 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3"
+            className={cn(
+              'flex gap-2 overflow-x-auto border-b border-border bg-muted/40 p-2 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3',
+              isHellHand &&
+                'border-red-300/15 bg-red-950/20 sm:border-red-300/15',
+            )}
             role="tablist"
           >
             {tabs.map((tab) => {
@@ -121,6 +186,11 @@ export function GameSettingsModal({ onOpenChange, open }) {
                   className={cn(
                     'flex h-10 min-w-max flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold text-muted-foreground transition sm:flex-none sm:justify-start',
                     isActive && 'bg-background text-foreground shadow-sm',
+                    isHellHand &&
+                      'text-stone-400 hover:bg-red-950/45 hover:text-amber-100',
+                    isHellHand &&
+                      isActive &&
+                      'border border-red-300/20 bg-red-950/70 text-amber-100 shadow-black/30',
                   )}
                   onClick={() => setActiveTab(tab.id)}
                 >
@@ -131,19 +201,44 @@ export function GameSettingsModal({ onOpenChange, open }) {
             })}
           </div>
 
-          <div className="min-h-0 overflow-y-auto p-4 sm:min-h-[22rem] sm:p-5">
+          <div
+            className={cn(
+              'min-h-0 overflow-y-auto p-4 sm:min-h-[22rem] sm:p-5',
+              isHellHand && 'bg-black/95',
+            )}
+          >
             {activeTab === 'sounds' ? (
               <div className="grid gap-5" role="tabpanel">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-10 place-items-center rounded-md bg-secondary text-secondary-foreground">
-                      <Volume2 className="size-5" />
-                    </span>
+                    <button
+                      type="button"
+                      aria-label={t('settings.generalVolume')}
+                      title={t('settings.generalVolume')}
+                      className={cn(
+                        'grid size-10 cursor-pointer place-items-center rounded-md bg-secondary text-secondary-foreground transition hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring',
+                        isHellHand &&
+                          'border border-red-300/15 bg-red-950/60 text-amber-200 focus:ring-red-400',
+                      )}
+                      onClick={() => toggleVolume('volume')}
+                    >
+                      {preferences.volume > 0 ? (
+                        <Volume2 className="size-5" />
+                      ) : (
+                        <VolumeX className="size-5" />
+                      )}
+                    </button>
                     <span className="text-sm font-semibold">
                       {t('settings.generalVolume')}
                     </span>
                   </div>
-                  <span className="rounded-md border border-border px-2 py-1 text-sm font-semibold">
+                  <span
+                    className={cn(
+                      'rounded-md border border-border px-2 py-1 text-sm font-semibold',
+                      isHellHand &&
+                        'border-red-300/20 bg-red-950/35 text-amber-100',
+                    )}
+                  >
                     {preferences.volume}%
                   </span>
                 </div>
@@ -155,9 +250,65 @@ export function GameSettingsModal({ onOpenChange, open }) {
                   step="1"
                   value={preferences.volume}
                   aria-label={t('settings.generalVolume')}
-                  className="h-2 w-full cursor-pointer accent-primary"
+                  className={cn(
+                    'h-2 w-full cursor-pointer accent-primary',
+                    isHellHand && 'accent-red-500',
+                  )}
                   onChange={(event) =>
-                    updatePreferences({ volume: event.target.value })
+                    updateVolumePreference('volume', event.target.value)
+                  }
+                />
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      aria-label={t('settings.hellHandHomeMusicVolume')}
+                      title={t('settings.hellHandHomeMusicVolume')}
+                      className={cn(
+                        'grid size-10 cursor-pointer place-items-center rounded-md bg-secondary text-secondary-foreground transition hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring',
+                        isHellHand &&
+                          'border border-red-300/15 bg-red-950/60 text-amber-200 focus:ring-red-400',
+                      )}
+                      onClick={() => toggleVolume('hellHandHomeMusicVolume')}
+                    >
+                      {preferences.hellHandHomeMusicVolume > 0 ? (
+                        <Volume2 className="size-5" />
+                      ) : (
+                        <VolumeX className="size-5" />
+                      )}
+                    </button>
+                    <span className="text-sm font-semibold">
+                      {t('settings.hellHandHomeMusicVolume')}
+                    </span>
+                  </div>
+                  <span
+                    className={cn(
+                      'rounded-md border border-border px-2 py-1 text-sm font-semibold',
+                      isHellHand &&
+                        'border-red-300/20 bg-red-950/35 text-amber-100',
+                    )}
+                  >
+                    {preferences.hellHandHomeMusicVolume}%
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={preferences.hellHandHomeMusicVolume}
+                  aria-label={t('settings.hellHandHomeMusicVolume')}
+                  className={cn(
+                    'h-2 w-full cursor-pointer accent-primary',
+                    isHellHand && 'accent-red-500',
+                  )}
+                  onChange={(event) =>
+                    updateVolumePreference(
+                      'hellHandHomeMusicVolume',
+                      event.target.value,
+                    )
                   }
                 />
               </div>

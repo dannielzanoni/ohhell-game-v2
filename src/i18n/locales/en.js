@@ -86,9 +86,9 @@ export const en = {
     eyebrow: 'Game type',
     fodinhaClassic: 'Fodinha Classic',
     fodinhaClassicDescription: 'The current Oh Hell/Fodinha trick-taking rules.',
-    fodinhaPower: 'Fodinha Power',
+    fodinhaPower: 'Hell Hand',
     fodinhaPowerDescription:
-      'Fodinha with 50 lives, 10x life loss, and Lua-powered power cards.',
+      'A dark-magic mode with 50 lives, heavier damage, and Lua-powered cards.',
   },
   leaderboard: {
     averageBid: 'Avg bid',
@@ -174,6 +174,42 @@ export const en = {
       },
       tagline:
         'Fodinha, also known as Oh Hell, is a classic trick-taking card game. Predict your wins, outsmart your friends, and have fun online!',
+    },
+    gameModeSelect: {
+      eyebrow: 'Game modes',
+      title: 'Choose your table',
+      classic: {
+        description: 'The classic bid-and-trick mode with clean rules and fast rounds.',
+        title: 'Fodinha Classic',
+      },
+      hellHand: {
+        description: 'A darker table of mercenaries, curses, power cards, and desperate bets.',
+        title: 'Hell Hand',
+      },
+    },
+    hellHandHome: {
+      actions: {
+        cards: 'Cards',
+        mercenaries: 'Mercenaries',
+        play: 'Play',
+        rooms: 'Rooms',
+        settings: 'Settings',
+      },
+      description:
+        'Mercenaries bargain with cursed decks, blood debts, and impossible bids beneath a blackened table.',
+      eyebrow: 'Dark magic mode',
+      pillOne: 'Cursed bids',
+      pillTwo: 'Mercenary decks',
+      title: 'Hell Hand',
+    },
+    hellHandGame: {
+      characterEyebrow: 'Mercenary',
+      characterRequired: 'Select a mercenary before playing.',
+      characterTitle: 'Choose your contract',
+      eyebrow: 'Table contract',
+      selectCharacter: 'Select',
+      title: 'Prepare Hell Hand',
+      unlockCharacter: 'Change',
     },
     howToPlay: {
       description: 'A reserved page for rules, rounds, and scoring.',
@@ -495,6 +531,7 @@ export const en = {
     english: 'English',
     french: 'French',
     generalVolume: 'General volume',
+    hellHandHomeMusicVolume: 'Intro music volume',
     language: 'Language',
     languageDescription: 'Choose the app language.',
     portuguese: 'Portuguese',

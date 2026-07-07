@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Home, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import {
   Combobox,
@@ -50,6 +50,14 @@ function getDefaultLives(gameType) {
   return String(getLifeSettings(gameType).defaultValue);
 }
 
+function getInitialGameType(search) {
+  const params = new URLSearchParams(search);
+
+  return params.get('mode') === 'hell-hand'
+    ? gameTypes.FODINHA_POWER
+    : gameTypes.FODINHA_CLASSIC;
+}
+
 function getLivesValidationError(value, settings) {
   const selectedLives = Number(value);
 
@@ -68,9 +76,10 @@ function getLivesValidationError(value, settings) {
 }
 
 export function CreateGame() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [gameType, setGameType] = useState(gameTypes.FODINHA_CLASSIC);
+  const [gameType, setGameType] = useState(() => getInitialGameType(location.search));
   const [livesByGameType, setLivesByGameType] = useState(createDefaultLivesByGameType);
   const [powerDeckId, setPowerDeckId] = useState('');
   const [powerDecks, setPowerDecks] = useState([]);
@@ -371,7 +380,7 @@ export function CreateGame() {
               </InteractiveHoverButton>
 
               <Link
-                to="/"
+                to="/home"
                 className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Home className="size-4" />

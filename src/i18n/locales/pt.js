@@ -86,9 +86,9 @@ export const pt = {
     eyebrow: 'Tipo de jogo',
     fodinhaClassic: 'Fodinha Clássico',
     fodinhaClassicDescription: 'As regras atuais de Fodinha/Oh Hell com vazas e bids.',
-    fodinhaPower: 'Fodinha Power',
+    fodinhaPower: 'Hell Hand',
     fodinhaPowerDescription:
-      'Fodinha com 50 vidas, perda 10x maior e cartas de poder em Lua.',
+      'Modo de magia sombria com 50 vidas, dano maior e cartas de poder em Lua.',
   },
   leaderboard: {
     averageBid: 'Bid médio',
@@ -174,6 +174,42 @@ export const pt = {
       },
       tagline:
         'Fodinha, também conhecido como Oh Hell, é um jogo clássico de cartas originário do Truco. Preveja suas vitórias, supere seus amigos e divirta-se online!',
+    },
+    gameModeSelect: {
+      eyebrow: 'Modos de jogo',
+      title: 'Escolha sua mesa',
+      classic: {
+        description: 'O modo classico de apostas e vazas com regras diretas e rodadas rapidas.',
+        title: 'Fodinha Classic',
+      },
+      hellHand: {
+        description: 'Uma mesa mais sombria com mercenarios, maldicoes, cartas de poder e apostas desesperadas.',
+        title: 'Hell Hand',
+      },
+    },
+    hellHandHome: {
+      actions: {
+        cards: 'Cards',
+        mercenaries: 'Mercenaries',
+        play: 'Play',
+        rooms: 'Rooms',
+        settings: 'Settings',
+      },
+      description:
+        'Mercenarios negociam com decks amaldicoados, dividas de sangue e apostas impossiveis sob uma mesa enegrecida.',
+      eyebrow: 'Modo dark magic',
+      pillOne: 'Apostas amaldicoadas',
+      pillTwo: 'Decks de mercenarios',
+      title: 'Hell Hand',
+    },
+    hellHandGame: {
+      characterEyebrow: 'Mercenario',
+      characterRequired: 'Selecione um mercenario antes de jogar.',
+      characterTitle: 'Escolha seu contrato',
+      eyebrow: 'Contrato da mesa',
+      selectCharacter: 'Selecionar',
+      title: 'Preparar Hell Hand',
+      unlockCharacter: 'Alterar',
     },
     howToPlay: {
       description: 'Página reservada para explicar regras, rodadas e pontuação.',
@@ -495,6 +531,7 @@ export const pt = {
     english: 'Inglês',
     french: 'Francês',
     generalVolume: 'Volume geral',
+    hellHandHomeMusicVolume: 'Volume da musica inicial',
     language: 'Idioma',
     languageDescription: 'Escolha o idioma',
     portuguese: 'Português',

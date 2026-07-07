@@ -41,6 +41,10 @@ import {
   gameTypes,
   getGameTypeOption,
 } from '@/services/gameTypesService.js';
+import {
+  startHellHandHomeTheme,
+  stopHellHandHomeTheme,
+} from '@/services/hellHandAudioService.js';
 import { joinLobby } from '@/services/lobbyService.js';
 
 const MAX_TABLE_PLAYERS = 10;
@@ -1694,6 +1698,16 @@ export function Game() {
   useEffect(() => {
     roundCardCountRef.current = roundCardCount;
   }, [roundCardCount]);
+
+  useEffect(() => {
+    if (gameType !== gameTypes.FODINHA_POWER) {
+      stopHellHandHomeTheme();
+      return undefined;
+    }
+
+    startHellHandHomeTheme();
+    return () => stopHellHandHomeTheme();
+  }, [gameType]);
 
   const playedCountsByPlayer = useMemo(
     () => getPlayedCountsByPlayer(pile),

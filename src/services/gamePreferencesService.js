@@ -10,6 +10,7 @@ export const deckTypes = {
 export const defaultGamePreferences = {
   cardBack: 'back_card',
   deckType: deckTypes.SPANISH,
+  hellHandHomeMusicVolume: 10,
   volume: 70,
 };
 
@@ -43,6 +44,7 @@ export function normalizeGamePreferences(preferences = {}) {
   return {
     cardBack: normalizeCardBack(preferences.cardBack),
     deckType: normalizeDeckType(preferences.deckType),
+    hellHandHomeMusicVolume: normalizeVolume(preferences.hellHandHomeMusicVolume),
     volume: normalizeVolume(preferences.volume),
   };
 }

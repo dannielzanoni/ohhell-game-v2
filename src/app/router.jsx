@@ -3,21 +3,28 @@ import { CharacterProfile } from './routes/Characters/CharacterProfile.jsx';
 import { Mercenaries } from './routes/Characters/Characters.jsx';
 import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
+import { GameModeSelect } from './routes/GameModeSelect.jsx';
+import { HellHandGame } from './routes/HellHand/HellHandGame.jsx';
 import { Github } from './routes/Github/Github.jsx';
+import { HellHandHome } from './routes/HellHand/HellHandHome.jsx';
 import { Home } from './routes/Home/Home.jsx';
 import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
 import { Playground } from './routes/Playground/Playground.jsx';
 import { PowerDecks } from './routes/PowerDecks/PowerDecks.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
+import { Settings } from './routes/Settings/Settings.jsx';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<GameModeSelect />} />
+        <Route path="/hell-hand" element={<HellHandHome />} />
+        <Route path="/hell-hand/game" element={<HellHandGame />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/create-game" element={<CreateGame />} />
           <Route path="/game" element={<Navigate to="/create-game" replace />} />
           <Route path="/game/:lobbyId" element={<Game />} />
@@ -36,6 +43,7 @@ export function AppRouter() {
           <Route path="/how-to-play" element={<HowToPlay />} />
           <Route path="/playground" element={<Playground />} />
           <Route path="/power-decks" element={<PowerDecks />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/github" element={<Github />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

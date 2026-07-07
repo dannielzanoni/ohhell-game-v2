@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
 
 const navItems = [
-  { label: 'Home', labelKey: 'common.home', path: '/', icon: Home },
+  { label: 'Home', labelKey: 'common.home', path: '/home', icon: Home },
   ...pageLinks,
 ];
 
