@@ -1,7 +1,7 @@
 import { SettingsView } from './SettingsView.jsx';
-import { useStaticRouteController } from '../useStaticRouteController.js';
+import { useSettingsController } from './useSettingsController.js';
 
 export function Settings() {
-  const controller = useStaticRouteController();
+  const controller = useSettingsController();
   return <SettingsView controller={controller} />;
 }

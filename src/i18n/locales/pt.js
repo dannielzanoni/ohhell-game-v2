@@ -237,6 +237,7 @@ export const pt = {
     english: 'Inglês',
     french: 'Francês',
     generalVolume: 'Volume geral',
+    generalVolumeDescription: 'Ajuste todos os sons do jogo de 0 a 100.',
     language: 'Idioma',
     languageDescription: 'Escolha o idioma',
     portuguese: 'Português',
@@ -244,5 +245,6 @@ export const pt = {
     spanish: 'Espanhol',
     spanish8Bit: 'Espanhol 8-bit',
     title: 'Configurações',
+    volumeValue: 'Volume {{volume}}%',
   },
 };

@@ -237,6 +237,7 @@ export const en = {
     english: 'English',
     french: 'French',
     generalVolume: 'General volume',
+    generalVolumeDescription: 'Adjust all game sounds from 0 to 100.',
     language: 'Language',
     languageDescription: 'Choose the app language.',
     portuguese: 'Portuguese',
@@ -244,5 +245,6 @@ export const en = {
     spanish: 'Spanish',
     spanish8Bit: 'Spanish 8-bit',
     title: 'Settings',
+    volumeValue: 'Volume {{volume}}%',
   },
 };
