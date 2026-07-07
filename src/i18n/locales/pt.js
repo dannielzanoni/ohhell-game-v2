@@ -387,11 +387,9 @@ export const pt = {
         title: 'Posicao e tamanho da arte',
       },
       importImage: 'Importar imagem',
-      importLua: 'Importar Lua',
       importTemplate: 'Importar template',
       loadError: 'Nao foi possivel carregar as definicoes de cartas.',
-      luaImportError: 'Nao foi possivel importar o script Lua.',
-      luaRequired: 'Anexe um script .lua antes de salvar.',
+      luaRequired: 'Digite um script Lua antes de salvar.',
       luaScript: 'Script Lua do efeito',
       layout: {
         case: 'Maiuscula/minuscula',

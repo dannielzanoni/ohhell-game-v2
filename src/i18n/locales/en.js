@@ -387,11 +387,9 @@ export const en = {
         title: 'Artwork position and size',
       },
       importImage: 'Import image',
-      importLua: 'Import Lua',
       importTemplate: 'Import template',
       loadError: 'Could not load card definitions.',
-      luaImportError: 'Could not import the Lua script.',
-      luaRequired: 'Attach a .lua script before saving.',
+      luaRequired: 'Enter a Lua script before saving.',
       luaScript: 'Lua effect script',
       layout: {
         case: 'Upper/lowercase',

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
-  Code2,
   Download,
   ImagePlus,
   Plus,
@@ -23,6 +22,7 @@ import { isCurrentUserAdmin } from '@/services/authService.js';
 import {
   createCardDefinition,
   getCardDefinitions,
+  uploadCardDefinitionAsset,
 } from '@/services/cardDefinitionsService.js';
 
 const EXPORT_CARD_HEIGHT = 1344;
@@ -65,7 +65,6 @@ const emptyDraft = {
   layout: createDefaultLayout(),
   life: '',
   luaScript: '',
-  luaScriptName: '',
   template: '',
   title: '',
 };
@@ -73,6 +72,7 @@ const emptyDraft = {
 function normalizeCard(card) {
   const cleanedCard = { ...card };
   delete cleanedCard.cost;
+  delete cleanedCard.luaScriptName;
   delete cleanedCard.power;
   delete cleanedCard.rarity;
   const cardType = ['instant', 'targetable', 'interactive'].includes(cleanedCard.cardType)
@@ -97,8 +97,6 @@ function normalizeCard(card) {
     },
     layout,
     luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
-    luaScriptName:
-      typeof cleanedCard.luaScriptName === 'string' ? cleanedCard.luaScriptName : '',
     cardType,
   };
 }
@@ -109,15 +107,6 @@ function readImageAsDataUrl(file) {
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
-  });
-}
-
-function readFileAsText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = reject;
-    reader.readAsText(file);
   });
 }
 
@@ -200,6 +189,21 @@ function slugifyFileName(value) {
     .replace(/(^-|-$)/g, '');
 
   return slug || 'card';
+}
+
+function getCardAssetFingerprint(card) {
+  const normalizedCard = normalizeCard(card);
+
+  return JSON.stringify({
+    description: normalizedCard.description,
+    image: normalizedCard.image,
+    imageLayout: normalizedCard.imageLayout,
+    layout: normalizedCard.layout,
+    life: normalizedCard.life,
+    luaScript: normalizedCard.luaScript,
+    template: normalizedCard.template,
+    title: normalizedCard.title,
+  });
 }
 
 function getCreatorName(item, t) {
@@ -622,7 +626,7 @@ function ImageLayoutControls({ draft, onChange, t }) {
 export function Playground() {
   const { t } = useTranslation();
   const assetInputRef = useRef(null);
-  const scriptInputRef = useRef(null);
+  const assetUploadRef = useRef(null);
   const templateInputRef = useRef(null);
   const [cards, setCards] = useState([]);
   const [draft, setDraft] = useState(() => normalizeCard(emptyDraft));
@@ -633,7 +637,9 @@ export function Playground() {
   const [publishError, setPublishError] = useState('');
   const [publishSuccess, setPublishSuccess] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
+  const [stagedAsset, setStagedAsset] = useState(null);
   const canCreateOfficial = isCurrentUserAdmin();
+  const draftAssetFingerprint = getCardAssetFingerprint(draft);
 
   const loadCards = async () => {
     setIsLoadingCards(true);
@@ -652,6 +658,65 @@ export function Playground() {
   useEffect(() => {
     void loadCards();
   }, []);
+
+  useEffect(() => {
+    const normalizedDraft = normalizeCard(draft);
+
+    if (!normalizedDraft.template || !normalizedDraft.luaScript.trim()) {
+      assetUploadRef.current = null;
+      setStagedAsset(null);
+      return undefined;
+    }
+
+    const fingerprint = draftAssetFingerprint;
+
+    if (stagedAsset?.fingerprint === fingerprint) {
+      return undefined;
+    }
+
+    const abortController = new AbortController();
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      const promise = (async () => {
+        const imageBlob = await renderCardToBlob(normalizedDraft);
+
+        if (abortController.signal.aborted) {
+          return null;
+        }
+
+        return uploadCardDefinitionAsset({
+          imageBlob,
+          scriptFileName: `${slugifyFileName(normalizedDraft.title)}.lua`,
+          scriptText: normalizedDraft.luaScript,
+          signal: abortController.signal,
+        });
+      })();
+
+      assetUploadRef.current = {
+        abortController,
+        fingerprint,
+        promise,
+      };
+
+      promise
+        .then((asset) => {
+          if (!cancelled && asset) {
+            setStagedAsset({ ...asset, fingerprint });
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setStagedAsset(null);
+          }
+        });
+    }, 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      abortController.abort();
+    };
+  }, [draftAssetFingerprint]);
 
   const updateDraft = (field, value) => {
     setDraft((current) => ({
@@ -734,32 +799,10 @@ export function Playground() {
     }
   };
 
-  const handleScriptChange = async (event) => {
-    const [file] = event.target.files || [];
-
-    if (!file) {
-      return;
-    }
-
-    setPublishError('');
-    setPublishSuccess('');
-
-    try {
-      const script = await readFileAsText(file);
-
-      setDraft((current) => ({
-        ...current,
-        luaScript: script,
-        luaScriptName: file.name,
-      }));
-    } catch {
-      setPublishError(t('pages.playground.luaImportError'));
-    } finally {
-      event.target.value = '';
-    }
-  };
-
   const resetDraft = () => {
+    assetUploadRef.current?.abortController?.abort();
+    assetUploadRef.current = null;
+    setStagedAsset(null);
     setDraft(normalizeCard(emptyDraft));
     setIsOfficialCard(false);
     setImageError('');
@@ -811,7 +854,7 @@ export function Playground() {
       return;
     }
 
-    if (!draft.luaScript) {
+    if (!draft.luaScript.trim()) {
       setPublishError(t('pages.playground.luaRequired'));
       return;
     }
@@ -821,16 +864,30 @@ export function Playground() {
     setPublishSuccess('');
 
     try {
-      const imageBlob = await renderCardToBlob(draft);
       const life = draft.life === '' ? '' : normalizeNumber(draft.life, 0);
+      const fingerprint = draftAssetFingerprint;
+      let assetId =
+        stagedAsset?.fingerprint === fingerprint ? stagedAsset.asset_id : null;
+
+      if (!assetId && assetUploadRef.current?.fingerprint === fingerprint) {
+        try {
+          const asset = await assetUploadRef.current.promise;
+          assetId = asset?.asset_id || null;
+        } catch {
+          assetId = null;
+        }
+      }
+
+      const imageBlob = assetId ? null : await renderCardToBlob(draft);
       const card = await createCardDefinition({
+        assetId,
         cardType: draft.cardType,
         description: draft.description,
         imageBlob,
         kind: canCreateOfficial && isOfficialCard ? 'official' : 'community',
         life,
         name: draft.title.trim() || t('pages.playground.untitled'),
-        scriptFileName: draft.luaScriptName || `${slugifyFileName(draft.title)}.lua`,
+        scriptFileName: `${slugifyFileName(draft.title)}.lua`,
         scriptText: draft.luaScript,
       });
 
@@ -840,6 +897,8 @@ export function Playground() {
       ]);
       setDraft(normalizeCard(emptyDraft));
       setIsOfficialCard(false);
+      setStagedAsset(null);
+      assetUploadRef.current = null;
       setImageError('');
 
       setPublishSuccess(
@@ -1017,13 +1076,6 @@ export function Playground() {
                   className="hidden"
                   onChange={(event) => void handleAssetImageChange(event)}
                 />
-                <input
-                  ref={scriptInputRef}
-                  type="file"
-                  accept=".lua,text/x-lua,text/plain"
-                  className="hidden"
-                  onChange={(event) => void handleScriptChange(event)}
-                />
 
                 <div className="grid gap-4">
                   <div className="rounded-lg border border-border bg-background/45 p-3">
@@ -1081,38 +1133,28 @@ export function Playground() {
                   </div>
 
                   <div className="rounded-lg border border-border bg-background/45 p-3">
-                    <p className="text-xs font-semibold uppercase text-muted-foreground">
-                      {t('pages.playground.luaScript')}
-                    </p>
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 cursor-pointer gap-2"
-                        onClick={() => scriptInputRef.current?.click()}
-                      >
-                        <Code2 className="size-4" />
-                        {t('pages.playground.importLua')}
-                      </Button>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        {t('pages.playground.luaScript')}
+                      </p>
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-10 cursor-pointer gap-2"
+                        className="h-8 cursor-pointer gap-2 px-2"
                         disabled={!draft.luaScript}
-                        onClick={() => {
-                          updateDraft('luaScript', '');
-                          updateDraft('luaScriptName', '');
-                        }}
+                        onClick={() => updateDraft('luaScript', '')}
                       >
                         <Trash2 className="size-4" />
                         {t('pages.playground.removeLua')}
                       </Button>
                     </div>
-                    {draft.luaScriptName ? (
-                      <p className="mt-2 text-xs font-semibold text-primary">
-                        {draft.luaScriptName}
-                      </p>
-                    ) : null}
+                    <Textarea
+                      aria-label={t('pages.playground.luaScript')}
+                      className="mt-3 min-h-48 resize-y font-mono text-xs leading-5"
+                      spellCheck={false}
+                      value={draft.luaScript}
+                      onChange={(event) => updateDraft('luaScript', event.target.value)}
+                    />
                   </div>
                 </div>
 

@@ -24,7 +24,57 @@ export function createPowerDeck({ cardIds, description, kind = 'community', name
   );
 }
 
+export function uploadCardDefinitionAsset({
+  imageBlob,
+  scriptFileName = 'effect.lua',
+  scriptText,
+  signal,
+}) {
+  const form = new FormData();
+
+  form.set('image', imageBlob, 'card.png');
+  form.set(
+    'script',
+    new Blob([scriptText || ''], { type: 'text/x-lua' }),
+    scriptFileName,
+  );
+
+  return withAuthRetry(() =>
+    apiRequest('/card-definitions/assets', {
+      auth: true,
+      body: form,
+      method: 'POST',
+      signal,
+    }),
+  );
+}
+
+function createCardDefinitionFromAsset({
+  assetId,
+  cardType,
+  description,
+  kind = 'community',
+  life,
+  name,
+}) {
+  return withAuthRetry(() =>
+    apiRequest('/card-definitions/from-asset', {
+      auth: true,
+      body: {
+        asset_id: assetId,
+        description,
+        kind,
+        life: life === '' ? undefined : life,
+        name,
+        type: cardType || 'instant',
+      },
+      method: 'POST',
+    }),
+  );
+}
+
 export function createCardDefinition({
+  assetId,
   cardType,
   description,
   imageBlob,
@@ -34,6 +84,17 @@ export function createCardDefinition({
   scriptFileName = 'effect.lua',
   scriptText,
 }) {
+  if (assetId) {
+    return createCardDefinitionFromAsset({
+      assetId,
+      cardType,
+      description,
+      kind,
+      life,
+      name,
+    });
+  }
+
   const form = new FormData();
 
   form.set('name', name || 'Untitled card');
@@ -66,4 +127,5 @@ export const cardDefinitionsService = {
   createPowerDeck,
   getCardDefinitions,
   getPowerDecks,
+  uploadCardDefinitionAsset,
 };
