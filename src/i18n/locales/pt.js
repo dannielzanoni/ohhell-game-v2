@@ -188,6 +188,7 @@ export const pt = {
     howToPlay: {
       description: 'Entenda o fluxo implementado: objetivo, cartas, trunfo, bids, pontos e vidas antes de entrar na mesa.',
       eyebrow: 'Guia essencial',
+      indexTitle: 'Neste guia',
       sections: [
         {
           id: 'goal',
@@ -241,6 +242,7 @@ export const pt = {
         },
       ],
       title: 'Como jogar',
+      webIndex: 'Índice do guia',
     },
     links: {
       createGame: {

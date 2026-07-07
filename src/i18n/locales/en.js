@@ -188,6 +188,7 @@ export const en = {
     howToPlay: {
       description: 'Learn the implemented flow: goal, cards, trump, bids, points and lives before joining the table.',
       eyebrow: 'Essential guide',
+      indexTitle: 'In this guide',
       sections: [
         {
           id: 'goal',
@@ -241,6 +242,7 @@ export const en = {
         },
       ],
       title: 'How To Play',
+      webIndex: 'Guide index',
     },
     links: {
       createGame: {
