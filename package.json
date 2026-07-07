@@ -6,6 +6,7 @@
   "scripts": {
     "contracts:check": "node scripts/verify-contracts.mjs",
     "observability:check": "node scripts/verify-frontend-observability.mjs",
+    "quality:controllers": "node scripts/verify-controller-integration.mjs",
     "quality:unit": "node scripts/verify-unit-quality.mjs",
     "security:check": "node scripts/verify-security.mjs",
     "dev": "vite",
