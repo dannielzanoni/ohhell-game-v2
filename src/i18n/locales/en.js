@@ -276,7 +276,7 @@ export const en = {
             },
             isRightfullyMine: {
               description:
-                'No fim da rodada, compre uma carta para cada aposta acertada sua e descarte uma carta para cada aposta errada',
+                'At the end of the round, draw one card for each bid you hit and discard one card for each bid you missed.',
               story:
                 'His last coin has bought escapes, impossible wins, and a few debts that are still breathing.',
               title: 'Is Rightfully Mine',
@@ -297,7 +297,7 @@ export const en = {
             },
             guabiru: {
               description:
-                'Jogador alvo tem +2 em apostas no turno',
+                'Target player gets +2 to bids this turn.',
               story:
                 '',
               title: 'Guabiru',
@@ -313,11 +313,11 @@ export const en = {
         },
         leandro: {
           cards: {},
-          deck: 'Polímata',
-          history: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
+          deck: 'Polymath',
+          history: 'Shortly after beginning his training in the army, Leandro drew the attention not only of the general, but also of scholars, mages, and even Fate itself.',
           style: 'Mage',
-          subtitle: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
-          temper: 'Enigmatico',
+          subtitle: 'A prodigy noticed by generals, scholars, mages, and Fate itself.',
+          temper: 'Enigmatic',
           title: 'Leandro',
         },
       },
