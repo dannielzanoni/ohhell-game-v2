@@ -1,6 +1,5 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
-import { gameTypes } from './gameTypesService.js';
 
 const pendingCommandsBySocket = new WeakMap();
 export const WAITING_LOBBY_INACTIVITY_CLOSE_CODE = 4001;
@@ -75,54 +74,44 @@ export function sendGameCommand(socket, command) {
   socket.send(JSON.stringify(command));
 }
 
-function buildGameCommand(command, gameType = gameTypes.FODINHA_CLASSIC) {
+function buildGameCommand(command) {
   return {
     type: 'GameCommand',
     data: {
-      game_type: gameType || gameTypes.FODINHA_CLASSIC,
       command,
     },
   };
 }
 
-export function playTurn(socket, card, gameType) {
+export function playTurn(socket, card) {
   sendGameCommand(socket, {
-    ...buildGameCommand(
-      {
-        type: 'PlayTurn',
-        data: { card },
-      },
-      gameType,
-    ),
+    ...buildGameCommand({
+      type: 'PlayTurn',
+      data: { card },
+    }),
   });
 }
 
-export function putBid(socket, bid, gameType) {
+export function putBid(socket, bid) {
   sendGameCommand(
     socket,
-    buildGameCommand(
-      {
-        type: 'PutBid',
-        data: { bid },
-      },
-      gameType,
-    ),
+    buildGameCommand({
+      type: 'PutBid',
+      data: { bid },
+    }),
   );
 }
 
-export function usePowerCard(socket, cardId, targetPlayerId, gameType) {
+export function usePowerCard(socket, cardId, targetPlayerId) {
   sendGameCommand(
     socket,
-    buildGameCommand(
-      {
-        type: 'UsePowerCard',
-        data: {
-          card_id: cardId,
-          ...(targetPlayerId ? { target_player_id: targetPlayerId } : {}),
-        },
+    buildGameCommand({
+      type: 'UsePowerCard',
+      data: {
+        card_id: cardId,
+        ...(targetPlayerId ? { target_player_id: targetPlayerId } : {}),
       },
-      gameType,
-    ),
+    }),
   );
 }
 

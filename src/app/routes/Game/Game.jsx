@@ -2820,7 +2820,7 @@ export function Game() {
     });
 
     try {
-      putBid(socketRef.current, bid, gameType);
+      putBid(socketRef.current, bid);
     } catch (error) {
       setJoinError(error.message || t('game.bidError'));
     }
@@ -2851,7 +2851,7 @@ export function Game() {
         card,
         id: `${Date.now()}-${getCardKey(card)}`,
       });
-      playTurn(socketRef.current, card, gameType);
+      playTurn(socketRef.current, card);
       setPlayerDeck((currentDeck) => {
         const nextDeck = removeCardFromDeck(currentDeck, card);
         playerDeckCountRef.current = nextDeck.length;
@@ -2893,7 +2893,7 @@ export function Game() {
 
     try {
       setJoinError('');
-      usePowerCard(socketRef.current, card.id, targetPlayerId, gameType);
+      usePowerCard(socketRef.current, card.id, targetPlayerId);
       setDraggingPowerCard(null);
       setPowerCards((currentCards) => {
         const nextCards = removePowerCardFromHand(currentCards, card.id);
