@@ -46,6 +46,10 @@ export function normalizeGamePreferences(preferences = {}) {
   };
 }
 
+function serializePreferences(preferences) {
+  return JSON.stringify(normalizeGamePreferences(preferences));
+}
+
 export function getGamePreferences() {
   try {
     const storedPreferences = storage.getItem(GAME_PREFERENCES_STORAGE_KEY);
@@ -61,10 +65,15 @@ export function getGamePreferences() {
 }
 
 export function setGamePreferences(nextPreferences) {
+  const currentPreferences = getGamePreferences();
   const preferences = normalizeGamePreferences({
-    ...getGamePreferences(),
+    ...currentPreferences,
     ...nextPreferences,
   });
+
+  if (serializePreferences(preferences) === serializePreferences(currentPreferences)) {
+    return currentPreferences;
+  }
 
   storage.setJson(GAME_PREFERENCES_STORAGE_KEY, preferences);
 
@@ -84,13 +93,27 @@ export function subscribeToGamePreferences(listener) {
     return () => {};
   }
 
+  let lastSerializedPreferences = serializePreferences(getGamePreferences());
+
+  const notify = (preferences) => {
+    const normalizedPreferences = normalizeGamePreferences(preferences);
+    const nextSerializedPreferences = serializePreferences(normalizedPreferences);
+
+    if (nextSerializedPreferences === lastSerializedPreferences) {
+      return;
+    }
+
+    lastSerializedPreferences = nextSerializedPreferences;
+    listener(normalizedPreferences);
+  };
+
   const handlePreferencesChanged = (event) => {
-    listener(event.detail || getGamePreferences());
+    notify(event.detail || getGamePreferences());
   };
 
   const handleStorageChanged = (event) => {
     if (event.key === GAME_PREFERENCES_STORAGE_KEY) {
-      listener(getGamePreferences());
+      notify(getGamePreferences());
     }
   };
 
