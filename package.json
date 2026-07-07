@@ -9,6 +9,7 @@
     "security:check": "node scripts/verify-security.mjs",
     "dev": "vite",
     "build": "vite build",
+    "i18n:check": "node scripts/verify-i18n.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },

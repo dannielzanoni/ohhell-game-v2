@@ -17,6 +17,7 @@ export function WebHero() {
           poster={gamePoster}
           fontSize={13}
           fontWeight="900"
+          whiteSpace="normal"
           className="drop-shadow-2xl"
         >
           {t('common.appName')}

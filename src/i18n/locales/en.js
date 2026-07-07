@@ -32,14 +32,13 @@ export const en = {
     play: 'Play',
     refresh: 'Refresh',
     settings: 'Settings',
-    appNameShort: 'Oh Hell',
-    appNameShort2: 'Game',
   },
   errors: {
     render: 'The interface could not be rendered safely. Please reload and try again.',
   },
   cards: {
     label: '{{rank}} of {{suit}}',
+    previewAlt: '{{card}} in the {{deck}} deck',
     ranks: {
       eight: '8', eleven: '11', five: '5', four: '4', nine: '9', one: 'ace',
       seven: '7', six: '6', ten: '10', three: '3', twelve: '12', two: '2',
