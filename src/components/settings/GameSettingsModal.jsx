@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { Check, Image as ImageIcon, Layers, Volume2 } from 'lucide-react';
 import { Translate01 as TranslateIcon } from '@untitledui/icons/Translate01';
 import { useTranslation } from 'react-i18next';
-import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
-import spanish8BitCard3Paus from '@/assets/cards/spanish_8bit/3paus.png';
-import frenchCard3Paus from '@/assets/cards/french/3paus.png';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +10,8 @@ import {
 } from '@/components/ui/dialog.jsx';
 import { LanguagePanel } from '@/components/i18n/LanguageSwitcher.jsx';
 import { cn } from '@/lib/utils.js';
+import { deckOptions } from './deckOptions.js';
 import {
-  deckTypes,
   getGamePreferences,
   setGamePreferences,
 } from '@/services/gamePreferencesService.js';
@@ -23,24 +20,6 @@ const tabs = [
   { id: 'sounds', icon: Volume2, labelKey: 'settings.sounds' },
   { id: 'deck', icon: Layers, labelKey: 'settings.deck' },
   { id: 'language', icon: TranslateIcon, labelKey: 'settings.language' },
-];
-
-const deckOptions = [
-  {
-    image: spanishCard3Paus,
-    labelKey: 'settings.spanish',
-    value: deckTypes.SPANISH,
-  },
-  {
-    image: spanish8BitCard3Paus,
-    labelKey: 'settings.spanish8Bit',
-    value: deckTypes.SPANISH_8BIT,
-  },
-  {
-    image: frenchCard3Paus,
-    labelKey: 'settings.french',
-    value: deckTypes.FRENCH,
-  },
 ];
 
 const deckSettingsTabs = [
