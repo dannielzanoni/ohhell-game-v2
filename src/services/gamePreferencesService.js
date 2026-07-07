@@ -1,5 +1,6 @@
 import { storage } from '@/infrastructure/storage/storageAdapter.js';
 import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
+import { isKnownCardBack } from '@/assets/catalog/cardCatalog.js';
 
 export const GAME_PREFERENCES_STORAGE_KEY = storageKeys.cardPreferences;
 export const GAME_PREFERENCES_CHANGED_EVENT = 'ohhell-game-preferences-changed';
@@ -23,7 +24,7 @@ function normalizeDeckType(deckType) {
 }
 
 function normalizeCardBack(cardBack) {
-  return typeof cardBack === 'string' && /^back_card\d*$/.test(cardBack)
+  return typeof cardBack === 'string' && isKnownCardBack(cardBack)
     ? cardBack
     : defaultGamePreferences.cardBack;
 }

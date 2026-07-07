@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { avatars, findAvatar, resolveAvatarSrc } from './avatarCatalog.js';
 import {
+  cardBackOptions,
   cardRanks,
   cardSuits,
   defaultCardBack,
@@ -8,6 +9,7 @@ import {
   getCardBackSrc,
   getCardImageSrc,
   getCardLabel,
+  isKnownCardBack,
 } from './cardCatalog.js';
 
 describe('shared asset catalog', () => {
@@ -31,5 +33,18 @@ describe('shared asset catalog', () => {
     expect(getCardImageSrc(card, 'spanish')).toBeTruthy();
     expect(getCardImageSrc(card, 'french')).toBeTruthy();
     expect(getCardBackSrc('unknown')).toBe(defaultCardBack);
+  });
+
+  it('exposes the same ordered card-back catalog used by previews and the table', () => {
+    expect(cardBackOptions.length).toBeGreaterThan(1);
+    expect(cardBackOptions[0]).toEqual(
+      expect.objectContaining({
+        image: getCardBackSrc('back_card'),
+        labelValues: { number: 1 },
+        value: 'back_card',
+      }),
+    );
+    expect(isKnownCardBack(cardBackOptions.at(-1).value)).toBe(true);
+    expect(isKnownCardBack('back_card999')).toBe(false);
   });
 });

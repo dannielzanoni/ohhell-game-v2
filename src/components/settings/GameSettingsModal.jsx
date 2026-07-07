@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog.jsx';
 import { LanguagePanel } from '@/components/i18n/LanguageSwitcher.jsx';
 import { cn } from '@/lib/utils.js';
+import { cardBackOptions } from '@/assets/catalog/cardCatalog.js';
 import {
   deckTypes,
   getGamePreferences,
@@ -47,38 +48,6 @@ const deckSettingsTabs = [
   { id: 'deckType', icon: Layers, labelKey: 'settings.deckTypeTab' },
   { id: 'cardBack', icon: ImageIcon, labelKey: 'settings.cardBack' },
 ];
-
-const cardBackImages = import.meta.glob(
-  '/src/assets/cards/back_cards/back_card*.png',
-  {
-    eager: true,
-    import: 'default',
-  },
-);
-
-function getCardBackNumber(value) {
-  if (value === 'back_card') {
-    return 1;
-  }
-
-  const [, number] = value.match(/^back_card(\d+)$/) || [];
-
-  return Number(number) || Number.MAX_SAFE_INTEGER;
-}
-
-const cardBackOptions = Object.entries(cardBackImages)
-  .map(([path, image]) => {
-    const value = path.split('/').pop().replace(/\.png$/, '');
-    const number = getCardBackNumber(value);
-
-    return {
-      image,
-      labelValues: { number },
-      sort: number,
-      value,
-    };
-  })
-  .sort((first, second) => first.sort - second.sort);
 
 export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) {
   const { t } = useTranslation();

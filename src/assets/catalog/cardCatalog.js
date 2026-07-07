@@ -34,6 +34,36 @@ export const cardSuits = Object.freeze({
 
 export const defaultCardBack = cardBacks['../cards/back_cards/back_card.png'];
 
+function getCardBackNumber(value) {
+  if (value === 'back_card') {
+    return 1;
+  }
+
+  const [, number] = String(value).match(/^back_card(\d+)$/) || [];
+
+  return Number(number) || Number.MAX_SAFE_INTEGER;
+}
+
+export const cardBackOptions = Object.freeze(
+  Object.entries(cardBacks)
+    .map(([path, image]) => {
+      const value = path.split('/').pop().replace(/\.png$/, '');
+      const number = getCardBackNumber(value);
+
+      return {
+        image,
+        labelValues: { number },
+        sort: number,
+        value,
+      };
+    })
+    .sort((first, second) => first.sort - second.sort),
+);
+
+export function isKnownCardBack(cardBack) {
+  return cardBackOptions.some((option) => option.value === cardBack);
+}
+
 export function getRankLabel(rank, translate) {
   const metadata = cardRanks[rank];
   return metadata
