@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "contracts:check": "node scripts/verify-contracts.mjs",
+    "e2e": "playwright test",
+    "e2e:check": "node scripts/verify-e2e-coverage.mjs",
     "observability:check": "node scripts/verify-frontend-observability.mjs",
     "quality:controllers": "node scripts/verify-controller-integration.mjs",
     "quality:unit": "node scripts/verify-unit-quality.mjs",
@@ -42,6 +44,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "^6.0.2",
