@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  AlertCircle,
   Code2,
   Download,
   ImagePlus,
   Plus,
+  RefreshCw,
   RotateCcw,
   Save,
+  Sparkles,
+  Target,
   Trash2,
-  UploadCloud,
+  UserRound,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -15,18 +19,20 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { cn } from '@/lib/utils.js';
-import { createCardDefinition } from '@/services/cardDefinitionsService.js';
+import {
+  createCardDefinition,
+  getCardDefinitions,
+} from '@/services/cardDefinitionsService.js';
 
-const STORAGE_KEY = 'ohhell_magic_card_playground';
 const EXPORT_CARD_HEIGHT = 1344;
 const EXPORT_CARD_WIDTH = 768;
 const PREVIEW_CARD_WIDTH = 384;
 const EXPORT_TEXT_Y_OFFSET_RATIO = 0.22;
 
 const textFieldOptions = [
-  { key: 'title', defaultValue: 'Nova carta' },
-  { key: 'description', defaultValue: 'Descreva o efeito da carta.' },
-  { key: 'life', defaultValue: '0' },
+  { key: 'title' },
+  { key: 'description' },
+  { key: 'life' },
 ];
 
 const defaultFieldLayout = {
@@ -52,25 +58,16 @@ function createDefaultImageLayout() {
 
 const emptyDraft = {
   cardType: 'instant',
-  description: 'Ao entrar em jogo, recupere 1 vida e compre uma carta.',
+  description: '',
   image: '',
   imageLayout: createDefaultImageLayout(),
   layout: createDefaultLayout(),
-  life: 7,
+  life: '',
   luaScript: '',
   luaScriptName: '',
   template: '',
-  title: 'Artemis Guard',
+  title: '',
 };
-
-function readSavedCards() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(stored) ? stored.map(normalizeCard) : [];
-  } catch {
-    return [];
-  }
-}
 
 function normalizeCard(card) {
   const cleanedCard = { ...card };
@@ -202,6 +199,39 @@ function slugifyFileName(value) {
     .replace(/(^-|-$)/g, '');
 
   return slug || 'card';
+}
+
+function getCreatorName(item, t) {
+  if (item?.kind === 'official' || item?.creator_id === 'official') {
+    return t('pages.powerDecks.officialCreator');
+  }
+
+  const creator = item?.creator;
+
+  if (creator?.type === 'Anonymous') {
+    return creator.data?.data?.nickname || creator.data?.id || item.creator_id;
+  }
+
+  if (creator?.type === 'Google') {
+    return (
+      creator.data?.nickname ||
+      creator.data?.name ||
+      creator.data?.email ||
+      item.creator_id
+    );
+  }
+
+  return item?.creator_id || '';
+}
+
+function getKindLabelKey(kind) {
+  return kind === 'official'
+    ? 'pages.powerDecks.kind.official'
+    : 'pages.powerDecks.kind.community';
+}
+
+function getCardTypeLabelKey(cardType) {
+  return `pages.powerDecks.cardTypes.${cardType || 'instant'}`;
 }
 
 function drawCoverImage(context, image, x, y, width, height) {
@@ -602,21 +632,32 @@ export function Playground() {
   const assetInputRef = useRef(null);
   const scriptInputRef = useRef(null);
   const templateInputRef = useRef(null);
-  const [cards, setCards] = useState(readSavedCards);
+  const [cards, setCards] = useState([]);
   const [draft, setDraft] = useState(() => normalizeCard(emptyDraft));
-  const [editingId, setEditingId] = useState('');
+  const [cardsError, setCardsError] = useState('');
   const [imageError, setImageError] = useState('');
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [publishError, setPublishError] = useState('');
   const [publishSuccess, setPublishSuccess] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
 
-  useEffect(() => {
+  const loadCards = async () => {
+    setIsLoadingCards(true);
+    setCardsError('');
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-    } catch {
-      setImageError(t('pages.playground.storageError'));
+      const response = await getCardDefinitions();
+      setCards(Array.isArray(response) ? response : []);
+    } catch (error) {
+      setCardsError(error.message || t('pages.playground.loadError'));
+    } finally {
+      setIsLoadingCards(false);
     }
-  }, [cards, t]);
+  };
+
+  useEffect(() => {
+    void loadCards();
+  }, []);
 
   const updateDraft = (field, value) => {
     setDraft((current) => ({
@@ -726,51 +767,14 @@ export function Playground() {
 
   const resetDraft = () => {
     setDraft(normalizeCard(emptyDraft));
-    setEditingId('');
     setImageError('');
     setPublishError('');
     setPublishSuccess('');
   };
 
-  const saveCard = (event) => {
+  const saveCard = async (event) => {
     event.preventDefault();
-
-    if (!draft.template) {
-      setImageError(t('pages.playground.templateRequired'));
-      return;
-    }
-
-    const nextCard = normalizeCard({
-      ...draft,
-      id: editingId || crypto.randomUUID(),
-      life: normalizeNumber(draft.life, emptyDraft.life),
-      title: draft.title.trim() || t('pages.playground.untitled'),
-    });
-
-    setCards((current) => {
-      if (!editingId) {
-        return [nextCard, ...current];
-      }
-
-      return current.map((card) => (card.id === editingId ? nextCard : card));
-    });
-
-    setDraft(nextCard);
-    setEditingId(nextCard.id);
-  };
-
-  const editCard = (card) => {
-    setDraft(normalizeCard(card));
-    setEditingId(card.id);
-    window.scrollTo({ behavior: 'smooth', top: 0 });
-  };
-
-  const deleteCard = (id) => {
-    setCards((current) => current.filter((card) => card.id !== id));
-
-    if (editingId === id) {
-      resetDraft();
-    }
+    await publishCommunityCard();
   };
 
   const exportCards = () => {
@@ -823,15 +827,23 @@ export function Playground() {
 
     try {
       const imageBlob = await renderCardToBlob(draft);
+      const life = draft.life === '' ? '' : normalizeNumber(draft.life, 0);
       const card = await createCardDefinition({
         cardType: draft.cardType,
         description: draft.description,
         imageBlob,
-        life: normalizeNumber(draft.life, emptyDraft.life),
+        life,
         name: draft.title.trim() || t('pages.playground.untitled'),
         scriptFileName: draft.luaScriptName || `${slugifyFileName(draft.title)}.lua`,
         scriptText: draft.luaScript,
       });
+
+      setCards((current) => [
+        card,
+        ...current.filter((currentCard) => currentCard.id !== card.id),
+      ]);
+      setDraft(normalizeCard(emptyDraft));
+      setImageError('');
 
       setPublishSuccess(
         t('pages.playground.publishSuccess', { name: card.name || draft.title }),
@@ -873,6 +885,16 @@ export function Playground() {
                 type="button"
                 variant="outline"
                 className="h-10 cursor-pointer gap-2"
+                disabled={isLoadingCards}
+                onClick={() => void loadCards()}
+              >
+                <RefreshCw className={cn('size-4', isLoadingCards && 'animate-spin')} />
+                {t('common.refresh')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 cursor-pointer gap-2"
                 disabled={!cards.length}
                 onClick={exportCards}
               >
@@ -896,9 +918,7 @@ export function Playground() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    {editingId
-                      ? t('pages.playground.editing')
-                      : t('pages.playground.drafting')}
+                    {t('pages.playground.drafting')}
                   </p>
                   <h2 className="text-xl font-black">
                     {t('pages.playground.cardData')}
@@ -1097,14 +1117,19 @@ export function Playground() {
                 onChange={updateImageLayout}
               />
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <Button
                   type="submit"
                   className="h-11 w-full cursor-pointer gap-2"
+                  disabled={isPublishing}
                 >
-                  <Save className="size-4" />
-                  {editingId
-                    ? t('pages.playground.updateCard')
+                  {isPublishing ? (
+                    <i className="pi pi-spin pi-spinner text-sm" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  {isPublishing
+                    ? t('pages.playground.publishing')
                     : t('pages.playground.saveCard')}
                 </Button>
                 <Button
@@ -1115,22 +1140,6 @@ export function Playground() {
                 >
                   <Download className="size-4" />
                   {t('pages.playground.saveImage')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-11 w-full cursor-pointer gap-2"
-                  disabled={isPublishing}
-                  onClick={() => void publishCommunityCard()}
-                >
-                  {isPublishing ? (
-                    <i className="pi pi-spin pi-spinner text-sm" />
-                  ) : (
-                    <UploadCloud className="size-4" />
-                  )}
-                  {isPublishing
-                    ? t('pages.playground.publishing')
-                    : t('pages.playground.publish')}
                 </Button>
               </div>
 
@@ -1169,45 +1178,71 @@ export function Playground() {
                 </div>
               </div>
 
-              {cards.length ? (
+              {cardsError ? (
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <AlertCircle className="size-4 shrink-0" />
+                  {cardsError}
+                </div>
+              ) : null}
+
+              {isLoadingCards ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="h-72 animate-pulse rounded-lg bg-muted" />
+                  ))}
+                </div>
+              ) : cards.length ? (
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {cards.map((card) => (
                     <article
                       key={card.id}
-                      className={cn(
-                        'overflow-hidden rounded-lg border border-border bg-background shadow-sm',
-                        editingId === card.id && 'ring-2 ring-primary',
-                      )}
+                      className="overflow-hidden rounded-lg border border-border bg-background shadow-sm"
                     >
-                      <button
-                        type="button"
-                        className="block w-full cursor-pointer p-3 text-left"
-                        onClick={() => editCard(card)}
-                      >
-                        <MagicCardPreview
-                          card={card}
-                          compact
-                          className="mx-auto max-w-[10rem] shadow-lg"
-                        />
-                        <div className="mt-3">
-                          <p className="line-clamp-1 text-sm font-black">
-                            {card.title}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      <div className="aspect-[768/1344] bg-muted">
+                        {card.image_url ? (
+                          <img
+                            src={card.image_url}
+                            alt={card.name}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid size-full place-items-center bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60 p-6 text-center text-white">
+                            <div>
+                              <Sparkles className="mx-auto size-9 text-violet-100" />
+                              <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-violet-100/80">
+                                {t(getKindLabelKey(card.kind))}
+                              </p>
+                              <p className="mt-2 line-clamp-3 text-lg font-black leading-tight">
+                                {card.name}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid gap-3 p-3">
+                        <div>
+                          <p className="line-clamp-1 text-sm font-black">{card.name}</p>
+                          <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
                             {card.description}
                           </p>
                         </div>
-                      </button>
-                      <div className="border-t border-border p-2">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          className="w-full cursor-pointer gap-2"
-                          onClick={() => deleteCard(card.id)}
-                        >
-                          <Trash2 className="size-4" />
-                          {t('pages.playground.delete')}
-                        </Button>
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                          <span className="rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-primary">
+                            {t(getKindLabelKey(card.kind))}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1">
+                            <Target className="size-3.5" />
+                            {t(getCardTypeLabelKey(card.type))}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+                          <UserRound className="size-4 shrink-0" />
+                          <span className="min-w-0 flex-1 truncate">
+                            {t('pages.powerDecks.createdBy', {
+                              name: getCreatorName(card, t),
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </article>
                   ))}
