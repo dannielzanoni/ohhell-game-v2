@@ -1,3 +1,5 @@
+import { frontendTelemetry } from '@/infrastructure/observability/frontendTelemetry.js';
+
 export class HttpError extends Error {
   constructor({ cause, data, message, status, statusText }) {
     super(message, cause ? { cause } : undefined);
@@ -81,6 +83,11 @@ export function createHttpClient({
           signal,
         });
       } catch (cause) {
+        frontendTelemetry.trackFailure({
+          diagnostic: { message: cause?.message, path, status: 0 },
+          failureType: 'api',
+          phase: 'request',
+        });
         throw new HttpError({
           cause,
           data: { code: cause?.name === 'AbortError' ? 'ABORTED' : 'NETWORK_ERROR' },
@@ -92,6 +99,11 @@ export function createHttpClient({
 
       const data = await parseBody(response);
       if (!response.ok) {
+        frontendTelemetry.trackFailure({
+          diagnostic: { path, status: response.status, statusText: response.statusText },
+          failureType: 'api',
+          phase: 'response',
+        });
         throw new HttpError({
           data,
           message: data?.error || response.statusText || 'Request failed',

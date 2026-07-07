@@ -1,12 +1,15 @@
 import { AppProvider } from './provider.jsx';
 import { AppRouter } from './router.jsx';
+import { RenderErrorBoundary } from './RenderErrorBoundary.jsx';
 import { PlatformProvider } from '@/platform/PlatformProvider.jsx';
 
 function App() {
   return (
     <PlatformProvider>
       <AppProvider>
-        <AppRouter />
+        <RenderErrorBoundary>
+          <AppRouter />
+        </RenderErrorBoundary>
       </AppProvider>
     </PlatformProvider>
   );

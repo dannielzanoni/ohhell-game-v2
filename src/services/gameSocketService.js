@@ -4,6 +4,7 @@ import {
   parseRealtimeMessage,
   serializeRealtimeCommand,
 } from '@/contracts/v1/contracts.js';
+import { frontendTelemetry } from '@/infrastructure/observability/frontendTelemetry.js';
 
 const CONNECTING = 0;
 const OPEN = 1;
@@ -65,14 +66,29 @@ export class GameRealtimeSession {
         this.handlers.onMessage?.(parseRealtimeMessage(event.data), event);
       } catch (error) {
         if (String(error?.message).startsWith('Unknown realtime message type:')) {
+          frontendTelemetry.trackFailure({
+            diagnostic: { message: error.message },
+            failureType: 'websocket',
+            phase: 'message_parse',
+          });
           this.handlers.onUnknown?.({ code: 'unknown_server_message' });
         } else {
+          frontendTelemetry.trackFailure({
+            diagnostic: error,
+            failureType: 'websocket',
+            phase: 'message_handler',
+          });
           this.handlers.onError?.(error);
         }
       }
     });
     socket.addEventListener('error', (event) => {
       if (this.socket === socket && !this.disposed) {
+        frontendTelemetry.trackFailure({
+          diagnostic: { code: 'realtime_connection_failed', event },
+          failureType: 'websocket',
+          phase: 'connection',
+        });
         this.handlers.onError?.(new RealtimeConnectionError());
       }
     });

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "contracts:check": "node scripts/verify-contracts.mjs",
+    "observability:check": "node scripts/verify-frontend-observability.mjs",
     "security:check": "node scripts/verify-security.mjs",
     "dev": "vite",
     "build": "vite build",
