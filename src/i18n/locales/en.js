@@ -22,6 +22,7 @@ export const en = {
   },
   common: {
     appName: 'Oh Hell Game',
+    back: 'Back',
     backHome: 'Back to Home',
     create: 'Create',
     home: 'Home',
@@ -239,6 +240,9 @@ export const en = {
     generalVolume: 'General volume',
     language: 'Language',
     languageDescription: 'Choose the app language.',
+    mobileDeckDescription: 'Choose deck and card back without losing your preferences.',
+    mobileSections: 'Mobile settings sections',
+    mobileSoundsDescription: 'Adjust volume and sound preferences in a scrollable screen.',
     portuguese: 'Portuguese',
     sounds: 'Sounds',
     spanish: 'Spanish',

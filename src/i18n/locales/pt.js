@@ -22,6 +22,7 @@ export const pt = {
   },
   common: {
     appName: 'Fodinha',
+    back: 'Voltar',
     backHome: 'Voltar para Home',
     create: 'Criar',
     home: 'Home',
@@ -239,6 +240,9 @@ export const pt = {
     generalVolume: 'Volume geral',
     language: 'Idioma',
     languageDescription: 'Escolha o idioma',
+    mobileDeckDescription: 'Escolha baralho e verso sem perder suas preferências.',
+    mobileSections: 'Seções mobile de configurações',
+    mobileSoundsDescription: 'Ajuste volume e preferências sonoras em uma tela rolável.',
     portuguese: 'Português',
     sounds: 'Sons',
     spanish: 'Espanhol',

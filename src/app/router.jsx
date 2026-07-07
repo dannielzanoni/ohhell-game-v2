@@ -7,6 +7,7 @@ import { Home } from './routes/Home/Home.jsx';
 import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
+import { Settings } from './routes/Settings/Settings.jsx';
 import { routePaths } from './routes/routeContract.js';
 
 export function AppRouter() {
@@ -22,6 +23,7 @@ export function AppRouter() {
           <Route path={routePaths.leaderboard} element={<Leaderboard />} />
           <Route path={routePaths.howToPlay} element={<HowToPlay />} />
           <Route path={routePaths.github} element={<Github />} />
+          <Route path={routePaths.settings} element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to={routePaths.home} replace />} />
       </Routes>

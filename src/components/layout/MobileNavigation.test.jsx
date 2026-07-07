@@ -39,7 +39,7 @@ describe('MobileNavigation', () => {
     expect(drawer).toHaveClass('pb-[env(safe-area-inset-bottom)]');
     expect(drawer.querySelector('a[href="/how-to-play"]')).toBeInTheDocument();
     expect(drawer.querySelector('a[href^="https://github.com"]')).not.toHaveAttribute('target');
-    expect(screen.getByRole('button', { name: 'Settings' })).toHaveClass('min-h-11');
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveClass('min-h-11');
     expect(screen.getByRole('button', { name: /Language/ })).toHaveClass('min-h-11');
   });
 
@@ -56,15 +56,12 @@ describe('MobileNavigation', () => {
     );
   });
 
-  it('opens settings as a safe mobile sheet and restores focus', async () => {
+  it('opens settings as a mobile route instead of compressing options in a short modal', async () => {
     renderNavigation();
-    const menuButton = screen.getByRole('button', { name: 'Open menu' });
-    fireEvent.click(menuButton);
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Settings' });
-    expect(dialog).toHaveClass('bottom-0', 'pb-[env(safe-area-inset-bottom)]');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
-    await waitFor(() => expect(menuButton).toHaveFocus());
+    const settingsLink = screen.getByRole('link', { name: 'Settings' });
+    expect(settingsLink).toHaveAttribute('href', '/settings');
+    expect(screen.queryByRole('dialog', { name: 'Settings' })).not.toBeInTheDocument();
   });
 });

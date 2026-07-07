@@ -7,7 +7,6 @@ import { pageLinks } from '@/app/routes/pageLinks.js';
 import { routePaths } from '@/app/routes/routeContract.js';
 import aceIcon from '@/assets/icons/ace.svg';
 import { LanguageSettingsModal } from '@/components/i18n/LanguageSwitcher.jsx';
-import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { cn } from '@/lib/utils.js';
 
 const primaryItems = [
@@ -26,7 +25,6 @@ export function MobileNavigation() {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const menuButtonRef = useRef(null);
   const isGameRoute = location.pathname.startsWith(`${routePaths.game}/`);
 
@@ -124,9 +122,13 @@ export function MobileNavigation() {
                   </NavLink>
                 );
               })}
-              <button type="button" className="flex min-h-11 items-center gap-3 rounded-md px-3 font-semibold hover:bg-muted" onClick={() => { setDrawerOpen(false); setSettingsOpen(true); }}>
+              <NavLink
+                to={routePaths.settings}
+                className="flex min-h-11 items-center gap-3 rounded-md px-3 font-semibold hover:bg-muted"
+                onClick={() => setDrawerOpen(false)}
+              >
                 <Settings className="size-5" /> {t('settings.title')}
-              </button>
+              </NavLink>
               <button type="button" className="flex min-h-11 items-center gap-3 rounded-md px-3 font-semibold hover:bg-muted" onClick={() => { setDrawerOpen(false); setLanguageOpen(true); }}>
                 <span className="grid size-5 place-items-center font-black">文</span> {t('settings.language')}
               </button>
@@ -139,14 +141,6 @@ export function MobileNavigation() {
         </div>
       ) : null}
 
-      <GameSettingsModal
-        open={settingsOpen}
-        presentation="mobile"
-        onOpenChange={(open) => {
-          setSettingsOpen(open);
-          if (!open) restoreMenuFocus();
-        }}
-      />
       <LanguageSettingsModal
         open={languageOpen}
         presentation="mobile"

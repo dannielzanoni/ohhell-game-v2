@@ -1,7 +1,11 @@
 import { SettingsView } from './SettingsView.jsx';
-import { useStaticRouteController } from '../useStaticRouteController.js';
+import { useNavigate } from 'react-router-dom';
 
 export function Settings() {
-  const controller = useStaticRouteController();
+  const navigate = useNavigate();
+  const controller = {
+    goBack: () => navigate(-1),
+  };
+
   return <SettingsView controller={controller} />;
 }
