@@ -2186,12 +2186,14 @@ export function Game() {
               player: message.data,
               ready: false,
             });
+            const existing = previousPlayers[player.id];
 
             return {
               ...previousPlayers,
               [player.id]: {
-                ...previousPlayers[player.id],
+                ...existing,
                 ...player,
+                ready: existing?.ready ?? player.ready,
               },
             };
           });
