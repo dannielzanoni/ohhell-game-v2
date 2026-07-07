@@ -134,6 +134,7 @@ export const en = {
     loadError: 'Could not load the leaderboard.',
     noRounds: 'No rounds',
     player: 'Player',
+    playerAvatar: '{{name}} avatar',
     rounds: 'Rounds',
     title: 'Leaderboard',
     trumps: 'Trumps',

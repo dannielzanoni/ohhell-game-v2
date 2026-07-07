@@ -50,15 +50,15 @@ function formatNumber(value, fractionDigits = 0) {
   return Number.isFinite(number) ? number.toFixed(fractionDigits) : '0';
 }
 
-function PlayerAvatar({ player }) {
+function PlayerAvatar({ alt, player }) {
   const picture = getPlayerPicture(player);
 
   return (
     <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-secondary text-secondary-foreground">
       {picture ? (
-        <img src={picture} alt="" className="size-full object-cover" />
+        <img src={picture} alt={alt} className="size-full object-cover" />
       ) : (
-        <UserRound className="size-5" />
+        <UserRound aria-hidden="true" className="size-5" />
       )}
     </span>
   );
@@ -118,7 +118,12 @@ export function LeaderboardView({ controller }) {
                     <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-sm font-black text-primary-foreground">
                       {index + 1}
                     </span>
-                    <PlayerAvatar player={stats.player} />
+                    <PlayerAvatar
+                      alt={t('leaderboard.playerAvatar', {
+                        name: getPlayerName(stats.player, stats.player_id),
+                      })}
+                      player={stats.player}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold">
                         {getPlayerName(stats.player, stats.player_id)}
@@ -146,6 +151,10 @@ export function LeaderboardView({ controller }) {
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.averageBid')}{' '}
                       <strong>{formatNumber(stats.average_bid, 2)}</strong>
+                    </span>
+                    <span className="rounded-md bg-muted px-3 py-2">
+                      {t('leaderboard.favorite')}{' '}
+                      <strong>{getCardLabel(stats.favorite_card, t)}</strong>
                     </span>
                   </div>
                 </article>
@@ -193,7 +202,12 @@ export function LeaderboardView({ controller }) {
                         <td className="px-4 py-3 font-black">{index + 1}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <PlayerAvatar player={stats.player} />
+                            <PlayerAvatar
+                              alt={t('leaderboard.playerAvatar', {
+                                name: getPlayerName(stats.player, stats.player_id),
+                              })}
+                              player={stats.player}
+                            />
                             <span className="font-bold">
                               {getPlayerName(stats.player, stats.player_id)}
                             </span>
