@@ -311,6 +311,15 @@ export const en = {
           temper: 'Bold',
           title: 'Gambler',
         },
+        leandro: {
+          cards: {},
+          deck: 'Polímata',
+          history: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
+          style: 'Mage',
+          subtitle: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
+          temper: 'Enigmatico',
+          title: 'Leandro',
+        },
       },
     },
     links: {
