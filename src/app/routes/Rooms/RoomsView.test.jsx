@@ -50,5 +50,6 @@ describe('RoomsView desktop listing', () => {
     expect(copyRoomId).toHaveBeenCalledWith('a-very-long-room-id-that-must-truncate');
     expect(screen.getByRole('article', { name: 'Room a-very-long-room-id-that-must-truncate' })).toBeInTheDocument();
     expect(screen.getByTestId('rooms-list')).toHaveClass('min-w-0', 'overflow-hidden');
+    expect(screen.getByTestId('rooms-list')).toHaveAttribute('aria-busy', 'false');
   });
 });
