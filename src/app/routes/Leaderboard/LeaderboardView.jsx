@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { resolveAvatarSrc } from '@/assets/catalog/avatarCatalog.js';
 import { getCardLabel as getCatalogCardLabel } from '@/assets/catalog/cardCatalog.js';
 import { Button } from '@/components/ui/button.jsx';
+import {
+  formatLocalizedNumber,
+  formatLocalizedPercent,
+} from '@/i18n/localizedFormat.js';
 
 function getPlayerName(player, fallback) {
   if (player?.type === 'Anonymous') {
@@ -40,16 +44,6 @@ function getCardLabel(card, t) {
   return getCatalogCardLabel(card, t);
 }
 
-function formatPercent(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? `${number.toFixed(1)}%` : '0.0%';
-}
-
-function formatNumber(value, fractionDigits = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(fractionDigits) : '0';
-}
-
 function PlayerAvatar({ player }) {
   const picture = getPlayerPicture(player);
 
@@ -65,8 +59,9 @@ function PlayerAvatar({ player }) {
 }
 
 export function LeaderboardView({ controller }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { error, isLoading, leaderboard, refresh } = controller;
+  const language = i18n.resolvedLanguage || i18n.language;
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
@@ -124,8 +119,9 @@ export function LeaderboardView({ controller }) {
                         {getPlayerName(stats.player, stats.player_id)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {stats.matches_won} {t('leaderboard.winsShort')} -{' '}
-                        {formatPercent(stats.win_rate)}
+                        {formatLocalizedNumber(stats.matches_won, { language })}{' '}
+                        {t('leaderboard.winsShort')} -{' '}
+                        {formatLocalizedPercent(stats.win_rate, { language })}
                       </p>
                     </div>
                   </div>
@@ -133,19 +129,19 @@ export function LeaderboardView({ controller }) {
                   <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.games')}{' '}
-                      <strong>{stats.games_played}</strong>
+                      <strong>{formatLocalizedNumber(stats.games_played, { language })}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.rounds')}{' '}
-                      <strong>{stats.rounds_won}</strong>
+                      <strong>{formatLocalizedNumber(stats.rounds_won, { language })}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.bid')}{' '}
-                      <strong>{formatPercent(stats.bid_accuracy)}</strong>
+                      <strong>{formatLocalizedPercent(stats.bid_accuracy, { language })}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.averageBid')}{' '}
-                      <strong>{formatNumber(stats.average_bid, 2)}</strong>
+                      <strong>{formatLocalizedNumber(stats.average_bid, { fractionDigits: 2, language })}</strong>
                     </span>
                   </div>
                 </article>
@@ -199,19 +195,27 @@ export function LeaderboardView({ controller }) {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">{stats.games_played}</td>
-                        <td className="px-4 py-3 text-right">{stats.matches_won}</td>
                         <td className="px-4 py-3 text-right">
-                          {formatPercent(stats.win_rate)}
-                        </td>
-                        <td className="px-4 py-3 text-right">{stats.rounds_won}</td>
-                        <td className="px-4 py-3 text-right">
-                          {formatPercent(stats.bid_accuracy)}
+                          {formatLocalizedNumber(stats.games_played, { language })}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {formatNumber(stats.average_bid, 2)}
+                          {formatLocalizedNumber(stats.matches_won, { language })}
                         </td>
-                        <td className="px-4 py-3 text-right">{stats.trump_cards}</td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedPercent(stats.win_rate, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.rounds_won, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedPercent(stats.bid_accuracy, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.average_bid, { fractionDigits: 2, language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.trump_cards, { language })}
+                        </td>
                         <td className="px-4 py-3">
                           {getCardLabel(stats.favorite_card, t)}
                         </td>
