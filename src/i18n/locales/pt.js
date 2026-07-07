@@ -37,6 +37,7 @@ export const pt = {
   },
   cards: {
     label: '{{rank}} de {{suit}}',
+    previewAlt: '{{card}} no baralho {{deck}}',
     ranks: {
       eight: '8', eleven: '11', five: '5', four: '4', nine: '9', one: 'ás',
       seven: '7', six: '6', ten: '10', three: '3', twelve: '12', two: '2',
