@@ -1,4 +1,5 @@
 import { BookOpen, Crown, Play, Users } from 'lucide-react';
+import { externalLinks } from '@/config/externalLinks.js';
 import { routePaths } from './routeContract.js';
 
 export const pageLinks = [
@@ -37,7 +38,7 @@ export const pageLinks = [
   {
     description: 'Project repository for Oh Hell Game v2',
     descriptionKey: 'pages.links.github.description',
-    externalUrl: 'https://github.com/dannielzanoni/ohhell-game-v2',
+    externalUrl: externalLinks.repository,
     label: 'Github',
     labelKey: 'pages.links.github.label',
     path: routePaths.github,
