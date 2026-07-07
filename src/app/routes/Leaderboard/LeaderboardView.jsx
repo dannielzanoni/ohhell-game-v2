@@ -1,64 +1,15 @@
 import { AlertCircle, RefreshCw, Trophy, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { resolveAvatarSrc } from '@/assets/catalog/avatarCatalog.js';
-import { getCardLabel as getCatalogCardLabel } from '@/assets/catalog/cardCatalog.js';
 import { Button } from '@/components/ui/button.jsx';
+import { createLeaderboardRows } from './leaderboardModel.js';
 
-function getPlayerName(player, fallback) {
-  if (player?.type === 'Anonymous') {
-    return player.data?.data?.nickname || player.data?.id || fallback;
-  }
-
-  if (player?.type === 'Google') {
-    return (
-      player.data?.nickname ||
-      player.data?.name ||
-      player.data?.email ||
-      fallback
-    );
-  }
-
-  return player?.data?.nickname || player?.name || fallback;
-}
-
-function getPlayerPicture(player) {
-  if (player?.type === 'Anonymous') {
-    return resolveAvatarSrc(player.data?.data?.picture);
-  }
-
-  if (player?.type === 'Google') {
-    return resolveAvatarSrc(player.data?.picture_override || player.data?.picture);
-  }
-
-  return resolveAvatarSrc(player?.data?.picture || player?.picture);
-}
-
-function getCardLabel(card, t) {
-  if (!card) {
-    return t('leaderboard.noRounds');
-  }
-  return getCatalogCardLabel(card, t);
-}
-
-function formatPercent(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? `${number.toFixed(1)}%` : '0.0%';
-}
-
-function formatNumber(value, fractionDigits = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(fractionDigits) : '0';
-}
-
-function PlayerAvatar({ player }) {
-  const picture = getPlayerPicture(player);
-
+function PlayerAvatar({ alt, src }) {
   return (
     <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-secondary text-secondary-foreground">
-      {picture ? (
-        <img src={picture} alt="" className="size-full object-cover" />
+      {src ? (
+        <img src={src} alt={alt} className="size-full object-cover" />
       ) : (
-        <UserRound className="size-5" />
+        <UserRound aria-hidden="true" className="size-5" />
       )}
     </span>
   );
@@ -67,6 +18,7 @@ function PlayerAvatar({ player }) {
 export function LeaderboardView({ controller }) {
   const { t } = useTranslation();
   const { error, isLoading, leaderboard, refresh } = controller;
+  const rows = createLeaderboardRows(leaderboard, t);
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
@@ -106,26 +58,26 @@ export function LeaderboardView({ controller }) {
               <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
-        ) : leaderboard.length ? (
+        ) : rows.length ? (
           <>
             <div className="grid gap-3 md:hidden">
-              {leaderboard.map((stats, index) => (
+              {rows.map((row) => (
                 <article
-                  key={stats.player_id}
+                  key={row.id}
                   className="rounded-lg border border-border bg-card p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-sm font-black text-primary-foreground">
-                      {index + 1}
+                      {row.position}
                     </span>
-                    <PlayerAvatar player={stats.player} />
+                    <PlayerAvatar alt={row.avatarAlt} src={row.avatarSrc} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold">
-                        {getPlayerName(stats.player, stats.player_id)}
+                        {row.playerName}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {stats.matches_won} {t('leaderboard.winsShort')} -{' '}
-                        {formatPercent(stats.win_rate)}
+                        {row.matchesWon} {t('leaderboard.winsShort')} -{' '}
+                        {row.winRate}
                       </p>
                     </div>
                   </div>
@@ -133,19 +85,19 @@ export function LeaderboardView({ controller }) {
                   <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.games')}{' '}
-                      <strong>{stats.games_played}</strong>
+                      <strong>{row.gamesPlayed}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.rounds')}{' '}
-                      <strong>{stats.rounds_won}</strong>
+                      <strong>{row.roundsWon}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.bid')}{' '}
-                      <strong>{formatPercent(stats.bid_accuracy)}</strong>
+                      <strong>{row.bidAccuracy}</strong>
                     </span>
                     <span className="rounded-md bg-muted px-3 py-2">
                       {t('leaderboard.averageBid')}{' '}
-                      <strong>{formatNumber(stats.average_bid, 2)}</strong>
+                      <strong>{row.averageBid}</strong>
                     </span>
                   </div>
                 </article>
@@ -153,67 +105,75 @@ export function LeaderboardView({ controller }) {
             </div>
 
             <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
-              <div className="overflow-x-auto">
+              <div
+                aria-label={t('leaderboard.tableScroll')}
+                className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                role="region"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[62rem] text-sm">
+                  <caption className="sr-only">
+                    {t('leaderboard.tableCaption')}
+                  </caption>
                   <thead className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-3 text-left">#</th>
-                      <th className="px-4 py-3 text-left">
+                      <th className="px-4 py-3 text-left" scope="col">#</th>
+                      <th className="px-4 py-3 text-left" scope="col">
                         {t('leaderboard.player')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.games')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.wins')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.winRate')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.rounds')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.bidHit')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.averageBid')}
                       </th>
-                      <th className="px-4 py-3 text-right">
+                      <th className="px-4 py-3 text-right" scope="col">
                         {t('leaderboard.trumps')}
                       </th>
-                      <th className="px-4 py-3 text-left">
+                      <th className="px-4 py-3 text-left" scope="col">
                         {t('leaderboard.favorite')}
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {leaderboard.map((stats, index) => (
-                      <tr key={stats.player_id} className="hover:bg-muted/50">
-                        <td className="px-4 py-3 font-black">{index + 1}</td>
+                    {rows.map((row) => (
+                      <tr key={row.id} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-black">{row.position}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <PlayerAvatar player={stats.player} />
+                            <PlayerAvatar alt={row.avatarAlt} src={row.avatarSrc} />
                             <span className="font-bold">
-                              {getPlayerName(stats.player, stats.player_id)}
+                              {row.playerName}
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">{stats.games_played}</td>
-                        <td className="px-4 py-3 text-right">{stats.matches_won}</td>
+                        <td className="px-4 py-3 text-right">{row.gamesPlayed}</td>
+                        <td className="px-4 py-3 text-right">{row.matchesWon}</td>
                         <td className="px-4 py-3 text-right">
-                          {formatPercent(stats.win_rate)}
+                          {row.winRate}
                         </td>
-                        <td className="px-4 py-3 text-right">{stats.rounds_won}</td>
+                        <td className="px-4 py-3 text-right">{row.roundsWon}</td>
                         <td className="px-4 py-3 text-right">
-                          {formatPercent(stats.bid_accuracy)}
+                          {row.bidAccuracy}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {formatNumber(stats.average_bid, 2)}
+                          {row.averageBid}
                         </td>
-                        <td className="px-4 py-3 text-right">{stats.trump_cards}</td>
+                        <td className="px-4 py-3 text-right">{row.trumpCards}</td>
                         <td className="px-4 py-3">
-                          {getCardLabel(stats.favorite_card, t)}
+                          {row.favoriteCard}
                         </td>
                       </tr>
                     ))}
