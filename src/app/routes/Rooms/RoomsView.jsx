@@ -60,7 +60,11 @@ export function RoomsView({ controller }) {
           </div>
         ) : null}
 
-        <div data-testid="rooms-list" className="min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div
+          aria-busy={isLoading}
+          data-testid="rooms-list"
+          className="min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-sm"
+        >
           <div className="hidden grid-cols-[minmax(0,1fr)_7rem_7rem_7rem] border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid">
             <span>{t('pages.rooms.room')}</span>
             <span className="text-center">{t('pages.rooms.players')}</span>

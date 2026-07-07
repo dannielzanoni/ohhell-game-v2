@@ -372,12 +372,22 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .ohhell-game-ended-overlay,
   .ohhell-game-ended-card,
   .ohhell-game-ended-card::before,
   .ohhell-game-ended-card::after,
   .ohhell-winner-avatar,
   .ohhell-no-winners-mark,
+  .ohhell-life-loss-popup,
   .ohhell-life-loss-burst {
     animation: none !important;
   }
