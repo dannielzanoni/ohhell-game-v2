@@ -19,7 +19,37 @@ export function HowToPlayView() {
           </p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-[16rem_minmax(0,1fr)] md:items-start">
+        <section
+          aria-label={t('pages.howToPlay.mobileSections')}
+          className="grid min-w-0 gap-4 md:hidden"
+        >
+          {sections.map((section, index) => (
+            <details
+              className="group min-w-0 rounded-lg border border-border bg-card shadow-sm"
+              key={section.id}
+              open={index === 0}
+            >
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 break-words px-5 py-4 text-left text-lg font-bold text-foreground marker:hidden focus:outline-none focus:ring-2 focus:ring-ring [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 break-words">{section.title}</span>
+                <span aria-hidden="true" className="shrink-0 text-xl leading-none text-primary transition group-open:rotate-45">+</span>
+              </summary>
+              <div className="grid min-w-0 gap-4 border-t border-border px-5 py-5">
+                <p className="text-sm leading-6 text-muted-foreground">{section.description}</p>
+                <ul className="list-disc space-y-3 pl-5 text-base leading-7 text-muted-foreground">
+                  {section.items.map((item) => (
+                    <li className="break-words" key={item}>{item}</li>
+                  ))}
+                </ul>
+                <aside className="min-w-0 rounded-md bg-muted p-4 text-sm leading-6 text-muted-foreground">
+                  <p className="font-semibold text-foreground">{t('pages.howToPlay.exampleLabel')}</p>
+                  <p className="mt-2 break-words">{section.example}</p>
+                </aside>
+              </div>
+            </details>
+          ))}
+        </section>
+
+        <div className="hidden gap-6 md:grid md:grid-cols-[16rem_minmax(0,1fr)] md:items-start">
           <nav
             aria-label={t('pages.howToPlay.webIndex')}
             className="hidden rounded-lg border border-border bg-card p-4 shadow-sm md:sticky md:top-6 md:block"

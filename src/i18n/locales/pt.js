@@ -188,11 +188,14 @@ export const pt = {
     howToPlay: {
       description: 'Entenda o fluxo implementado: objetivo, cartas, trunfo, bids, pontos e vidas antes de entrar na mesa.',
       eyebrow: 'Guia essencial',
+      exampleLabel: 'Exemplo',
       indexTitle: 'Neste guia',
+      mobileSections: 'Seções do guia',
       sections: [
         {
           id: 'goal',
           title: 'Objetivo',
+          example: 'Se você recebeu 3 cartas e espera vencer 1 vaza, faça bid 1 antes da jogada começar.',
           description: 'Fodinha é um jogo de vazas: em cada rodada você tenta cumprir exatamente o bid que declarou.',
           items: [
             'Entre em uma sala, marque ready e aguarde o servidor iniciar a partida.',
@@ -203,6 +206,7 @@ export const pt = {
         {
           id: 'cards',
           title: 'Cartas e sequência',
+          example: 'Quando for sua vez, jogue uma carta válida e aguarde a confirmação do servidor.',
           description: 'A mesa mostra sua mão, o monte dos oponentes e as cartas já jogadas em ordem enviada pelo servidor.',
           items: [
             'A carta só sai da sua mão quando o servidor confirma a jogada.',
@@ -213,6 +217,7 @@ export const pt = {
         {
           id: 'trump',
           title: 'Trunfo e carta joker',
+          example: 'Trocar do baralho espanhol para o francês muda só as imagens; o servidor ainda decide a vaza.',
           description: 'A carta virada no centro define a referência visual de trunfo/joker daquela rodada.',
           items: [
             'A interface preserva a ordem real do monte recebida do backend.',
@@ -223,6 +228,7 @@ export const pt = {
         {
           id: 'bid',
           title: 'Bid',
+          example: 'Se o servidor oferece bids 0 e 1, a interface bloqueia qualquer outro valor.',
           description: 'Antes das cartas serem jogadas, cada jogador declara quantas vazas pretende ganhar.',
           items: [
             'As opções válidas de bid vêm do servidor para evitar jogadas ilegais.',
@@ -233,6 +239,7 @@ export const pt = {
         {
           id: 'score',
           title: 'Pontos e vidas',
+          example: 'Se você errar o bid, o evento de perda de vida aparece visualmente e continua representado no placar.',
           description: 'Ao fim da rodada, o servidor envia os pontos e, quando necessário, a atualização de vidas.',
           items: [
             'O placar mostra pontos por jogador durante a partida.',
