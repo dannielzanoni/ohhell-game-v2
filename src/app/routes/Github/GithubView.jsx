@@ -1,8 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
-
-const repositoryUrl = 'https://github.com/dannielzanoni/ohhell-game-v2';
+import { externalLinks } from '@/config/externalLinks.js';
 
 export function GithubView() {
   const { t } = useTranslation();
@@ -20,8 +19,8 @@ export function GithubView() {
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
             {t('pages.github.description')}
           </p>
-          <Button asChild className="mt-6 h-11 cursor-pointer gap-2">
-            <a href={repositoryUrl} target="_blank" rel="noreferrer">
+          <Button asChild className="mt-6 h-11 min-w-11 cursor-pointer gap-2">
+            <a href={externalLinks.repository} target="_blank" rel="noreferrer">
               <ExternalLink className="size-4" />
               {t('pages.github.open')}
             </a>
