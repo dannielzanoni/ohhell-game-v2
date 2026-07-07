@@ -232,6 +232,7 @@ export const en = {
   settings: {
     cardBack: 'Card back',
     cardBackOption: 'Back {{number}}',
+    deckSections: 'Deck sections',
     deck: 'Type of deck',
     deckTypeTab: 'Type of deck',
     english: 'English',
@@ -241,6 +242,7 @@ export const en = {
     languageDescription: 'Choose the app language.',
     portuguese: 'Portuguese',
     sounds: 'Sounds',
+    sections: 'Settings sections',
     spanish: 'Spanish',
     spanish8Bit: 'Spanish 8-bit',
     title: 'Settings',

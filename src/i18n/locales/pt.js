@@ -232,6 +232,7 @@ export const pt = {
   settings: {
     cardBack: 'Verso da carta',
     cardBackOption: 'Verso {{number}}',
+    deckSections: 'Seções de baralho',
     deck: 'Tipo de baralho',
     deckTypeTab: 'Tipo de baralho',
     english: 'Inglês',
@@ -241,6 +242,7 @@ export const pt = {
     languageDescription: 'Escolha o idioma',
     portuguese: 'Português',
     sounds: 'Sons',
+    sections: 'Seções de configurações',
     spanish: 'Espanhol',
     spanish8Bit: 'Espanhol 8-bit',
     title: 'Configurações',

@@ -102,7 +102,7 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
         'flex flex-col overflow-hidden p-0',
         presentation === 'mobile'
           ? 'bottom-0 left-0 top-auto h-[min(88dvh,48rem)] max-w-none translate-x-0 translate-y-0 rounded-b-none px-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)]'
-          : 'h-[54dvh] max-w-[calc(100vw-1rem)] sm:h-auto sm:max-h-[46vh] sm:max-w-2xl',
+          : 'max-h-[min(42rem,calc(100dvh-2rem))] max-w-[calc(100vw-1rem)] sm:max-w-2xl',
       )}>
         <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
           <DialogTitle>{t('settings.title')}</DialogTitle>
@@ -111,6 +111,7 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
         <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-0 overflow-hidden sm:grid-cols-[12rem_1fr] sm:grid-rows-1">
           <div
             className="flex gap-2 overflow-x-auto border-b border-border bg-muted/40 p-2 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3"
+            aria-label={t('settings.sections')}
             role="tablist"
           >
             {tabs.map((tab) => {
@@ -120,9 +121,12 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
               return (
                 <button
                   key={tab.id}
+                  id={`settings-tab-${tab.id}`}
                   type="button"
                   role="tab"
+                  aria-controls={`settings-panel-${tab.id}`}
                   aria-selected={isActive}
+                  tabIndex={isActive ? 0 : -1}
                   className={cn(
                     'flex h-10 min-w-max flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold text-muted-foreground transition sm:flex-none sm:justify-start',
                     isActive && 'bg-background text-foreground shadow-sm',
@@ -138,7 +142,13 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
 
           <div className="min-h-0 overflow-y-auto p-4 sm:min-h-[22rem] sm:p-5">
             {activeTab === 'sounds' ? (
-              <div className="grid gap-5" role="tabpanel">
+              <div
+                id="settings-panel-sounds"
+                aria-labelledby="settings-tab-sounds"
+                className="grid gap-5"
+                role="tabpanel"
+                tabIndex={0}
+              >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="grid size-10 place-items-center rounded-md bg-secondary text-secondary-foreground">
@@ -167,9 +177,16 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                 />
               </div>
             ) : activeTab === 'deck' ? (
-              <div className="grid gap-4" role="tabpanel">
+              <div
+                id="settings-panel-deck"
+                aria-labelledby="settings-tab-deck"
+                className="grid gap-4"
+                role="tabpanel"
+                tabIndex={0}
+              >
                 <div
                   className="grid grid-cols-2 gap-1 rounded-lg bg-muted/60 p-1"
+                  aria-label={t('settings.deckSections')}
                   role="tablist"
                 >
                   {deckSettingsTabs.map((tab) => {
@@ -179,9 +196,12 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                     return (
                       <button
                         key={tab.id}
+                        id={`settings-deck-tab-${tab.id}`}
                         type="button"
                         role="tab"
+                        aria-controls={`settings-deck-panel-${tab.id}`}
                         aria-selected={isActive}
+                        tabIndex={isActive ? 0 : -1}
                         className={cn(
                           'flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-xs font-bold text-muted-foreground transition sm:text-sm',
                           isActive && 'bg-background text-foreground shadow-sm',
@@ -196,7 +216,13 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                 </div>
 
                 {activeDeckSettingsTab === 'deckType' ? (
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div
+                    id="settings-deck-panel-deckType"
+                    aria-labelledby="settings-deck-tab-deckType"
+                    className="grid gap-3 sm:grid-cols-3"
+                    role="tabpanel"
+                    tabIndex={0}
+                  >
                     {deckOptions.map((deck) => {
                       const isSelected = preferences.deckType === deck.value;
 
@@ -238,7 +264,13 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                     })}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div
+                    id="settings-deck-panel-cardBack"
+                    aria-labelledby="settings-deck-tab-cardBack"
+                    className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+                    role="tabpanel"
+                    tabIndex={0}
+                  >
                     {cardBackOptions.map((cardBack) => {
                       const isSelected = preferences.cardBack === cardBack.value;
 
@@ -284,7 +316,12 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                 )}
               </div>
             ) : (
-              <div role="tabpanel">
+              <div
+                id="settings-panel-language"
+                aria-labelledby="settings-tab-language"
+                role="tabpanel"
+                tabIndex={0}
+              >
                 <LanguagePanel />
               </div>
             )}
