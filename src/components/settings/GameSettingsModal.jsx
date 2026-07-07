@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
 import spanish8BitCard3Paus from '@/assets/cards/spanish_8bit/3paus.png';
 import frenchCard3Paus from '@/assets/cards/french/3paus.png';
+import { getCardLabel } from '@/assets/catalog/cardCatalog.js';
 import {
   Dialog,
   DialogContent,
@@ -214,7 +215,10 @@ export function GameSettingsModal({ onOpenChange, open, presentation = 'web' }) 
                           <span className="flex justify-center rounded-md bg-muted/60 py-3 sm:order-2 sm:py-3">
                             <img
                               src={deck.image}
-                              alt={`3 de paus ${t(deck.labelKey)}`}
+                              alt={t('cards.previewAlt', {
+                                card: getCardLabel({ rank: 'Three', suit: 'Clubs' }, t),
+                                deck: t(deck.labelKey),
+                              })}
                               className="h-28 w-[4.65rem] rounded-md border border-black object-cover shadow-xl sm:h-32 sm:w-[5.35rem]"
                               draggable="false"
                             />

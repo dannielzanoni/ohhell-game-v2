@@ -14,6 +14,7 @@ export function VideoText({
  preload = "auto",
  fontSize = 20,
  fontWeight = "bold",
+ whiteSpace = "normal",
  textAnchor = "middle",
  dominantBaseline = "middle",
  fontFamily = "sans-serif",
@@ -28,14 +29,14 @@ export function VideoText({
     const updateSvgMask = () => {
       const responsiveFontSize =
         typeof fontSize === "number" ? `${fontSize}vw` : fontSize
-      const newSvgMask = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><text x='50%' y='50%' font-size='${responsiveFontSize}' font-weight='${fontWeight}' text-anchor='${textAnchor}' dominant-baseline='${dominantBaseline}' font-family='${fontFamily}'>${content}</text></svg>`
+      const newSvgMask = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><text x='50%' y='50%' font-size='${responsiveFontSize}' font-weight='${fontWeight}' text-anchor='${textAnchor}' dominant-baseline='${dominantBaseline}' font-family='${fontFamily}' style='white-space:${whiteSpace};font-stretch:condensed'>${content}</text></svg>`
       setSvgMask(newSvgMask)
     }
 
     updateSvgMask()
     window.addEventListener("resize", updateSvgMask)
     return () => window.removeEventListener("resize", updateSvgMask);
-  }, [content, fontSize, fontWeight, textAnchor, dominantBaseline, fontFamily])
+  }, [content, fontSize, fontWeight, whiteSpace, textAnchor, dominantBaseline, fontFamily])
 
   useEffect(() => {
     const query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -48,7 +49,7 @@ export function VideoText({
   const dataUrlMask = `url("data:image/svg+xml,${encodeURIComponent(svgMask)}")`
 
   return (
-   <Component className={cn(`relative size-full`, className)}>
+   <Component className={cn(`relative size-full`, className)} data-text-wrap={whiteSpace}>
     {/* Create a container that masks the video to only show within text */}
     <div
      className="absolute inset-0 flex items-center justify-center"

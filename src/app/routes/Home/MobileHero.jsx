@@ -22,6 +22,7 @@ export function MobileHero() {
           videoEnabled={shouldLoadOptionalMedia}
           fontSize={18}
           fontWeight="900"
+          whiteSpace="normal"
           className="drop-shadow-2xl"
         >
           {t('common.appName')}
