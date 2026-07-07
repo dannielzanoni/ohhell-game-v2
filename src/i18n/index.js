@@ -54,7 +54,11 @@ i18n.on('languageChanged', (language) => {
 });
 
 export function getResolvedLanguage(language = i18n.resolvedLanguage || i18n.language) {
-  return language?.split('-')[0] || 'en';
+  const normalizedLanguage = language?.split('-')[0];
+
+  return languageOptions.some((option) => option.value === normalizedLanguage)
+    ? normalizedLanguage
+    : 'en';
 }
 
 export function setAppLanguage(language) {
