@@ -2,8 +2,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { en } from './locales/en.js';
 import { pt } from './locales/pt.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
-export const LANGUAGE_STORAGE_KEY = 'ohhell_language';
+export const LANGUAGE_STORAGE_KEY = storageKeys.language;
 
 export const languageOptions = [
   {
@@ -25,7 +27,7 @@ function getStoredLanguage() {
     return 'en';
   }
 
-  const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const storedLanguage = storage.getItem(LANGUAGE_STORAGE_KEY);
 
   return languageOptions.some((language) => language.value === storedLanguage)
     ? storedLanguage
@@ -45,20 +47,10 @@ i18n.use(initReactI18next).init({
   supportedLngs: languageOptions.map((language) => language.value),
 });
 
-function updateDocumentTitle() {
-  if (typeof document !== 'undefined') {
-    document.title = i18n.t('common.appName');
-  }
-}
-
-updateDocumentTitle();
-
 i18n.on('languageChanged', (language) => {
   if (typeof window !== 'undefined') {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    storage.setItem(LANGUAGE_STORAGE_KEY, language);
   }
-
-  updateDocumentTitle();
 });
 
 export function getResolvedLanguage(language = i18n.resolvedLanguage || i18n.language) {

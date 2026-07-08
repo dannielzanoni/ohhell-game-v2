@@ -1,0 +1,16 @@
+[
+  {"type":"Snapshot","data":{"type":"Waiting","status":{"player-1":{"ready":false,"player":{"type":"Anonymous","data":{"id":"player-1","data":{"nickname":"Guest","picture":"avatar-1"}}}}}}},
+  {"type":"PlayerJoined","data":{"id":"player-1","nickname":"Guest","picture":"avatar-1"}},
+  {"type":"PlayerLeft","data":{"player_id":"player-1"}},
+  {"type":"PlayerStatusChange","data":{"player_id":"player-1","ready":true}},
+  {"type":"PlayerBidded","data":{"player_id":"player-1","bid":1}},
+  {"type":"RoundEnded","data":{"player-1":1}},
+  {"type":"PlayerBiddingTurn","data":{"player_id":"player-1","possible_bids":[0,1]}},
+  {"type":"PlayerDeck","data":[{"rank":"One","suit":"Cups"}]},
+  {"type":"PlayerTurn","data":{"player_id":"player-1"}},
+  {"type":"TurnPlayed","data":{"pile":[{"player_id":"player-1","card":{"rank":"One","suit":"Cups"}}]}},
+  {"type":"SetStart","data":{"upcard":{"rank":"Seven","suit":"Golds"}}},
+  {"type":"SetEnded","data":{"lifes":{"player-1":4}}},
+  {"type":"GameEnded","data":{"lifes":{"player-1":4}}},
+  {"type":"Error","data":{"msg":"Invalid command"}}
+]

@@ -1,39 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { NavBar } from './NavBar.jsx';
-
-const NAV_COLLAPSED_STORAGE_KEY = 'ohhell_nav_collapsed';
+import { Outlet, useLocation } from 'react-router-dom';
+import { DesktopSidebar } from './NavBar.jsx';
+import { MobileNavigation } from './MobileNavigation.jsx';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
 function getSavedNavCollapsed() {
-  try {
-    return localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return storage.getItem(storageKeys.navCollapsed) === 'true';
 }
 
 export function AppLayout() {
+  const location = useLocation();
   const [isNavCollapsed, setIsNavCollapsed] = useState(getSavedNavCollapsed);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        NAV_COLLAPSED_STORAGE_KEY,
-        String(isNavCollapsed),
-      );
-    } catch {
-      // Ignore storage failures and keep the menu usable.
-    }
+    storage.setItem(storageKeys.navCollapsed, String(isNavCollapsed));
   }, [isNavCollapsed]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <NavBar
+      <MobileNavigation />
+      <DesktopSidebar
         isCollapsed={isNavCollapsed}
         onToggle={() => setIsNavCollapsed((current) => !current)}
       />
       <div
-        className={`min-h-screen transition-[padding] duration-300 ${
+        className={`min-h-screen transition-[padding] duration-300 ${location.pathname.startsWith('/game/') ? 'pb-0' : 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'} md:pb-0 ${
           isNavCollapsed ? 'md:pl-20' : 'md:pl-64'
         }`}
       >

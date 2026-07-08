@@ -1,49 +1,41 @@
 import {
   apiRequest,
-  clearAuthToken as clearStoredAuthToken,
+  clearAuthToken,
   getAuthToken,
   setAuthToken,
 } from './apiClient.js';
-import { avatars } from '@/components/auth/avatarOptions.js';
+import { findAvatar } from '@/assets/catalog/avatarCatalog.js';
+import { storage } from '@/infrastructure/storage/storageAdapter.js';
+import { storageKeys } from '@/infrastructure/storage/storageKeys.js';
 
-const GUEST_AVATAR_STORAGE_KEY = 'ohhell_guest_avatar_id';
-const GUEST_NICKNAME_STORAGE_KEY = 'ohhell_guest_nickname';
-const REFRESH_TOKEN_STORAGE_KEY = 'REFRESH_TOKEN';
-const ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 30;
-const MISSING_REFRESH_TOKEN_CODE = 'MISSING_REFRESH_TOKEN';
-let pendingAuthRefresh = null;
-let pendingGuestAuthRefresh = null;
+const GUEST_AVATAR_STORAGE_KEY = storageKeys.guestAvatar;
+const GUEST_NICKNAME_STORAGE_KEY = storageKeys.guestNickname;
+const REFRESH_TOKEN_STORAGE_KEY = storageKeys.refreshToken;
+let pendingSessionRefresh = null;
+export const MAX_GUEST_NICKNAME_LENGTH = 24;
 
-function canUseStorage() {
-  return typeof window !== 'undefined' && window.localStorage;
+export function normalizeGuestNickname(value) {
+  const nickname = String(value ?? '').trim();
+
+  if (nickname.length > MAX_GUEST_NICKNAME_LENGTH) {
+    const error = new RangeError(`Nickname must have at most ${MAX_GUEST_NICKNAME_LENGTH} characters.`);
+    error.code = 'nickname_too_long';
+    throw error;
+  }
+
+  return nickname || 'Guest';
+}
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired. Confirm your profile to continue.');
+    this.name = 'SessionExpiredError';
+    this.code = 'profile_confirmation_required';
+  }
 }
 
 function getAuthErrorMessage(error) {
   return String(error?.message || error?.data?.error || '');
-}
-
-function getRefreshToken() {
-  return canUseStorage() ? localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) : null;
-}
-
-function setRefreshToken(token) {
-  if (!canUseStorage()) {
-    return;
-  }
-
-  if (token) {
-    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
-  } else {
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-  }
-}
-
-function createMissingRefreshTokenError() {
-  const error = new Error('Missing refresh token');
-  error.code = MISSING_REFRESH_TOKEN_CODE;
-  error.status = 401;
-  error.data = { error: 'Missing refresh token' };
-  return error;
 }
 
 function decodeAuthTokenPayload(token) {
@@ -102,28 +94,6 @@ function parseAuthPlayer(token = getAuthToken()) {
   return null;
 }
 
-function getExplicitPlayerRole(player, claims) {
-  return (
-    player?.role ||
-    player?.data?.role ||
-    claims?.role ||
-    claims?.user?.role ||
-    claims?.user?.data?.role ||
-    null
-  );
-}
-
-function hasExplicitAuthRole(token) {
-  const claims = decodeAuthTokenPayload(token);
-  const player = parseAuthPlayer(token);
-
-  if (!claims || !player) {
-    return false;
-  }
-
-  return Boolean(getExplicitPlayerRole(player, claims));
-}
-
 function getPlayerNickname(player) {
   if (player?.type === 'Anonymous') {
     return player.data?.data?.nickname || player.data?.id || '';
@@ -148,10 +118,6 @@ function getPlayerPicture(player) {
   return player?.data?.picture || player?.picture || '';
 }
 
-function getPlayerRole(player, claims) {
-  return getExplicitPlayerRole(player, claims) || 'Player';
-}
-
 export function isMissingAuthTokenError(error) {
   return (
     error?.status === 401 &&
@@ -159,41 +125,15 @@ export function isMissingAuthTokenError(error) {
   );
 }
 
-function isInvalidAuthTokenError(error, hadAuthToken = Boolean(getAuthToken())) {
+function isInvalidAuthTokenError(error) {
   const message = getAuthErrorMessage(error);
 
   return (
     !isMissingAuthTokenError(error) &&
     (message.includes("Invalid KeyId ('kid')") ||
       message.toLowerCase().includes('invalid token') ||
-      (error?.status === 401 && hadAuthToken))
+      (error?.status === 401 && Boolean(getAuthToken())))
   );
-}
-
-function canFallbackToGuestAuth(error) {
-  return (
-    error?.code === MISSING_REFRESH_TOKEN_CODE ||
-    (error?.status === 401 &&
-      getAuthErrorMessage(error).toLowerCase().includes('refresh token'))
-  );
-}
-
-function shouldRefreshAccessToken(token) {
-  const claims = decodeAuthTokenPayload(token);
-  const expiresAt = Number(claims?.exp);
-
-  if (!Number.isFinite(expiresAt)) {
-    return true;
-  }
-
-  return (
-    expiresAt <= Math.floor(Date.now() / 1000) + ACCESS_TOKEN_REFRESH_SKEW_SECONDS
-  );
-}
-
-export function clearAuthToken() {
-  clearStoredAuthToken();
-  setRefreshToken(null);
 }
 
 function persistAuth(response) {
@@ -207,24 +147,24 @@ function persistAuth(response) {
   }
 
   if (response?.refresh_token !== undefined) {
-    setRefreshToken(response.refresh_token);
+    if (response.refresh_token) {
+      storage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refresh_token);
+    } else {
+      storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    }
   }
 
   return response;
 }
 
 function getSavedGuestProfile(payload = {}) {
-  const savedNickname = canUseStorage()
-    ? localStorage.getItem(GUEST_NICKNAME_STORAGE_KEY)
-    : '';
-  const savedAvatarId = canUseStorage()
-    ? localStorage.getItem(GUEST_AVATAR_STORAGE_KEY)
-    : '';
-  const savedAvatar = avatars.find((avatar) => avatar.id === savedAvatarId);
-  const nickname = String(payload.nickname ?? savedNickname ?? '').trim();
+  const savedNickname = storage.getItem(GUEST_NICKNAME_STORAGE_KEY) || '';
+  const savedAvatarId = storage.getItem(GUEST_AVATAR_STORAGE_KEY) || '';
+  const savedAvatar = findAvatar(savedAvatarId);
+  const nickname = normalizeGuestNickname(payload.nickname ?? savedNickname);
 
   return {
-    nickname: nickname || 'Guest',
+    nickname,
     picture: payload.picture ?? savedAvatar?.picture ?? '',
   };
 }
@@ -232,131 +172,45 @@ function getSavedGuestProfile(payload = {}) {
 export async function signUp({ nickname, picture } = {}) {
   const response = await apiRequest('/auth/signup', {
     method: 'POST',
-    body: { nickname, picture },
+    body: { nickname: normalizeGuestNickname(nickname), picture },
   });
 
   return persistAuth(response);
 }
 
 export async function updateProfile({ nickname, picture }) {
-  const response = await withAuthRetry(
-    () =>
-      apiRequest('/auth/profile', {
-        auth: true,
-        method: 'POST',
-        body: { nickname, picture },
-      }),
-    { nickname, picture },
-  );
+  const response = await apiRequest('/auth/profile', {
+    auth: true,
+    method: 'POST',
+    body: { nickname: normalizeGuestNickname(nickname), picture },
+  });
 
   return persistAuth(response);
-}
-
-export async function refreshAuth() {
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
-    clearAuthToken();
-    throw createMissingRefreshTokenError();
-  }
-
-  if (!pendingAuthRefresh) {
-    pendingAuthRefresh = apiRequest('/auth/refresh', {
-      method: 'POST',
-      body: { refresh_token: refreshToken },
-      token: null,
-    })
-      .then(persistAuth)
-      .catch((error) => {
-        if (error?.status === 401) {
-          clearAuthToken();
-        }
-
-        throw error;
-      })
-      .finally(() => {
-        pendingAuthRefresh = null;
-      });
-  }
-
-  return pendingAuthRefresh;
-}
-
-export async function refreshAuthIfNeeded() {
-  const token = getAuthToken();
-  const player = parseAuthPlayer(token);
-
-  if (!token) {
-    return null;
-  }
-
-  if (hasExplicitAuthRole(token) && !shouldRefreshAccessToken(token)) {
-    return token;
-  }
-
-  try {
-    const response = await refreshAuth();
-
-    return response?.token || getAuthToken();
-  } catch (error) {
-    if (player?.type !== 'Anonymous' || !canFallbackToGuestAuth(error)) {
-      throw error;
-    }
-
-    const response = await refreshGuestAuth();
-
-    return response?.token || getAuthToken();
-  }
 }
 
 export async function loginWithGoogle(credential) {
   const token = getAuthToken();
   const currentPlayer = parseAuthPlayer(token);
-  const linkToken =
-    currentPlayer?.type === 'Anonymous' && hasExplicitAuthRole(token)
-      ? token
-      : null;
+  const response = await apiRequest('/auth/google', {
+    method: 'POST',
+    body: { credential },
+    token: currentPlayer?.type === 'Anonymous' ? token : null,
+  });
 
-  const requestGoogleLogin = (authToken) =>
-    apiRequest('/auth/google', {
-      method: 'POST',
-      body: { credential },
-      token: authToken,
-    });
-
-  let response;
-
-  try {
-    response = await requestGoogleLogin(linkToken);
-  } catch (error) {
-    if (!linkToken || !isInvalidAuthTokenError(error, Boolean(linkToken))) {
-      throw error;
-    }
-
-    clearAuthToken();
-    response = await requestGoogleLogin(null);
-  }
-
-  clearAuthToken();
   return persistAuth(response);
 }
 
 export async function saveGuestProfile(payload) {
   const guestProfile = getSavedGuestProfile(payload);
-  const existingToken = getAuthToken();
-  const existingPlayer = getAuthPlayer();
 
-  if (!existingToken) {
+  if (!getAuthToken()) {
     return signUp(guestProfile);
   }
 
   try {
     return await updateProfile(guestProfile);
   } catch (error) {
-    if (
-      (existingPlayer?.type === 'Google' && hasExplicitAuthRole(existingToken)) ||
-      !isInvalidAuthTokenError(error)
-    ) {
+    if (!isInvalidAuthTokenError(error)) {
       throw error;
     }
 
@@ -365,77 +219,69 @@ export async function saveGuestProfile(payload) {
   }
 }
 
-export async function refreshGuestAuth(payload) {
-  if (!pendingGuestAuthRefresh) {
-    pendingGuestAuthRefresh = (async () => {
-      clearAuthToken();
-      return signUp(getSavedGuestProfile(payload));
+function clearSession() {
+  clearAuthToken();
+  storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+function isDefinitiveRefreshFailure(error) {
+  return [400, 401, 403].includes(error?.status);
+}
+
+export async function refreshAuthSession() {
+  if (!pendingSessionRefresh) {
+    pendingSessionRefresh = (async () => {
+      const refreshToken = storage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+
+      if (!refreshToken) {
+        clearSession();
+        throw new SessionExpiredError();
+      }
+
+      try {
+        const response = await apiRequest('/auth/refresh', {
+          method: 'POST',
+          body: { refresh_token: refreshToken },
+        });
+        return persistAuth(response);
+      } catch (error) {
+        if (isDefinitiveRefreshFailure(error)) {
+          clearSession();
+          throw new SessionExpiredError();
+        }
+        throw error;
+      }
     })().finally(() => {
-      pendingGuestAuthRefresh = null;
+      pendingSessionRefresh = null;
     });
   }
 
-  return pendingGuestAuthRefresh;
+  return pendingSessionRefresh;
 }
+
+export const refreshGuestAuth = refreshAuthSession;
 
 export function getAuthPlayer() {
   return parseAuthPlayer();
 }
 
-export function isCurrentUserAdmin() {
-  const token = getAuthToken();
-  const claims = decodeAuthTokenPayload(token);
-  const player = parseAuthPlayer(token);
-
-  return String(getPlayerRole(player, claims)).toLowerCase() === 'admin';
-}
-
 export function getCurrentProfile() {
-  const token = getAuthToken();
-  const claims = decodeAuthTokenPayload(token);
-  const player = parseAuthPlayer(token);
+  const player = getAuthPlayer();
 
   return {
-    isGoogle: player?.type === 'Google' && hasExplicitAuthRole(token),
+    isGoogle: player?.type === 'Google',
     nickname: getPlayerNickname(player),
     picture: getPlayerPicture(player),
     player,
-    role: getPlayerRole(player, claims),
   };
 }
 
 export function isGoogleAuthenticated() {
-  const token = getAuthToken();
-  const player = parseAuthPlayer(token);
-
-  return player?.type === 'Google' && hasExplicitAuthRole(token);
+  return getAuthPlayer()?.type === 'Google';
 }
 
-export async function withAuthRetry(request, payload) {
-  let tokenBeforeRequest = getAuthToken();
-  let playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
-
-  if (
-    tokenBeforeRequest &&
-    playerBeforeRequest &&
-    !hasExplicitAuthRole(tokenBeforeRequest)
-  ) {
-    try {
-      await refreshAuth();
-    } catch (refreshError) {
-      if (
-        playerBeforeRequest?.type !== 'Anonymous' ||
-        !canFallbackToGuestAuth(refreshError)
-      ) {
-        throw refreshError;
-      }
-
-      await refreshGuestAuth(payload);
-    }
-
-    tokenBeforeRequest = getAuthToken();
-    playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
-  }
+export async function withGuestAuthRetry(request, payload) {
+  const tokenBeforeRequest = getAuthToken();
 
   try {
     return await request();
@@ -443,24 +289,12 @@ export async function withAuthRetry(request, payload) {
     if (
       !tokenBeforeRequest ||
       isMissingAuthTokenError(error) ||
-      !isInvalidAuthTokenError(error, Boolean(tokenBeforeRequest))
+      !isInvalidAuthTokenError(error)
     ) {
       throw error;
     }
 
-    try {
-      await refreshAuth();
-    } catch (refreshError) {
-      if (
-        playerBeforeRequest?.type !== 'Anonymous' ||
-        !canFallbackToGuestAuth(refreshError)
-      ) {
-        throw refreshError;
-      }
-
-      await refreshGuestAuth(payload);
-    }
-
+    await refreshAuthSession();
     return request();
   }
 }
@@ -472,11 +306,10 @@ export const authService = {
   getCurrentProfile,
   isGoogleAuthenticated,
   loginWithGoogle,
-  refreshAuth,
-  refreshAuthIfNeeded,
+  refreshAuthSession,
   refreshGuestAuth,
   saveGuestProfile,
   signUp,
   updateProfile,
-  withAuthRetry,
+  withGuestAuthRetry,
 };

@@ -1,0 +1,245 @@
+import { AlertCircle, RefreshCw, Trophy, UserRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { resolveAvatarSrc } from '@/assets/catalog/avatarCatalog.js';
+import { getCardLabel as getCatalogCardLabel } from '@/assets/catalog/cardCatalog.js';
+import { Button } from '@/components/ui/button.jsx';
+import {
+  formatLocalizedNumber,
+  formatLocalizedPercent,
+} from '@/i18n/localizedFormat.js';
+
+function getPlayerName(player, fallback) {
+  if (player?.type === 'Anonymous') {
+    return player.data?.data?.nickname || player.data?.id || fallback;
+  }
+
+  if (player?.type === 'Google') {
+    return (
+      player.data?.nickname ||
+      player.data?.name ||
+      player.data?.email ||
+      fallback
+    );
+  }
+
+  return player?.data?.nickname || player?.name || fallback;
+}
+
+function getPlayerPicture(player) {
+  if (player?.type === 'Anonymous') {
+    return resolveAvatarSrc(player.data?.data?.picture);
+  }
+
+  if (player?.type === 'Google') {
+    return resolveAvatarSrc(player.data?.picture_override || player.data?.picture);
+  }
+
+  return resolveAvatarSrc(player?.data?.picture || player?.picture);
+}
+
+function getCardLabel(card, t) {
+  if (!card) {
+    return t('leaderboard.noRounds');
+  }
+  return getCatalogCardLabel(card, t);
+}
+
+function PlayerAvatar({ player }) {
+  const picture = getPlayerPicture(player);
+
+  return (
+    <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-secondary text-secondary-foreground">
+      {picture ? (
+        <img src={picture} alt="" className="size-full object-cover" />
+      ) : (
+        <UserRound className="size-5" />
+      )}
+    </span>
+  );
+}
+
+export function LeaderboardView({ controller }) {
+  const { i18n, t } = useTranslation();
+  const { error, isLoading, leaderboard, refresh } = controller;
+  const language = i18n.resolvedLanguage || i18n.language;
+
+  return (
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              {t('leaderboard.eyebrow')}
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+              {t('leaderboard.title')}
+            </h1>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
+            disabled={isLoading}
+            onClick={() => void refresh()}
+          >
+            <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
+            {t('common.refresh')}
+          </Button>
+        </div>
+
+        {error ? (
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="size-4 shrink-0" />
+            {error.message || t('leaderboard.loadError')}
+          </div>
+        ) : null}
+
+        {isLoading ? (
+          <div className="grid gap-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : leaderboard.length ? (
+          <>
+            <div className="grid gap-3 md:hidden">
+              {leaderboard.map((stats, index) => (
+                <article
+                  key={stats.player_id}
+                  className="rounded-lg border border-border bg-card p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-sm font-black text-primary-foreground">
+                      {index + 1}
+                    </span>
+                    <PlayerAvatar player={stats.player} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">
+                        {getPlayerName(stats.player, stats.player_id)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatLocalizedNumber(stats.matches_won, { language })}{' '}
+                        {t('leaderboard.winsShort')} -{' '}
+                        {formatLocalizedPercent(stats.win_rate, { language })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <span className="rounded-md bg-muted px-3 py-2">
+                      {t('leaderboard.games')}{' '}
+                      <strong>{formatLocalizedNumber(stats.games_played, { language })}</strong>
+                    </span>
+                    <span className="rounded-md bg-muted px-3 py-2">
+                      {t('leaderboard.rounds')}{' '}
+                      <strong>{formatLocalizedNumber(stats.rounds_won, { language })}</strong>
+                    </span>
+                    <span className="rounded-md bg-muted px-3 py-2">
+                      {t('leaderboard.bid')}{' '}
+                      <strong>{formatLocalizedPercent(stats.bid_accuracy, { language })}</strong>
+                    </span>
+                    <span className="rounded-md bg-muted px-3 py-2">
+                      {t('leaderboard.averageBid')}{' '}
+                      <strong>{formatLocalizedNumber(stats.average_bid, { fractionDigits: 2, language })}</strong>
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[62rem] text-sm">
+                  <thead className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 text-left">#</th>
+                      <th className="px-4 py-3 text-left">
+                        {t('leaderboard.player')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.games')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.wins')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.winRate')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.rounds')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.bidHit')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.averageBid')}
+                      </th>
+                      <th className="px-4 py-3 text-right">
+                        {t('leaderboard.trumps')}
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        {t('leaderboard.favorite')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {leaderboard.map((stats, index) => (
+                      <tr key={stats.player_id} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-black">{index + 1}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <PlayerAvatar player={stats.player} />
+                            <span className="font-bold">
+                              {getPlayerName(stats.player, stats.player_id)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.games_played, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.matches_won, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedPercent(stats.win_rate, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.rounds_won, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedPercent(stats.bid_accuracy, { language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.average_bid, { fractionDigits: 2, language })}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {formatLocalizedNumber(stats.trump_cards, { language })}
+                        </td>
+                        <td className="px-4 py-3">
+                          {getCardLabel(stats.favorite_card, t)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid min-h-72 place-items-center rounded-lg border border-border bg-card px-4 py-10 text-center shadow-sm">
+            <div>
+              <Trophy className="mx-auto size-10 text-muted-foreground" />
+              <p className="mt-3 text-sm font-semibold">
+                {t('leaderboard.emptyTitle')}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('leaderboard.emptyDescription')}
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}

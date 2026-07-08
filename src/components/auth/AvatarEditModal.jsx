@@ -1,77 +1,40 @@
-import { useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useRef } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
+import { ResilientImage } from '@/components/ui/resilient-image.jsx';
+import { useModalFocus } from '@/components/ui/useModalFocus.js';
+import { useOptionalMedia } from '@/platform/useOptionalMedia.js';
 import { cn } from '@/lib/utils.js';
-import { avatarGroups } from './avatarOptions.js';
+import { avatarGroups } from '@/assets/catalog/avatarCatalog.js';
 
 export { avatarGroups, avatars } from './avatarOptions.js';
 
-export function AvatarEditModal({
-  isOpen,
-  selectedAvatar,
-  onClose,
-  onSelect,
-  variant = 'default',
-}) {
+export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
   const { t } = useTranslation();
-  const isHellHand = variant === 'hellHand';
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  const { shouldLoadOptionalMedia } = useOptionalMedia();
+  const dialogRef = useRef(null);
+  useModalFocus({ dialogRef, isOpen, onClose });
 
   if (!isOpen) {
     return null;
   }
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  const modal = (
+  return (
     <div
-      className={cn(
-        'fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]',
-        isHellHand && 'z-[100] bg-black/85 p-3 pb-3 sm:p-5 sm:pb-5',
-      )}
+      className="fixed inset-0 z-[80] flex min-h-[100dvh] items-end justify-center bg-black/70 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={onClose}
     >
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
-        className={cn(
-          'flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl',
-          isHellHand &&
-            'h-[min(42rem,calc(100dvh-1.5rem))] w-[min(48rem,calc(100vw-1.5rem))] max-w-none rounded-lg border-red-200/15 bg-black/90 text-stone-100 shadow-black/70 sm:h-[min(46rem,calc(100dvh-2.5rem))] sm:w-[min(64rem,calc(100vw-2.5rem))]',
-        )}
+        className="flex max-h-[calc(100dvh-max(1rem,env(safe-area-inset-top)))] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-card pb-[env(safe-area-inset-bottom)] text-card-foreground shadow-2xl shadow-black/40 sm:h-[min(42rem,88vh)] sm:max-w-2xl sm:rounded-lg sm:pb-0"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header
-          className={cn(
-            'flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4',
-            isHellHand && 'border-red-200/15 bg-red-950/20',
-          )}
-        >
+        <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4">
           <h2 id="avatar-edit-title" className="text-base font-bold sm:text-xl">
             {t('auth.avatarModalTitle')}
           </h2>
@@ -80,11 +43,7 @@ export function AvatarEditModal({
             variant="ghost"
             size="icon"
             aria-label={t('auth.closeModal')}
-            className={cn(
-              'cursor-pointer',
-              isHellHand &&
-                'text-red-100 hover:bg-red-700/30 hover:text-white',
-            )}
+            className="cursor-pointer"
             onClick={onClose}
           >
             <X />
@@ -92,15 +51,15 @@ export function AvatarEditModal({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
+          {!shouldLoadOptionalMedia ? (
+            <p className="mb-4 text-sm text-muted-foreground" role="status">
+              {t('auth.animatedAvatarsPaused')}
+            </p>
+          ) : null}
           {avatarGroups.map((group) => (
             <div key={group.title} className="not-first:mt-6 sm:not-first:mt-7">
-              <h3
-                className={cn(
-                  'text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm',
-                  isHellHand && 'text-red-100/65',
-                )}
-              >
-                {group.title === 'Avatares' ? t('auth.avatars') : group.title}
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
+                {t(group.labelKey)}
               </h3>
               <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-x-2 gap-y-3 min-[380px]:grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] sm:mt-4 sm:grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] sm:gap-4">
                 {group.avatars.map((avatar) => {
@@ -113,12 +72,10 @@ export function AvatarEditModal({
                       aria-label={t('auth.selectAvatarAria', {
                         label: avatar.label,
                       })}
+                      aria-pressed={isSelected}
                       className={cn(
                         'mx-auto grid size-11 min-w-0 cursor-pointer place-items-center rounded-full p-0.5 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring min-[380px]:size-12 sm:size-16 sm:p-1',
                         isSelected && 'ring-primary',
-                        isHellHand &&
-                          'hover:ring-red-300/80 focus:ring-red-500/45',
-                        isHellHand && isSelected && 'ring-red-400',
                       )}
                       onClick={() => {
                         onSelect(avatar);
@@ -126,9 +83,11 @@ export function AvatarEditModal({
                       }}
                     >
                       <span className="block size-full overflow-hidden rounded-full border border-border bg-muted shadow-sm">
-                        <img
-                          src={avatar.src}
+                        <ResilientImage
+                          src={avatar.type === 'gif' && !shouldLoadOptionalMedia ? '' : avatar.src}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="block h-full w-full scale-110 object-cover"
                           draggable="false"
                         />
@@ -143,6 +102,4 @@ export function AvatarEditModal({
       </section>
     </div>
   );
-
-  return createPortal(modal, document.body);
 }

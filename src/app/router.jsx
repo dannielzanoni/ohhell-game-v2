@@ -1,66 +1,51 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { CharacterProfile } from './routes/Characters/CharacterProfile.jsx';
-import { Mercenaries } from './routes/Characters/Characters.jsx';
-import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
-import { Game } from './routes/Game/Game.jsx';
-import { GameModeSelect } from './routes/GameModeSelect.jsx';
-import { HellHandGame } from './routes/HellHand/HellHandGame.jsx';
-import { Github } from './routes/Github/Github.jsx';
-import { HellHandHome } from './routes/HellHand/HellHandHome.jsx';
-import { HellHandRooms } from './routes/HellHand/HellHandRooms.jsx';
-import { HellHandWorkshop } from './routes/HellHand/HellHandWorkshop.jsx';
-import { Home } from './routes/Home/Home.jsx';
-import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
-import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
-import { Playground } from './routes/Playground/Playground.jsx';
-import { PowerDecks } from './routes/PowerDecks/PowerDecks.jsx';
-import { Rooms } from './routes/Rooms/Rooms.jsx';
-import { Settings } from './routes/Settings/Settings.jsx';
+import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
+import { routePaths } from './routes/routeContract.js';
 
-function CharacterProfileRoute() {
-  const { mercenaryId } = useParams();
+const Home = lazy(() => import('./routes/Home/Home.jsx').then((module) => ({ default: module.Home })));
+const CreateGame = lazy(() => import('./routes/CreateGame/CreateGame.jsx').then((module) => ({ default: module.CreateGame })));
+const Game = lazy(() => import('./routes/Game/Game.jsx').then((module) => ({ default: module.Game })));
+const Rooms = lazy(() => import('./routes/Rooms/Rooms.jsx').then((module) => ({ default: module.Rooms })));
+const Leaderboard = lazy(() => import('./routes/Leaderboard/Leaderboard.jsx').then((module) => ({ default: module.Leaderboard })));
+const HowToPlay = lazy(() => import('./routes/HowToPlay/HowToPlay.jsx').then((module) => ({ default: module.HowToPlay })));
+const Github = lazy(() => import('./routes/Github/Github.jsx').then((module) => ({ default: module.Github })));
 
-  return <CharacterProfile characterId={mercenaryId} />;
+function RouteLoadingFallback() {
+  const { t } = useTranslation();
+
+  return (
+    <main
+      aria-busy="true"
+      className="grid min-h-screen place-items-center px-6 py-8 text-muted-foreground"
+    >
+      <p className="rounded-md border border-border bg-card px-4 py-3 text-sm font-semibold shadow-sm">
+        {t('common.loading')}
+      </p>
+    </main>
+  );
+}
+
+function LazyRoute({ children }) {
+  return <Suspense fallback={<RouteLoadingFallback />}>{children}</Suspense>;
 }
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<GameModeSelect />} />
-        <Route path="/hell-hand" element={<HellHandHome />} />
-        <Route path="/hell-hand/game" element={<HellHandGame />} />
-        <Route path="/hell-hand/rooms" element={<HellHandRooms />} />
-        <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />
-        <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
-        <Route path="/hell-hand/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
-        <Route path="/hell-hand/mercenaries/Carmen" element={<CharacterProfile characterId="carmen" />} />
-        <Route path="/hell-hand/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />
-        <Route path="/hell-hand/mercenaries/Gambler" element={<CharacterProfile characterId="gambler" />} />
-        <Route path="/hell-hand/mercenaries/Leandro" element={<CharacterProfile characterId="leandro" />} />
         <Route element={<AppLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/create-game" element={<CreateGame />} />
-          <Route path="/game" element={<Navigate to="/create-game" replace />} />
-          <Route path="/game/:lobbyId" element={<Game />} />
-          <Route path="/rooms" element={<Rooms />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/characters" element={<Mercenaries />} />
-          <Route path="/mercenaries" element={<Mercenaries />} />
-          <Route path="/mercenaries/:mercenaryId" element={<CharacterProfileRoute />} />
-          <Route path="/Artemis" element={<Navigate to="/mercenaries/Artemis" replace />} />
-          <Route path="/Carmen" element={<Navigate to="/mercenaries/Carmen" replace />} />
-          <Route path="/Conjuruz" element={<Navigate to="/mercenaries/Conjuruz" replace />} />
-          <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
-          <Route path="/Leandro" element={<Navigate to="/mercenaries/Leandro" replace />} />
-          <Route path="/how-to-play" element={<HowToPlay />} />
-          <Route path="/playground" element={<Playground />} />
-          <Route path="/power-decks" element={<PowerDecks />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/github" element={<Github />} />
+          <Route path={routePaths.home} element={<LazyRoute><Home /></LazyRoute>} />
+          <Route path={routePaths.createGame} element={<LazyRoute><CreateGame /></LazyRoute>} />
+          <Route path={routePaths.game} element={<Navigate to={routePaths.createGame} replace />} />
+          <Route path={`${routePaths.game}/:lobbyId`} element={<LazyRoute><Game /></LazyRoute>} />
+          <Route path={routePaths.rooms} element={<LazyRoute><Rooms /></LazyRoute>} />
+          <Route path={routePaths.leaderboard} element={<LazyRoute><Leaderboard /></LazyRoute>} />
+          <Route path={routePaths.howToPlay} element={<LazyRoute><HowToPlay /></LazyRoute>} />
+          <Route path={routePaths.github} element={<LazyRoute><Github /></LazyRoute>} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={routePaths.home} replace />} />
       </Routes>
     </BrowserRouter>
   );

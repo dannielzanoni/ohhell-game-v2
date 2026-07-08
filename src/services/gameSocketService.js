@@ -1,11 +1,22 @@
 import { environment } from '@/config/environment.js';
 import { getAuthToken } from './apiClient.js';
+import {
+  parseRealtimeMessage,
+  serializeRealtimeCommand,
+} from '@/contracts/v1/contracts.js';
+import { frontendTelemetry } from '@/infrastructure/observability/frontendTelemetry.js';
 
-const pendingCommandsBySocket = new WeakMap();
-export const WAITING_LOBBY_INACTIVITY_CLOSE_CODE = 4001;
+const CONNECTING = 0;
+const OPEN = 1;
+const CLOSING = 2;
+const CLOSED = 3;
 
-export function isWaitingLobbyInactiveClose(event) {
-  return event?.code === WAITING_LOBBY_INACTIVITY_CLOSE_CODE;
+export class RealtimeConnectionError extends Error {
+  constructor() {
+    super('Realtime connection failed');
+    this.name = 'RealtimeConnectionError';
+    this.code = 'realtime_connection_failed';
+  }
 }
 
 export function getGameSocketUrl(token = getAuthToken()) {
@@ -19,40 +30,108 @@ export function getGameSocketUrl(token = getAuthToken()) {
   return url.toString();
 }
 
-export function createGameSocket({
-  onClose,
-  onError,
-  onMessage,
-  onOpen,
-  token = getAuthToken(),
-} = {}) {
-  const socket = new WebSocket(getGameSocketUrl(token));
+export class GameRealtimeSession {
+  constructor({ Socket = globalThis.WebSocket, urlFactory = getGameSocketUrl } = {}) {
+    this.Socket = Socket;
+    this.urlFactory = urlFactory;
+    this.socket = null;
+    this.pending = [];
+    this.handlers = {};
+    this.disposed = false;
+  }
 
-  socket.addEventListener('open', (event) => {
-    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
+  get readyState() {
+    return this.socket?.readyState ?? CLOSED;
+  }
 
-    pendingCommands.forEach((command) => {
-      socket.send(JSON.stringify(command));
+  connect({ onClose, onError, onMessage, onOpen, onUnknown, token = getAuthToken() } = {}) {
+    if (this.disposed) throw new Error('Realtime session is disposed');
+    this.handlers = { onClose, onError, onMessage, onOpen, onUnknown };
+
+    if (this.socket && [CONNECTING, OPEN].includes(this.socket.readyState)) {
+      return this;
+    }
+    if (!this.Socket) throw new Error('WebSocket is unavailable');
+
+    const socket = new this.Socket(this.urlFactory(token));
+    this.socket = socket;
+    socket.addEventListener('open', (event) => {
+      if (this.socket !== socket || this.disposed) return;
+      this.pending.splice(0).forEach((payload) => socket.send(payload));
+      this.handlers.onOpen?.(event);
     });
-    pendingCommandsBySocket.delete(socket);
+    socket.addEventListener('message', (event) => {
+      if (this.socket !== socket || this.disposed) return;
+      try {
+        this.handlers.onMessage?.(parseRealtimeMessage(event.data), event);
+      } catch (error) {
+        if (String(error?.message).startsWith('Unknown realtime message type:')) {
+          frontendTelemetry.trackFailure({
+            diagnostic: { message: error.message },
+            failureType: 'websocket',
+            phase: 'message_parse',
+          });
+          this.handlers.onUnknown?.({ code: 'unknown_server_message' });
+        } else {
+          frontendTelemetry.trackFailure({
+            diagnostic: error,
+            failureType: 'websocket',
+            phase: 'message_handler',
+          });
+          this.handlers.onError?.(error);
+        }
+      }
+    });
+    socket.addEventListener('error', (event) => {
+      if (this.socket === socket && !this.disposed) {
+        frontendTelemetry.trackFailure({
+          diagnostic: { code: 'realtime_connection_failed', event },
+          failureType: 'websocket',
+          phase: 'connection',
+        });
+        this.handlers.onError?.(new RealtimeConnectionError());
+      }
+    });
+    socket.addEventListener('close', (event) => {
+      if (this.socket !== socket) return;
+      this.socket = null;
+      if (!this.disposed) this.handlers.onClose?.(event);
+    });
 
-    onOpen?.(event);
-  });
+    return this;
+  }
 
-  socket.addEventListener('message', (event) => {
-    const message = JSON.parse(event.data);
-    onMessage?.(message, event);
-  });
+  send(payload) {
+    if (this.disposed) throw new Error('Realtime session is disposed');
+    if (this.readyState === CONNECTING) {
+      this.pending.push(payload);
+      return;
+    }
+    if (this.readyState !== OPEN) throw new Error('WebSocket is not open');
+    this.socket.send(payload);
+  }
 
-  socket.addEventListener('error', (event) => {
-    onError?.(event);
-  });
+  close(code, reason) {
+    this.pending = [];
+    if (this.socket && this.socket.readyState < CLOSING) {
+      this.socket.close(code, reason);
+    }
+  }
 
-  socket.addEventListener('close', (event) => {
-    onClose?.(event);
-  });
+  dispose() {
+    this.disposed = true;
+    this.handlers = {};
+    this.close(1000, 'route-unmounted');
+    this.socket = null;
+  }
+}
 
-  return socket;
+export function createGameSession(options) {
+  return new GameRealtimeSession(options);
+}
+
+export function createGameSocket(options) {
+  return createGameSession().connect(options);
 }
 
 export function sendGameCommand(socket, command) {
@@ -60,59 +139,25 @@ export function sendGameCommand(socket, command) {
     throw new Error('WebSocket is not open');
   }
 
-  if (socket.readyState === WebSocket.CONNECTING) {
-    const pendingCommands = pendingCommandsBySocket.get(socket) || [];
-    pendingCommands.push(command);
-    pendingCommandsBySocket.set(socket, pendingCommands);
-    return;
-  }
-
-  if (socket.readyState !== WebSocket.OPEN) {
+  if (![CONNECTING, OPEN].includes(socket.readyState)) {
     throw new Error('WebSocket is not open');
   }
 
-  socket.send(JSON.stringify(command));
-}
-
-function buildGameCommand(command) {
-  return {
-    type: 'GameCommand',
-    data: {
-      command,
-    },
-  };
+  socket.send(serializeRealtimeCommand(command));
 }
 
 export function playTurn(socket, card) {
   sendGameCommand(socket, {
-    ...buildGameCommand({
-      type: 'PlayTurn',
-      data: { card },
-    }),
+    type: 'PlayTurn',
+    data: { card },
   });
 }
 
 export function putBid(socket, bid) {
-  sendGameCommand(
-    socket,
-    buildGameCommand({
-      type: 'PutBid',
-      data: { bid },
-    }),
-  );
-}
-
-export function usePowerCard(socket, cardId, targetPlayerId) {
-  sendGameCommand(
-    socket,
-    buildGameCommand({
-      type: 'UsePowerCard',
-      data: {
-        card_id: cardId,
-        ...(targetPlayerId ? { target_player_id: targetPlayerId } : {}),
-      },
-    }),
-  );
+  sendGameCommand(socket, {
+    type: 'PutBid',
+    data: { bid },
+  });
 }
 
 export function setPlayerReady(socket, ready) {
@@ -122,25 +167,12 @@ export function setPlayerReady(socket, ready) {
   });
 }
 
-export function selectMercenary(socket, mercenaryId) {
-  if (!mercenaryId) {
-    return;
-  }
-
-  sendGameCommand(socket, {
-    type: 'SelectMercenary',
-    data: { mercenary_id: mercenaryId },
-  });
-}
-
 export const gameSocketService = {
   createGameSocket,
+  createGameSession,
   getGameSocketUrl,
-  isWaitingLobbyInactiveClose,
   playTurn,
   putBid,
-  selectMercenary,
   sendGameCommand,
   setPlayerReady,
-  usePowerCard,
 };

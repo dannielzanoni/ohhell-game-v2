@@ -1,13 +1,7 @@
-import { useTranslation } from 'react-i18next';
-import { RoutePage } from '../RoutePage.jsx';
+import { HowToPlayView } from './HowToPlayView.jsx';
+import { useStaticRouteController } from '../useStaticRouteController.js';
 
 export function HowToPlay() {
-  const { t } = useTranslation();
-
-  return (
-    <RoutePage
-      title={t('pages.howToPlay.title')}
-      description={t('pages.howToPlay.description')}
-    />
-  );
+  const controller = useStaticRouteController();
+  return <HowToPlayView controller={controller} />;
 }

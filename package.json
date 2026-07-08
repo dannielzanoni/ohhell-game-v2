@@ -3,19 +3,30 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=26 <27"
-  },
   "scripts": {
+    "a11y:motion": "node scripts/verify-accessibility-motion.mjs",
+    "contracts:check": "node scripts/verify-contracts.mjs",
+    "ci:check": "node scripts/verify-ci-config.mjs",
+    "e2e": "playwright test",
+    "e2e:check": "node scripts/verify-e2e-coverage.mjs",
+    "lazy:check": "node scripts/verify-lazy-loading.mjs",
+    "lint": "node scripts/verify-lint.mjs",
+    "media:check": "node scripts/verify-media-budgets.mjs",
+    "observability:check": "node scripts/verify-frontend-observability.mjs",
+    "quality:controllers": "node scripts/verify-controller-integration.mjs",
+    "quality:unit": "node scripts/verify-unit-quality.mjs",
+    "rollout:check": "node scripts/verify-rollout-flags.mjs",
+    "security:check": "node scripts/verify-security.mjs",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "i18n:check": "node scripts/verify-i18n.mjs",
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@tailwindcss/vite": "^4.3.1",
-    "@uiw/react-textarea-code-editor": "^3.1.1",
     "@untitledui/icons": "^0.0.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -30,7 +41,6 @@
     "react-aria-components": "^1.19.0",
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",
-    "react-pop-cards": "^2.2.0",
     "react-router-dom": "^7.18.0",
     "shadcn": "^4.11.0",
     "tailwind-merge": "^3.6.0",
@@ -40,7 +50,12 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "^6.0.2",
-    "vite": "^8.0.16"
+    "jsdom": "^29.1.1",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.9"
   }
 }

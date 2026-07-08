@@ -1,4 +1,6 @@
-import { BookOpen, Crown, GalleryVerticalEnd, Play, Sparkles, UserRound, Users } from 'lucide-react';
+import { BookOpen, Crown, Play, Users } from 'lucide-react';
+import { externalLinks } from '@/config/externalLinks.js';
+import { routePaths } from './routeContract.js';
 
 export const pageLinks = [
   {
@@ -7,7 +9,7 @@ export const pageLinks = [
     icon: Play,
     label: 'Create a Game',
     labelKey: 'pages.links.createGame.label',
-    path: '/create-game',
+    path: routePaths.createGame,
   },
   {
     description: 'View and enter the rooms.',
@@ -15,7 +17,7 @@ export const pageLinks = [
     icon: Users,
     label: 'Rooms',
     labelKey: 'pages.links.rooms.label',
-    path: '/rooms',
+    path: routePaths.rooms,
   },
   {
     description: 'Player ranking.',
@@ -23,15 +25,7 @@ export const pageLinks = [
     icon: Crown,
     label: 'Leaderboard',
     labelKey: 'pages.links.leaderboard.label',
-    path: '/leaderboard',
-  },
-  {
-    description: 'View mercenary profiles and cards.',
-    descriptionKey: 'pages.links.characters.description',
-    icon: UserRound,
-    label: 'Mercenaries',
-    labelKey: 'pages.links.characters.label',
-    path: '/hell-hand/mercenaries',
+    path: routePaths.leaderboard,
   },
   {
     description: 'Rules and game guide.',
@@ -39,31 +33,15 @@ export const pageLinks = [
     icon: BookOpen,
     label: 'How To Play',
     labelKey: 'pages.links.howToPlay.label',
-    path: '/how-to-play',
-  },
-  {
-    description: 'Create and save custom magic cards.',
-    descriptionKey: 'pages.links.playground.description',
-    icon: Sparkles,
-    label: 'Playground',
-    labelKey: 'pages.links.playground.label',
-    path: '/playground',
-  },
-  {
-    description: 'Create Fodinha Power decks.',
-    descriptionKey: 'pages.links.powerDecks.description',
-    icon: GalleryVerticalEnd,
-    label: 'Power Decks',
-    labelKey: 'pages.links.powerDecks.label',
-    path: '/power-decks',
+    path: routePaths.howToPlay,
   },
   {
     description: 'Project repository for Oh Hell Game v2',
     descriptionKey: 'pages.links.github.description',
-    externalUrl: 'https://github.com/dannielzanoni/ohhell-game-v2',
+    externalUrl: externalLinks.repository,
     label: 'Github',
     labelKey: 'pages.links.github.label',
-    path: '/github',
+    path: routePaths.github,
     primeIcon: 'pi pi-github',
   },
 ];

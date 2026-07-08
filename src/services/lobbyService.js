@@ -1,28 +1,22 @@
 import { apiRequest } from './apiClient.js';
-import { withAuthRetry } from './authService.js';
+import { withGuestAuthRetry } from './authService.js';
 
-export function getLobbies() {
-  return withAuthRetry(() => apiRequest('/lobby', { auth: true }));
+export function getLobbies({ signal } = {}) {
+  return withGuestAuthRetry(() => apiRequest('/lobby', { auth: true, signal }));
 }
 
-export function createLobby({ gameType, lifes, powerDeckId } = {}) {
-  const body = {
-    ...(gameType ? { game_type: gameType } : {}),
-    ...(lifes === undefined || lifes === null ? {} : { lifes }),
-    ...(powerDeckId ? { power_deck_id: powerDeckId } : {}),
-  };
-
-  return withAuthRetry(() =>
+export function createLobby({ lifes } = {}) {
+  return withGuestAuthRetry(() =>
     apiRequest('/lobby', {
       auth: true,
       method: 'POST',
-      body: Object.keys(body).length ? body : undefined,
+      body: lifes === undefined || lifes === null ? undefined : { lifes },
     }),
   );
 }
 
 export function joinLobby(lobbyId) {
-  return withAuthRetry(() =>
+  return withGuestAuthRetry(() =>
     apiRequest(`/lobby/${encodeURIComponent(lobbyId)}`, {
       auth: true,
       method: 'PUT',
