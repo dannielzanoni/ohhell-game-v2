@@ -812,6 +812,12 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
     }));
   };
 
+  const clearLuaScript = () => {
+    updateDraft('luaScript', '');
+    setLuaSnippetId('');
+    setLuaEditorKey((current) => current + 1);
+  };
+
   const updateFieldLayout = (fieldKey, property, value) => {
     setDraft((current) => {
       const fallback = defaultFieldLayout[fieldKey][property];
@@ -1341,7 +1347,7 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                         variant="ghost"
                         className="h-8 cursor-pointer gap-2 px-2"
                         disabled={!draft.luaScript}
-                        onClick={() => updateDraft('luaScript', '')}
+                        onClick={clearLuaScript}
                       >
                         <Trash2 className="size-4" />
                         {t('pages.playground.removeLua')}

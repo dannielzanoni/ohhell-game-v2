@@ -142,7 +142,9 @@ export function LuaStudioFrame({
   const frameRef = useRef(null);
   const lastStudioSourceRef = useRef(null);
   const [snippetId, setSnippetId] = useState('');
+  const [isFrameVisible, setIsFrameVisible] = useState(true);
   const [isOpeningTab, setIsOpeningTab] = useState(false);
+  const [isReopeningFrame, setIsReopeningFrame] = useState(false);
   const [openTabError, setOpenTabError] = useState('');
   const editorUrl = useMemo(
     () => (snippetId ? buildEmbeddedEditorUrl(snippetId) : buildSetupEditorUrl(templateUrl)),
@@ -159,7 +161,7 @@ export function LuaStudioFrame({
   };
 
   const postSource = () => {
-    if (!frameRef.current?.contentWindow || !luaStudioOrigin) {
+    if (snippetId || !frameRef.current?.contentWindow || !luaStudioOrigin) {
       return;
     }
 
@@ -187,7 +189,7 @@ export function LuaStudioFrame({
     try {
       let nextSnippetId = snippetId;
 
-      if (nextSnippetId) {
+      if (nextSnippetId && isFrameVisible) {
         try {
           await saveLuaStudioSnippetSource(nextSnippetId, source);
         } catch (error) {
@@ -213,11 +215,33 @@ export function LuaStudioFrame({
 
       tab.location.href = buildStandaloneEditorUrl(nextSnippetId);
       tab.focus();
+      setIsFrameVisible(false);
     } catch (error) {
       tab.close();
       setOpenTabError(error.message || 'Could not open Mooncode in a new tab.');
     } finally {
       setIsOpeningTab(false);
+    }
+  };
+
+  const reopenIframe = async () => {
+    if (!snippetId) {
+      setIsFrameVisible(true);
+      return;
+    }
+
+    setIsReopeningFrame(true);
+    setOpenTabError('');
+
+    try {
+      const latestSource = await fetchLuaStudioSnippetSource(snippetId);
+      lastStudioSourceRef.current = latestSource;
+      onSourceChange(latestSource);
+      setIsFrameVisible(true);
+    } catch (error) {
+      setOpenTabError(error.message || 'Could not reopen the Mooncode iframe.');
+    } finally {
+      setIsReopeningFrame(false);
     }
   };
 
@@ -273,24 +297,44 @@ export function LuaStudioFrame({
     <div className={cn('grid gap-2', className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[0.68rem] leading-4 text-muted-foreground">
-          Edit inline or open the same Mooncode session in a full tab.
+          {isFrameVisible
+            ? 'Edit inline or open the same Mooncode session in a full tab.'
+            : 'Mooncode is open in a full tab. Saving this form fetches the latest Lua source.'}
         </p>
-        <button
-          type="button"
-          className="rounded-md border border-input px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isOpeningTab}
-          onClick={openSessionInTab}
-        >
-          {isOpeningTab ? 'Opening...' : 'Open in new tab'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!isFrameVisible ? (
+            <button
+              type="button"
+              className="rounded-md border border-input px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isReopeningFrame}
+              onClick={reopenIframe}
+            >
+              {isReopeningFrame ? 'Syncing...' : 'Reopen iframe'}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="rounded-md border border-input px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isOpeningTab}
+            onClick={openSessionInTab}
+          >
+            {isOpeningTab ? 'Opening...' : 'Open in new tab'}
+          </button>
+        </div>
       </div>
-      <iframe
-        ref={frameRef}
-        title={title || 'Lua Studio'}
-        src={editorUrl}
-        className="min-h-[32rem] w-full rounded-md border border-input bg-background"
-        onLoad={postSource}
-      />
+      {isFrameVisible ? (
+        <iframe
+          ref={frameRef}
+          title={title || 'Lua Studio'}
+          src={editorUrl}
+          className="min-h-[32rem] w-full rounded-md border border-input bg-background"
+          onLoad={postSource}
+        />
+      ) : (
+        <div className="rounded-md border border-input bg-background/70 p-3 text-xs leading-5 text-muted-foreground">
+          The inline editor is closed. Keep editing in the Mooncode tab, then save this form to pull the full Lua source into Fodinha.
+        </div>
+      )}
       {openTabError ? (
         <p className="text-[0.68rem] leading-4 text-destructive">{openTabError}</p>
       ) : null}
