@@ -983,6 +983,49 @@ function ManaPool({ mana }) {
   );
 }
 
+function useTimerNow(timer) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!timer) {
+      return undefined;
+    }
+
+    setNow(Date.now());
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 200);
+
+    return () => window.clearInterval(interval);
+  }, [timer]);
+
+  return now;
+}
+
+function getTimerSnapshot(timer, now) {
+  if (!timer) {
+    return {
+      elapsedMs: 0,
+      progress: 0,
+      remainingMs: 0,
+      seconds: 0,
+    };
+  }
+
+  const elapsedMs = Math.max(0, now - timer.startedAt);
+  const remainingMs = Math.max(0, timer.durationMs - elapsedMs);
+  const progress = timer.durationMs
+    ? Math.max(0, Math.min(100, (remainingMs / timer.durationMs) * 100))
+    : 0;
+
+  return {
+    elapsedMs,
+    progress,
+    remainingMs,
+    seconds: Math.ceil(remainingMs / 1000),
+  };
+}
+
 function PlayerSeat({
   avatarSrc,
   cardBackSrc,
@@ -1001,9 +1044,13 @@ function PlayerSeat({
   points,
   readyControls = null,
   showReadyState = false,
+  turnTimer = null,
 }) {
   const scaleClass = isCurrent ? 'scale-90' : 'scale-75';
   const isPowerDropActive = canDropPowerCard && draggingPowerCard?.type === 'targetable';
+  const timerNow = useTimerNow(turnTimer);
+  const timerProgress = getTimerSnapshot(turnTimer, timerNow).progress;
+  const showTurnTimer = Boolean(isTurnToPlay && turnTimer);
   const avatarBorderClass = isPowerDropActive
     ? 'border-violet-200 ring-4 ring-violet-300/55'
     : isTurnToPlay
@@ -1035,20 +1082,37 @@ function PlayerSeat({
 
       <div className="relative z-10 flex items-center">
         <div
-          className={`relative z-20 grid size-[6.6rem] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] ${avatarBorderClass} bg-black shadow-2xl shadow-black/60 sm:size-[7.7rem]`}
+          className="relative z-20 grid size-[6.6rem] shrink-0 place-items-center sm:size-[7.7rem]"
           onDragOver={handleAvatarDragOver}
           onDrop={handleAvatarDrop}
         >
-          {avatarSrc ? (
-            <img
-              src={avatarSrc}
-              alt=""
-              className="size-full scale-110 object-cover"
-              draggable="false"
+          {showTurnTimer ? (
+            <span
+              aria-hidden="true"
+              className="absolute -inset-2 rounded-full opacity-95 transition-[background] duration-200 ease-linear"
+              style={{
+                background: `conic-gradient(#fbbf24 ${timerProgress}%, rgba(139, 92, 246, 0.18) ${timerProgress}% 100%)`,
+                mask: 'radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px))',
+                WebkitMask:
+                  'radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px))',
+              }}
             />
-          ) : (
-            <UserRound className="size-11 text-zinc-300 sm:size-12" />
-          )}
+          ) : null}
+
+          <div
+            className={`relative grid size-full place-items-center overflow-hidden rounded-full border-[3px] ${avatarBorderClass} bg-black shadow-2xl shadow-black/60`}
+          >
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt=""
+                className="size-full scale-110 object-cover"
+                draggable="false"
+              />
+            ) : (
+              <UserRound className="size-11 text-zinc-300 sm:size-12" />
+            )}
+          </div>
         </div>
 
         <div
@@ -1208,21 +1272,8 @@ function BidControls({ onBid, possibleBids }) {
 
 function ActionTimer({ onExpire, timer }) {
   const { t } = useTranslation();
-  const [now, setNow] = useState(() => Date.now());
+  const now = useTimerNow(timer);
   const expiredTimerIdRef = useRef('');
-
-  useEffect(() => {
-    if (!timer) {
-      return undefined;
-    }
-
-    setNow(Date.now());
-    const interval = window.setInterval(() => {
-      setNow(Date.now());
-    }, 200);
-
-    return () => window.clearInterval(interval);
-  }, [timer]);
 
   useEffect(() => {
     expiredTimerIdRef.current = '';
@@ -1247,12 +1298,7 @@ function ActionTimer({ onExpire, timer }) {
     return null;
   }
 
-  const elapsedMs = Math.max(0, now - timer.startedAt);
-  const remainingMs = Math.max(0, timer.durationMs - elapsedMs);
-  const progress = timer.durationMs
-    ? Math.max(0, Math.min(100, (remainingMs / timer.durationMs) * 100))
-    : 0;
-  const seconds = Math.ceil(remainingMs / 1000);
+  const { progress, remainingMs, seconds } = getTimerSnapshot(timer, now);
   const label =
     timer.type === 'bid'
       ? t('game.timerBid')
@@ -3143,6 +3189,7 @@ export function Game() {
               ) : null
             }
             showReadyState={isWaitingForReady}
+            turnTimer={player.id === turnPlayerId ? actionTimer : null}
           />
         );
       })}
