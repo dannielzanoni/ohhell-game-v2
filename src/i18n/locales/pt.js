@@ -192,14 +192,14 @@ export const pt = {
     },
     hellHandHome: {
       actions: {
-        cards: 'Cards',
-        mercenaries: 'Mercenaries',
-        play: 'Play',
-        rooms: 'Rooms',
-        settings: 'Settings',
+        cards: 'Cartas',
+        mercenaries: 'Mercenários',
+        play: 'Jogar',
+        rooms: 'Salas',
+        settings: 'Ajustes',
       },
-      description:
-        'Mercenarios negociam com decks amaldicoados, dividas de sangue e apostas impossiveis sob uma mesa enegrecida.',
+      description: 'Jogo Multiplayer de cartas. Jogue com mercenários, explore maldições com apostas valendo sua permanência na mesa.',
+      luaIntegration: ' Crie Cartas e Decks da comunidade com integração com Lua',
       eyebrow: 'Modo dark magic',
       pillOne: 'Apostas amaldicoadas',
       pillTwo: 'Decks de mercenarios',

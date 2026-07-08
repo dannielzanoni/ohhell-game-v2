@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -6,12 +6,17 @@ import {
   ChevronRight,
   Eye,
   Save,
+  House,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import TiltedCard from '@/components/ui/TiltedCard.jsx';
+import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import switchCardSound from '@/assets/sounds/hell-hand/ui/switch_card.mp3';
 import { cn } from '@/lib/utils.js';
+import { getGamePreferences } from '@/services/gamePreferencesService.js';
+import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
 import { createMercenary, getMercenaries } from '@/services/mercenariesService.js';
 import { isCurrentUserAdmin } from '@/services/authService.js';
 import {
@@ -35,6 +40,18 @@ function getCarouselOffset(index, activeIndex, length) {
   return offset;
 }
 
+function playSwitchCardSound() {
+  const volume = getGamePreferences().volume / 100;
+
+  if (volume <= 0) {
+    return;
+  }
+
+  const audio = new Audio(switchCardSound);
+  audio.volume = volume;
+  audio.play().catch(() => {});
+}
+
 function CharacterCard({ character, isActive, onSelect, offset, t }) {
   const title = getMercenaryTitle(character, t);
   const subtitle = getMercenarySubtitle(character, t);
@@ -49,11 +66,11 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
     <article
       aria-current={isActive}
       className={cn(
-        'absolute left-1/2 top-1/2 h-[20.5rem] w-[min(92vw,41rem)] cursor-pointer rounded-lg outline-none transition duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-[24rem] sm:w-[43rem] lg:h-[calc(100%-1.25rem)] lg:max-h-[24rem] lg:w-[min(68vw,46rem)]',
-        isActive ? 'opacity-100' : 'opacity-55 hover:opacity-80',
+        'absolute left-1/2 top-1/2 h-[20.5rem] w-[min(92vw,41rem)] cursor-pointer rounded-lg opacity-100 outline-none transition duration-300 focus-visible:ring-3 focus-visible:ring-amber-300/50 sm:h-[24rem] sm:w-[43rem] lg:h-[calc(100%-1rem)] lg:max-h-[20.5rem] lg:w-[min(62vw,40rem)] xl:max-h-[22rem]',
+        isActive ? 'brightness-100' : 'brightness-75 hover:brightness-90',
       )}
       style={{
-        transform: `translate(calc(-50% + ${xOffset}), -50%) rotate(${offset * -5}deg) scale(${isActive ? 1 : 0.82})`,
+        transform: `translate(calc(-50% + ${xOffset}), -50%) rotate(0deg) scale(${isActive ? 1 : 0.82})`,
         zIndex: isActive ? 20 : 10 - Math.abs(offset),
       }}
     >
@@ -70,13 +87,13 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
           containerWidth="100%"
           imageHeight="100%"
           imageWidth="100%"
-          rotateAmplitude={isActive ? 11 : 4}
+          rotateAmplitude={isActive ? 11 : 0}
           scaleOnHover={isActive ? 1.04 : 1}
           showMobileWarning={false}
           showTooltip={false}
           displayOverlayContent
           overlayContent={
-            <div className="relative flex size-full flex-col justify-between overflow-hidden rounded-lg border border-white/15 p-4 text-left text-white shadow-2xl shadow-black/35 sm:p-5">
+            <div className="relative flex size-full flex-col justify-between overflow-hidden rounded-lg border border-red-200/15 p-4 text-left text-white shadow-2xl shadow-black/45 sm:p-5 lg:p-4">
               <div
                 className={cn(
                   'absolute inset-0 bg-gradient-to-br',
@@ -92,10 +109,10 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
                     character.markerClass,
                   )}
                 />
-                <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-4xl">
                   {title}
                 </h2>
-                <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-white/78 sm:leading-6">
+                <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-stone-200/85 sm:leading-6 lg:max-w-[22rem] lg:leading-5">
                   {subtitle}
                 </p>
               </div>
@@ -106,7 +123,7 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
       {isActive ? (
         <Button
           asChild
-          className="absolute bottom-4 right-4 z-30 h-10 cursor-pointer gap-2 bg-white text-black hover:bg-white/85"
+          className="absolute bottom-4 right-4 z-30 h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
         >
           <Link to={character.path}>
             <Eye className="size-4" />
@@ -274,35 +291,68 @@ export function Mercenaries() {
 
   useEffect(() => {
     void loadMercenaries();
+    startHellHandHomeTheme();
   }, []);
 
   const goToPrevious = () => {
+    playSwitchCardSound();
     setActiveIndex((current) =>
       current === 0 ? characters.length - 1 : current - 1,
     );
   };
 
   const goToNext = () => {
+    playSwitchCardSound();
     setActiveIndex((current) => (current + 1) % characters.length);
   };
 
+  const handleCharacterSelect = (index) => {
+    if (index === activeIndex) {
+      return;
+    }
+
+    playSwitchCardSound();
+    setActiveIndex(index);
+  };
+
   return (
-    <main className="min-h-screen bg-background px-4 py-5 text-foreground md:px-6 lg:h-screen lg:overflow-hidden lg:py-4">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-4 lg:h-full lg:min-h-0">
-        <header className="rounded-lg border border-border bg-card p-4 shadow-sm lg:shrink-0">
-          <p className="text-sm font-semibold uppercase text-primary">
-            {t('pages.characters.eyebrow')}
-          </p>
+    <main className="relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-3">
+      <img
+        src={hellHandBg}
+        alt=""
+        className="absolute inset-0 size-full scale-105 object-cover"
+        draggable="false"
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(185,28,28,0.26),transparent_34%),linear-gradient(115deg,rgba(0,0,0,0.94),rgba(36,10,10,0.78)_48%,rgba(0,0,0,0.96))]" />
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/70 to-transparent" />
+
+      <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-4 lg:h-full lg:min-h-0 lg:gap-3">
+        <header className="rounded-lg border border-red-200/12 bg-black/70 p-4 shadow-2xl shadow-black/35 backdrop-blur lg:shrink-0 lg:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-black uppercase text-amber-300/80 lg:text-xs">
+              {t('pages.characters.eyebrow')}
+            </p>
+            <Button
+              asChild
+              variant="outline"
+              className="h-9 cursor-pointer gap-2 border-red-200/20 bg-black/55 text-stone-100 hover:border-amber-300/45 hover:bg-red-950/55 hover:text-amber-100"
+            >
+              <Link to="/hell-hand">
+                <House className="size-4" />
+                Home
+              </Link>
+            </Button>
+          </div>
           <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-3xl">
+              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-2xl">
                 {t('pages.characters.title')}
               </h1>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground lg:leading-5">
+              <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-stone-300 lg:max-w-2xl lg:text-xs lg:leading-4">
                 {t('pages.characters.description')}
               </p>
             </div>
-            <div className="flex gap-2 rounded-lg border border-border bg-background p-2">
+            <div className="flex gap-2 rounded-lg border border-red-200/12 bg-black/55 p-2 shadow-inner lg:p-1.5">
               {characters.map((character, index) => (
                 <button
                   key={character.id}
@@ -314,9 +364,9 @@ export function Mercenaries() {
                     'size-2.5 rounded-full transition',
                     activeIndex === index
                       ? character.markerClass
-                      : 'bg-muted-foreground/35 hover:bg-muted-foreground/65',
+                      : 'bg-stone-500/45 hover:bg-amber-200/65',
                   )}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => handleCharacterSelect(index)}
                 />
               ))}
             </div>
@@ -331,13 +381,13 @@ export function Mercenaries() {
         ) : null}
 
         <div className="grid gap-4 lg:min-h-0 lg:flex-1">
-          <section className="flex flex-col rounded-lg border border-border bg-card p-4 shadow-sm lg:min-h-0">
+          <section className="flex flex-col rounded-lg border border-red-200/12 bg-black/68 p-4 shadow-2xl shadow-black/35 backdrop-blur lg:min-h-0 lg:p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-muted-foreground">
+                <p className="text-xs font-black uppercase text-amber-300/70">
                   {t('pages.characters.carouselEyebrow')}
                 </p>
-                <h2 className="text-xl font-black lg:text-lg">
+                <h2 className="text-xl font-black text-white lg:text-base">
                   {t('pages.characters.carouselTitle')}
                 </h2>
               </div>
@@ -347,7 +397,7 @@ export function Mercenaries() {
                   variant="outline"
                   size="icon-lg"
                   aria-label={t('pages.characters.previous')}
-                  className="cursor-pointer"
+                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
                   onClick={goToPrevious}
                 >
                   <ChevronLeft className="size-4" />
@@ -357,7 +407,7 @@ export function Mercenaries() {
                   variant="outline"
                   size="icon-lg"
                   aria-label={t('pages.characters.next')}
-                  className="cursor-pointer"
+                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
                   onClick={goToNext}
                 >
                   <ChevronRight className="size-4" />
@@ -365,7 +415,7 @@ export function Mercenaries() {
               </div>
             </div>
 
-            <div className="relative mt-3 h-[34rem] overflow-hidden rounded-lg border border-border bg-background sm:h-[38rem] lg:min-h-0 lg:flex-1">
+            <div className="relative mt-3 h-[34rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/55 shadow-inner sm:h-[38rem] lg:mt-2 lg:min-h-0 lg:flex-1">
               {characters.map((character, index) => {
                 const offset = getCarouselOffset(
                   index,
@@ -380,7 +430,7 @@ export function Mercenaries() {
                     isActive={index === activeIndex}
                     offset={offset}
                     t={t}
-                    onSelect={() => setActiveIndex(index)}
+                    onSelect={() => handleCharacterSelect(index)}
                   />
                 );
               })}

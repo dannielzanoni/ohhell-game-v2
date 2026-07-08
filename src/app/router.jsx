@@ -29,6 +29,11 @@ export function AppRouter() {
         <Route path="/" element={<GameModeSelect />} />
         <Route path="/hell-hand" element={<HellHandHome />} />
         <Route path="/hell-hand/game" element={<HellHandGame />} />
+        <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
+        <Route path="/hell-hand/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
+        <Route path="/hell-hand/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />
+        <Route path="/hell-hand/mercenaries/Gambler" element={<CharacterProfile characterId="gambler" />} />
+        <Route path="/hell-hand/mercenaries/Leandro" element={<CharacterProfile characterId="leandro" />} />
         <Route element={<AppLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/create-game" element={<CreateGame />} />

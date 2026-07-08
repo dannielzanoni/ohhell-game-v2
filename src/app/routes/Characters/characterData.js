@@ -13,6 +13,8 @@ import gamblerCard3 from '@/assets/characters/gambler/cards/3.png';
 import gamblerCard4 from '@/assets/characters/gambler/cards/4.png';
 import gamblerCard5 from '@/assets/characters/gambler/cards/5.png';
 
+const hellHandMercenariesPath = '/hell-hand/mercenaries';
+
 export const mercenaries = [
   {
     id: 'artemis',
@@ -21,13 +23,13 @@ export const mercenaries = [
     bannerPosition: 'center 35%',
     cards: [
       { id: 'bloodTransfusion', image: artemisCard1, manaCost: 2 },
-      { id: 'deepRed', image: artemisCard2, manaCost: 3 },
+      { id: 'deepRed', image: artemisCard2, manaCost: 8 },
       { id: 'madJustice', image: artemisCard3, manaCost: 4 },
-      { id: 'signInBlood', image: artemisCard4, manaCost: 2 },
-      { id: 'hunterGrace', image: artemisCard5, manaCost: 3 },
+      { id: 'signInBlood', image: artemisCard4, manaCost: 3 },
+      { id: 'hunterGrace', image: artemisCard5, manaCost: 1 },
     ],
     markerClass: 'bg-emerald-500',
-    path: '/mercenaries/Artemis',
+    path: `${hellHandMercenariesPath}/Artemis`,
   },
   {
     id: 'conjuruz',
@@ -35,21 +37,21 @@ export const mercenaries = [
     banner: conjuruzBanner,
     cards: [],
     markerClass: 'bg-violet-500',
-    path: '/mercenaries/Conjuruz',
+    path: `${hellHandMercenariesPath}/Conjuruz`,
   },
   {
     id: 'gambler',
     accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
     banner: gamblerBanner,
     cards: [
-      { id: 'isRightfullyMine', image: gamblerCard1, manaCost: 2 },
-      { id: 'allIn', image: gamblerCard2, manaCost: 5 },
-      { id: 'giveItToMe', image: gamblerCard3, manaCost: 4 },
+      { id: 'isRightfullyMine', image: gamblerCard1, manaCost: 3 },
+      { id: 'allIn', image: gamblerCard2, manaCost: 3 },
+      { id: 'giveItToMe', image: gamblerCard3, manaCost: 5 },
       { id: 'crossYourFingers', image: gamblerCard4, manaCost: 3 },
       { id: 'guabiru', image: gamblerCard5, manaCost: 8 },
     ],
     markerClass: 'bg-red-500',
-    path: '/mercenaries/Gambler',
+    path: `${hellHandMercenariesPath}/Gambler`,
   },
   {
     id: 'leandro',
@@ -57,7 +59,7 @@ export const mercenaries = [
     banner: leandroBanner,
     cards: [],
     markerClass: 'bg-violet-500',
-    path: '/mercenaries/Leandro',
+    path: `${hellHandMercenariesPath}/Leandro`,
   },
 ];
 

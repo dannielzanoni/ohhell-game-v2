@@ -198,8 +198,8 @@ export const en = {
         rooms: 'Rooms',
         settings: 'Settings',
       },
-      description:
-        'Mercenaries bargain with cursed decks, blood debts, and impossible bids beneath a blackened table.',
+      description:'Mercenaries bargain with cursed decks, blood debts, and impossible bids beneath a blackened table.',
+      luaIntegration: ' Create community cards and decks with Lua integration.',
       eyebrow: 'Dark magic mode',
       pillOne: 'Cursed bids',
       pillTwo: 'Mercenary decks',
@@ -268,12 +268,12 @@ export const en = {
       items: {
         artemis: {
           cards: {
-            lastWatch: {
+            madJustice: {
               description:
                 'When low on life, Artemis turns defense into card draw and pressures the end of the round.',
               story:
                 'The last watch began when Artemis kept guard long after the night should have been lost.',
-              title: 'Last Watch',
+              title: 'Mad Justice',
             },
             bloodTransfusion: {
               description:

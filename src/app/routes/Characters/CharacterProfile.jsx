@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
+import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import manaIcon from '@/assets/icons/hell-hand/mana.png';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog.jsx';
 import { cn } from '@/lib/utils.js';
+import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
 import { getMercenaries } from '@/services/mercenariesService.js';
 import {
   findMercenary,
@@ -25,7 +29,7 @@ function CardArtwork({ card, title, markerClass, className }) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-lg border border-border bg-background shadow-inner',
+        'relative overflow-hidden rounded-lg border border-red-200/12 bg-black/70 shadow-inner',
         className,
       )}
     >
@@ -38,7 +42,7 @@ function CardArtwork({ card, title, markerClass, className }) {
         />
       ) : (
         <div className="relative min-h-52 p-4">
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-primary/12 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-red-500/15 to-transparent" />
           <span className={cn('relative block h-1.5 w-12 rounded-full', markerClass)} />
           <div className="relative mt-12">
             <h3 className="text-2xl font-black leading-none">
@@ -60,22 +64,17 @@ function AbilityCard({ card, characterId, markerClass, t }) {
 
   return (
     <Dialog>
-      <article className="relative w-full max-w-[16.5rem] overflow-hidden rounded-lg border border-border bg-card p-2 shadow-sm">
-        <CardArtwork card={card} title={title} markerClass={markerClass} />
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="outline"
-            aria-label={t('pages.characters.cardInfo', { name: title })}
-            className="absolute bottom-4 left-4 z-10 size-7 cursor-pointer rounded-full bg-background/90 shadow-lg backdrop-blur"
-          >
-            <Info className="size-3.5" />
-          </Button>
-        </DialogTrigger>
-      </article>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          aria-label={t('pages.characters.cardInfo', { name: title })}
+          className="relative block w-full max-w-[19.8rem] cursor-pointer overflow-hidden rounded-lg border border-red-200/12 bg-black/70 p-2 text-left shadow-xl shadow-black/25 outline-none transition duration-200 hover:border-amber-300/40 hover:shadow-amber-950/25 focus-visible:ring-2 focus-visible:ring-amber-300 lg:max-w-[10.5rem] xl:max-w-[11.4rem] 2xl:max-w-[12.6rem]"
+        >
+          <CardArtwork card={card} title={title} markerClass={markerClass} />
+        </button>
+      </DialogTrigger>
 
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="border-red-200/15 bg-zinc-950 text-stone-100 sm:max-w-4xl [&_[data-slot=dialog-close]]:size-[2.275rem] [&_[data-slot=dialog-close]_svg]:size-[1.3rem]">
         <div className="grid gap-5 md:grid-cols-[minmax(0,16.5rem)_1fr]">
           <CardArtwork
             card={card}
@@ -86,28 +85,36 @@ function AbilityCard({ card, characterId, markerClass, t }) {
 
           <div className="grid content-start gap-4">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black">
+              <DialogTitle className="text-2xl font-black text-white">
                 {title}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-stone-300">
                 {description}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-lg border border-border bg-muted/40 p-3">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
+            <div className="w-fit rounded-lg border border-red-200/12 bg-black/65 px-3 py-2">
+              <p className="text-xs font-black uppercase text-amber-300/70">
                 {t('pages.characters.manaCost')}
               </p>
-              <p className="mt-1 text-2xl font-black text-foreground">
-                {card.manaCost}
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-2xl font-black leading-none text-white">
+                  {card.manaCost}
+                </span>
+                <img
+                  src={manaIcon}
+                  alt=""
+                  className="size-7 object-contain"
+                  draggable="false"
+                />
+              </div>
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
+              <p className="text-xs font-black uppercase text-amber-300/70">
                 {t('pages.characters.cardStory')}
               </p>
-              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              <p className="mt-2 text-sm leading-7 text-stone-300">
                 {story}
               </p>
             </div>
@@ -123,6 +130,7 @@ export function CharacterProfile({ characterId }) {
   const [characters, setCharacters] = useState(mercenaries);
 
   useEffect(() => {
+    startHellHandHomeTheme();
     let isActive = true;
 
     async function loadMercenaries() {
@@ -149,7 +157,7 @@ export function CharacterProfile({ characterId }) {
   const character = findMercenary(characterId, characters);
 
   if (!character) {
-    return <Navigate to="/mercenaries" replace />;
+    return <Navigate to="/hell-hand/mercenaries" replace />;
   }
 
   const title = getMercenaryTitle(character, t);
@@ -162,10 +170,17 @@ export function CharacterProfile({ characterId }) {
   ];
 
   return (
-    <main className="min-h-screen bg-background px-4 py-5 text-foreground md:px-6">
-      <section className="mx-auto flex w-full max-w-[92rem] flex-col gap-5">
-        <header className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="relative min-h-[24rem]">
+    <main className="relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-3">
+      <img
+        src={hellHandBg}
+        alt=""
+        className="absolute inset-0 size-full scale-105 object-cover"
+        draggable="false"
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(185,28,28,0.24),transparent_34%),linear-gradient(115deg,rgba(0,0,0,0.95),rgba(36,10,10,0.78)_48%,rgba(0,0,0,0.97))]" />
+      <section className="relative z-10 mx-auto flex w-full max-w-[96rem] flex-col gap-5 lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(16rem,0.75fr)_minmax(0,1.65fr)] lg:gap-3">
+        <header className="overflow-hidden rounded-lg border border-red-200/12 bg-black/70 shadow-2xl shadow-black/35 backdrop-blur lg:min-h-0">
+          <div className="relative min-h-[24rem] lg:h-full lg:min-h-0">
             <img
               src={character.banner}
               alt={title}
@@ -180,22 +195,24 @@ export function CharacterProfile({ characterId }) {
               )}
             />
             <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
-            <div className="relative flex min-h-[24rem] flex-col justify-between p-5 text-white md:p-7">
+            <div className="relative flex min-h-[24rem] flex-col justify-between p-5 text-white md:p-7 lg:h-full lg:min-h-0 lg:p-5">
               <Button
                 asChild
                 variant="outline"
-                className="w-fit border-white/25 bg-black/30 text-white hover:bg-white/15 hover:text-white"
+                className="w-fit border-red-200/20 bg-black/55 text-white hover:border-amber-300/45 hover:bg-red-950/55 hover:text-amber-100"
               >
-                <Link to="/mercenaries">
+                <Link to="/hell-hand/mercenaries">
                   <ArrowLeft className="size-4" />
                   {t('pages.characters.backToMercenaries')}
                 </Link>
               </Button>
 
               <div>
-                <h1 className="text-5xl font-black tracking-tight md:text-7xl">
+                <h1 className="text-5xl font-black tracking-tight md:text-7xl lg:text-5xl xl:text-6xl">
                   {title}
                 </h1>
+                <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/78 lg:text-sm lg:leading-6">
+                  {t(`pages.characters.items.${character.id}.subtitle`)}
                 <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/78">
                   {subtitle}
                 </p>
@@ -204,54 +221,15 @@ export function CharacterProfile({ characterId }) {
           </div>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[1fr_24rem]">
-          <article className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">
-              {t('pages.characters.historyEyebrow')}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">
-              {history}
-            </p>
-          </article>
-          <aside className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">
-              {t('pages.characters.statsEyebrow')}
-            </p>
-            <h2 className="mt-1 text-xl font-black">
-              {t('pages.characters.statsTitle')}
-            </h2>
-            <div className="mt-4 grid gap-3">
-              {statRows.map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    {label}
-                  </p>
-                  <p className="mt-1 font-black">{value}</p>
-                </div>
-              ))}
-            </div>
-            {character.passiveScript ? (
-              <details className="mt-4 rounded-lg border border-border bg-muted/35 p-3 text-xs">
-                <summary className="cursor-pointer font-black">
-                  {t('pages.characters.passiveScript')}
-                </summary>
-                <pre className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md bg-background p-2 font-mono text-[0.68rem] leading-5 text-muted-foreground">
-                  {character.passiveScript}
-                </pre>
-              </details>
-            ) : null}
-          </aside>
-        </section>
-
         <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
           <p className="text-xs font-semibold uppercase text-muted-foreground">
             {t('pages.characters.cardsEyebrow')}
           </p>
-          <h2 className="mt-1 text-2xl font-black">
+          <h2 className="mt-1 text-2xl font-black text-white lg:text-xl">
             {t('pages.characters.cardsTitle')}
           </h2>
           {character.cards.length ? (
-            <div className="mt-4 grid justify-items-center gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="mt-4 grid justify-items-center gap-3 sm:grid-cols-2 lg:mt-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[repeat(auto-fit,minmax(10.5rem,10.5rem))] lg:content-center lg:justify-center lg:gap-2 xl:grid-cols-[repeat(auto-fit,minmax(11.4rem,11.4rem))] 2xl:grid-cols-[repeat(auto-fit,minmax(12.6rem,12.6rem))]">
               {character.cards.map((card) => (
                 <AbilityCard
                   key={card.id}
@@ -263,11 +241,11 @@ export function CharacterProfile({ characterId }) {
               ))}
             </div>
           ) : (
-            <div className="mt-4 rounded-lg border border-dashed border-border bg-background px-4 py-10 text-center">
-              <p className="text-sm font-semibold">
+            <div className="mt-4 rounded-lg border border-dashed border-red-200/15 bg-black/55 px-4 py-10 text-center lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:items-center lg:justify-center">
+              <p className="text-sm font-semibold text-stone-100">
                 {t('pages.characters.emptyCardsTitle')}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-stone-400">
                 {t('pages.characters.emptyCardsDescription')}
               </p>
             </div>

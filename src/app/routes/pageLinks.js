@@ -31,7 +31,7 @@ export const pageLinks = [
     icon: UserRound,
     label: 'Mercenaries',
     labelKey: 'pages.links.characters.label',
-    path: '/mercenaries',
+    path: '/hell-hand/mercenaries',
   },
   {
     description: 'Rules and game guide.',
