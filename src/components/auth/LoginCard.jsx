@@ -6,9 +6,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Pencil, UserRound } from 'lucide-react';
+import { Maximize2, Minus, Pencil, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
+import googleIcon from '@/assets/icons/google.svg';
 import { Button } from '@/components/ui/button.jsx';
 import { TypingAnimation } from '@/components/ui/typing-animation.jsx';
 import { environment } from '@/config/environment.js';
@@ -110,12 +111,21 @@ function getInitialProfile() {
 }
 
 export const LoginCard = forwardRef(function LoginCard(
-  { className, onProfileStateChange, onSaved },
+  {
+    className,
+    onProfileStateChange,
+    onSaved,
+    variant = 'default',
+    compact = false,
+    minimizable = false,
+    defaultMinimized = false,
+  },
   ref,
 ) {
   const { t } = useTranslation();
   const googleButtonRef = useRef(null);
   const initialProfileRef = useRef(null);
+  const isHellHand = variant === 'hellHand';
 
   if (!initialProfileRef.current) {
     initialProfileRef.current = getInitialProfile();
@@ -145,6 +155,8 @@ export const LoginCard = forwardRef(function LoginCard(
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [isMinimized, setIsMinimized] = useState(defaultMinimized);
+  const showMinimized = minimizable && isMinimized;
 
   const syncProfileFromAuth = useCallback(() => {
     const profile = authService.getCurrentProfile();
@@ -313,13 +325,23 @@ export const LoginCard = forwardRef(function LoginCard(
           client_id: environment.googleClientId,
           callback: handleGoogleCredential,
         });
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          shape: 'pill',
-          size: 'large',
-          text: 'continue_with',
-          theme: 'outline',
-          width: 260,
-        });
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          showMinimized
+            ? {
+                shape: 'circle',
+                size: 'medium',
+                theme: 'outline',
+                type: 'icon',
+              }
+            : {
+                shape: 'pill',
+                size: compact ? 'medium' : 'large',
+                text: 'continue_with',
+                theme: 'outline',
+                width: compact ? 210 : 260,
+              },
+        );
       })
       .catch(() => {
         if (isMounted) {
@@ -335,47 +357,225 @@ export const LoginCard = forwardRef(function LoginCard(
     return () => {
       isMounted = false;
     };
-  }, [canRenderGoogleLogin, handleGoogleCredential, t]);
+  }, [canRenderGoogleLogin, compact, handleGoogleCredential, showMinimized, t]);
+
+  const avatarButton = (
+    <button
+      type="button"
+      aria-label={t('auth.editGuestAvatar')}
+      className={cn(
+        'group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring',
+        compact && 'size-10',
+        showMinimized && 'size-9',
+        isHellHand &&
+          'bg-red-950/70 text-red-100 ring-red-200/20 hover:bg-red-700/80 hover:text-white hover:ring-red-300/60 focus:ring-red-500/35',
+      )}
+      onClick={() => setIsAvatarModalOpen(true)}
+    >
+      {selectedAvatar ? (
+        <img
+          src={selectedAvatar.src}
+          alt=""
+          className="absolute inset-0 size-full rounded-full object-cover"
+        />
+      ) : (
+        <UserRound
+          className={cn(
+            'size-7 text-muted-foreground transition group-hover:text-primary-foreground',
+            compact && 'size-5',
+            showMinimized && 'size-5',
+            isHellHand && 'text-red-100/70 group-hover:text-white',
+          )}
+        />
+      )}
+      {!showMinimized ? (
+        <span
+          className={cn(
+            'absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground',
+            compact && 'size-5',
+            isHellHand &&
+              'border-red-200/15 bg-black text-red-100 group-hover:border-red-300/60 group-hover:bg-red-700/80 group-hover:text-white',
+          )}
+        >
+          <Pencil className={cn('size-3', compact && 'size-2.5')} />
+        </span>
+      ) : null}
+    </button>
+  );
+
+  if (showMinimized) {
+    return (
+      <>
+        <section
+          className={cn(
+            isHellHand
+              ? 'relative rounded-lg border border-red-200/15 bg-black/70 p-2 text-stone-100 shadow-2xl shadow-black/50 backdrop-blur-md'
+              : 'relative rounded-lg border border-border bg-card p-2 shadow-sm',
+            className,
+          )}
+        >
+          <div className="flex min-h-10 items-center gap-2">
+            {avatarButton}
+
+            <button
+              type="button"
+              className={cn(
+                'min-w-0 flex-1 cursor-pointer truncate text-left text-sm font-semibold leading-none text-foreground outline-none transition focus-visible:underline',
+                isHellHand && 'text-stone-100 hover:text-red-100',
+              )}
+              aria-label="Expand login"
+              onClick={() => setIsMinimized(false)}
+            >
+              {displayNickname}
+            </button>
+
+            {canRenderGoogleLogin ? (
+              <>
+                <span
+                  className={cn(
+                    'shrink-0 text-[0.65rem] font-semibold uppercase text-muted-foreground',
+                    isHellHand && 'text-red-100/60',
+                  )}
+                >
+                  or
+                </span>
+                <div
+                  className={cn(
+                    'relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-stone-200/25 bg-white shadow-sm transition',
+                    isHellHand &&
+                      'border-red-200/15 bg-stone-100 hover:border-red-300/45',
+                  )}
+                >
+                  <img
+                    src={googleIcon}
+                    alt=""
+                    aria-hidden="true"
+                    className="pointer-events-none size-5"
+                    draggable="false"
+                  />
+                  <div
+                    ref={googleButtonRef}
+                    className={cn(
+                      'absolute inset-0 grid size-9 place-items-center overflow-hidden opacity-0',
+                      (isGoogleLoading || isGoogleSubmitting) && 'hidden',
+                    )}
+                  />
+
+                  {isGoogleLoading || isGoogleSubmitting ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled
+                      className={cn(
+                        'size-9 rounded-full p-0',
+                        isHellHand &&
+                          'border-red-200/15 bg-black/45 text-red-100 hover:bg-black/45',
+                      )}
+                    >
+                      {isGoogleSubmitting ? (
+                        <i className="pi pi-spin pi-spinner text-sm" />
+                      ) : (
+                        <GoogleLogo />
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+
+            <button
+              type="button"
+              className={cn(
+                'grid size-8 shrink-0 cursor-pointer place-items-center rounded-md border border-border bg-background/70 text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring',
+                isHellHand &&
+                  'border-red-200/15 bg-black/50 text-red-100/70 hover:bg-red-700/35 hover:text-white focus:ring-red-500/35',
+              )}
+              aria-label="Expand login"
+              onClick={() => setIsMinimized(false)}
+            >
+              <Maximize2 className="size-4" />
+            </button>
+          </div>
+        </section>
+
+        <AvatarEditModal
+          isOpen={isAvatarModalOpen}
+          selectedAvatar={selectedAvatar}
+          onClose={() => setIsAvatarModalOpen(false)}
+          onSelect={selectAvatar}
+          variant={isHellHand ? 'hellHand' : 'default'}
+        />
+      </>
+    );
+  }
 
   return (
     <>
       <section
         className={cn(
-          'rounded-lg border border-border bg-card p-6 shadow-sm',
+          isHellHand
+            ? 'relative rounded-lg border border-red-200/15 bg-black/70 p-3 text-stone-100 shadow-2xl shadow-black/50 backdrop-blur-md'
+            : 'relative rounded-lg border border-border bg-card p-6 shadow-sm',
+          compact && !isHellHand && 'p-3',
           className,
         )}
       >
-        <span className="mb-4 block w-full text-center text-xs font-semibold leading-5 text-muted-foreground">
+        {minimizable ? (
+          <button
+            type="button"
+            className={cn(
+              'absolute right-2 top-2 grid size-7 cursor-pointer place-items-center rounded-md border border-border bg-background/70 text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring',
+              isHellHand &&
+                'border-red-200/15 bg-black/50 text-red-100/65 hover:bg-red-700/35 hover:text-white focus:ring-red-500/35',
+            )}
+            aria-label="Minimize login"
+            onClick={() => setIsMinimized(true)}
+          >
+            <Minus className="size-4" />
+          </button>
+        ) : null}
+        <span
+          className={cn(
+            'mb-4 block w-full text-center text-xs font-semibold leading-5 text-muted-foreground',
+            compact && 'mb-2 text-[0.65rem] leading-4',
+            minimizable && 'pr-7',
+            isHellHand && 'text-red-100/70',
+          )}
+        >
           {t('auth.playAsGuest')}
         </span>
-        <div className="flex items-center gap-4">
-          <div className="flex w-20 shrink-0 flex-col items-center gap-2">
-            <button
-              type="button"
-              aria-label={t('auth.editGuestAvatar')}
-              className="group relative grid size-14 shrink-0 cursor-pointer place-items-center rounded-full bg-secondary ring-2 ring-border transition hover:bg-primary hover:text-primary-foreground hover:ring-primary/60 focus:outline-none focus:ring-4 focus:ring-ring"
-              onClick={() => setIsAvatarModalOpen(true)}
-            >
-              {selectedAvatar ? (
-                <img
-                  src={selectedAvatar.src}
-                  alt=""
-                  className="absolute inset-0 size-full rounded-full object-cover"
-                />
-              ) : (
-                <UserRound className="size-7 text-muted-foreground transition group-hover:text-primary-foreground" />
+        <div className={cn('flex items-center gap-4', compact && 'gap-3')}>
+          <div
+            className={cn(
+              'flex w-20 shrink-0 flex-col items-center gap-2',
+              compact && 'w-14 gap-1',
+            )}
+          >
+            {avatarButton}
+            <span
+              className={cn(
+                'text-center text-xs font-semibold leading-4 text-muted-foreground',
+                compact && 'text-[0.62rem] leading-3',
+                isHellHand && 'text-red-100/65',
               )}
-              <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full border border-border bg-card text-foreground shadow-sm transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
-                <Pencil className="size-3" />
-              </span>
-            </button>
-            <span className="text-center text-xs font-semibold leading-4 text-muted-foreground">
+            >
               {t('auth.selectAvatar')}
             </span>
           </div>
 
-          <div className="min-w-0 flex-1 self-start pt-1 mt-2">
-            <div className="min-h-8 truncate text-2xl font-medium leading-none text-foreground">
+          <div
+            className={cn(
+              'min-w-0 flex-1 self-start pt-1 mt-2',
+              compact && 'mt-1 pt-0',
+            )}
+          >
+            <div
+              className={cn(
+                'min-h-8 truncate text-2xl font-medium leading-none text-foreground',
+                compact && 'min-h-6 text-lg',
+                isHellHand && 'text-stone-100',
+              )}
+            >
               {shouldAnimateNickname ? (
                 <TypingAnimation
                   key={savedNickname}
@@ -391,18 +591,29 @@ export const LoginCard = forwardRef(function LoginCard(
           </div>
         </div>
 
-        <label className="mt-6 block">
-          <span className="text-sm font-medium text-muted-foreground">
+        <label className={cn('mt-6 block', compact && 'mt-3')}>
+          <span
+            className={cn(
+              'text-sm font-medium text-muted-foreground',
+              compact && 'text-xs',
+              isHellHand && 'text-red-100/70',
+            )}
+          >
             {t('auth.nick')}
           </span>
-          <div className="mt-2 flex gap-2">
+          <div className={cn('mt-2 flex gap-2', compact && 'mt-1.5 gap-1.5')}>
             <input
               type="text"
               name="nickname"
               maxLength={24}
               value={nickname}
               placeholder={t('auth.nickPlaceholder')}
-              className="h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
+              className={cn(
+                'h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40',
+                compact && 'h-8 px-2 text-xs',
+                isHellHand &&
+                  'border-red-200/15 bg-black/55 text-stone-100 placeholder:text-red-100/35 focus:border-red-300/55 focus:ring-red-600/30',
+              )}
               onChange={(event) => {
                 setNickname(event.target.value);
                 setSaveError('');
@@ -419,7 +630,12 @@ export const LoginCard = forwardRef(function LoginCard(
               size="icon"
               aria-label={t('auth.saveNick')}
               disabled={!canSaveProfile || isSaving}
-              className="h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              className={cn(
+                'h-11 w-11 shrink-0 cursor-pointer disabled:cursor-not-allowed',
+                compact && 'h-8 w-8',
+                isHellHand &&
+                  'border-red-200/15 bg-red-950/35 text-red-100 hover:border-red-300/45 hover:bg-red-700/55 hover:text-white disabled:opacity-40',
+              )}
               onClick={() => {
                 void saveGuestProfile();
               }}
@@ -427,24 +643,53 @@ export const LoginCard = forwardRef(function LoginCard(
               <i
                 className={`pi ${
                   isSaving ? 'pi-spin pi-spinner' : 'pi-save'
-                } text-base`}
+                } ${compact ? 'text-sm' : 'text-base'}`}
               />
             </Button>
           </div>
         </label>
 
         {saveError ? (
-          <p className="mt-3 text-sm text-destructive">{saveError}</p>
+          <p
+            className={cn(
+              'mt-3 text-sm text-destructive',
+              compact && 'mt-2 text-xs',
+              isHellHand && 'text-red-300',
+            )}
+          >
+            {saveError}
+          </p>
         ) : null}
 
         {canRenderGoogleLogin ? (
           <>
-            <div className="my-6 flex items-center gap-3">
-              <span className="h-px flex-1 bg-border" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div
+              className={cn(
+                'my-6 flex items-center gap-3',
+                compact && 'my-3 gap-2',
+              )}
+            >
+              <span
+                className={cn(
+                  'h-px flex-1 bg-border',
+                  isHellHand && 'bg-red-200/15',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+                  compact && 'text-[0.65rem]',
+                  isHellHand && 'text-red-100/60',
+                )}
+              >
                 {t('auth.or')}
               </span>
-              <span className="h-px flex-1 bg-border" />
+              <span
+                className={cn(
+                  'h-px flex-1 bg-border',
+                  isHellHand && 'bg-red-200/15',
+                )}
+              />
             </div>
 
             <div className="grid justify-items-center gap-2">
@@ -452,6 +697,7 @@ export const LoginCard = forwardRef(function LoginCard(
                 ref={googleButtonRef}
                 className={cn(
                   'min-h-11 w-full overflow-hidden [&>div]:mx-auto',
+                  compact && 'min-h-9',
                   (isGoogleLoading || isGoogleSubmitting) && 'hidden',
                 )}
               />
@@ -461,10 +707,20 @@ export const LoginCard = forwardRef(function LoginCard(
                   type="button"
                   variant="outline"
                   disabled
-                  className="h-11 w-full gap-3"
+                  className={cn(
+                    'h-11 w-full gap-3',
+                    compact && 'h-9 gap-2 text-xs',
+                    isHellHand &&
+                      'border-red-200/15 bg-black/45 text-red-100 hover:bg-black/45',
+                  )}
                 >
                   {isGoogleSubmitting ? (
-                    <i className="pi pi-spin pi-spinner text-base" />
+                    <i
+                      className={cn(
+                        'pi pi-spin pi-spinner text-base',
+                        compact && 'text-sm',
+                      )}
+                    />
                   ) : (
                     <GoogleLogo />
                   )}
@@ -473,13 +729,25 @@ export const LoginCard = forwardRef(function LoginCard(
               ) : null}
 
               {hasAuthToken && !isGoogleAuth ? (
-                <p className="text-center text-xs leading-5 text-muted-foreground">
+                <p
+                  className={cn(
+                    'text-center text-xs leading-5 text-muted-foreground',
+                    compact && 'text-[0.65rem] leading-4',
+                    isHellHand && 'text-red-100/55',
+                  )}
+                >
                   {t('auth.googleKeepsGuest')}
                 </p>
               ) : null}
 
               {googleError ? (
-                <p className="text-center text-sm text-destructive">
+                <p
+                  className={cn(
+                    'text-center text-sm text-destructive',
+                    compact && 'text-xs',
+                    isHellHand && 'text-red-300',
+                  )}
+                >
                   {googleError}
                 </p>
               ) : null}
@@ -493,6 +761,7 @@ export const LoginCard = forwardRef(function LoginCard(
         selectedAvatar={selectedAvatar}
         onClose={() => setIsAvatarModalOpen(false)}
         onSelect={selectAvatar}
+        variant={isHellHand ? 'hellHand' : 'default'}
       />
     </>
   );

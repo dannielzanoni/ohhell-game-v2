@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
@@ -7,8 +8,15 @@ import { avatarGroups } from './avatarOptions.js';
 
 export { avatarGroups, avatars } from './avatarOptions.js';
 
-export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
+export function AvatarEditModal({
+  isOpen,
+  selectedAvatar,
+  onClose,
+  onSelect,
+  variant = 'default',
+}) {
   const { t } = useTranslation();
+  const isHellHand = variant === 'hellHand';
 
   useEffect(() => {
     if (!isOpen) {
@@ -34,9 +42,16 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
     return null;
   }
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const modal = (
     <div
-      className="fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]"
+      className={cn(
+        'fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]',
+        isHellHand && 'z-[100] bg-black/85 p-3 pb-3 sm:p-5 sm:pb-5',
+      )}
       role="presentation"
       onMouseDown={onClose}
     >
@@ -44,10 +59,19 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
-        className="flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl"
+        className={cn(
+          'flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl',
+          isHellHand &&
+            'h-[min(42rem,calc(100dvh-1.5rem))] w-[min(48rem,calc(100vw-1.5rem))] max-w-none rounded-lg border-red-200/15 bg-black/90 text-stone-100 shadow-black/70 sm:h-[min(46rem,calc(100dvh-2.5rem))] sm:w-[min(64rem,calc(100vw-2.5rem))]',
+        )}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+        <header
+          className={cn(
+            'flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5 sm:py-4',
+            isHellHand && 'border-red-200/15 bg-red-950/20',
+          )}
+        >
           <h2 id="avatar-edit-title" className="text-base font-bold sm:text-xl">
             {t('auth.avatarModalTitle')}
           </h2>
@@ -56,7 +80,11 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
             variant="ghost"
             size="icon"
             aria-label={t('auth.closeModal')}
-            className="cursor-pointer"
+            className={cn(
+              'cursor-pointer',
+              isHellHand &&
+                'text-red-100 hover:bg-red-700/30 hover:text-white',
+            )}
             onClick={onClose}
           >
             <X />
@@ -66,7 +94,12 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
           {avatarGroups.map((group) => (
             <div key={group.title} className="not-first:mt-6 sm:not-first:mt-7">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
+              <h3
+                className={cn(
+                  'text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm',
+                  isHellHand && 'text-red-100/65',
+                )}
+              >
                 {group.title === 'Avatares' ? t('auth.avatars') : group.title}
               </h3>
               <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-x-2 gap-y-3 min-[380px]:grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] sm:mt-4 sm:grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] sm:gap-4">
@@ -83,6 +116,9 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
                       className={cn(
                         'mx-auto grid size-11 min-w-0 cursor-pointer place-items-center rounded-full p-0.5 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring min-[380px]:size-12 sm:size-16 sm:p-1',
                         isSelected && 'ring-primary',
+                        isHellHand &&
+                          'hover:ring-red-300/80 focus:ring-red-500/45',
+                        isHellHand && isSelected && 'ring-red-400',
                       )}
                       onClick={() => {
                         onSelect(avatar);
@@ -107,4 +143,6 @@ export function AvatarEditModal({ isOpen, selectedAvatar, onClose, onSelect }) {
       </section>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

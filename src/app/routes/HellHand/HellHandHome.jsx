@@ -12,6 +12,7 @@ import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
 import luaIcon from '@/assets/icons/hell-hand/Lua-Dark.svg';
 import selectMenuSound from '@/assets/sounds/hell-hand/ui/select_menu.mp3';
 import hellHandTitleVideo from '@/assets/videos/hell-hand-bg.mp4';
+import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
 import { getGamePreferences } from '@/services/gamePreferencesService.js';
@@ -111,6 +112,20 @@ export function HellHandHome() {
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(185,28,28,0.24),transparent_32%),linear-gradient(110deg,rgba(0,0,0,0.92),rgba(24,10,10,0.74)_48%,rgba(0,0,0,0.94))]" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/70 to-transparent" />
+      </div>
+
+      <div
+        className={`absolute right-3 top-3 z-20 w-[min(17rem,calc(100vw-1.5rem))] transition duration-700 sm:right-5 sm:top-5 lg:w-[16.5rem] ${
+          isTransitioning ? 'scale-125 opacity-0 blur-sm' : 'scale-100 opacity-100 blur-0'
+        }`}
+      >
+        <LoginCard
+          compact
+          defaultMinimized
+          minimizable
+          variant="hellHand"
+          className="w-full"
+        />
       </div>
 
       <section
