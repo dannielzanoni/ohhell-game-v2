@@ -12,6 +12,7 @@ const REFRESH_TOKEN_STORAGE_KEY = 'REFRESH_TOKEN';
 const ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 30;
 const MISSING_REFRESH_TOKEN_CODE = 'MISSING_REFRESH_TOKEN';
 let pendingAuthRefresh = null;
+let pendingAuthHydration = null;
 let pendingGuestAuthRefresh = null;
 
 function canUseStorage() {
@@ -185,6 +186,10 @@ export function clearAuthToken() {
   setRefreshToken(null);
 }
 
+export function canRestoreAuthSession() {
+  return Boolean(getAuthToken() && getRefreshToken());
+}
+
 function persistAuth(response) {
   if (typeof response === 'string') {
     setAuthToken(response);
@@ -269,6 +274,49 @@ export async function refreshAuth() {
   }
 
   return pendingAuthRefresh;
+}
+
+export async function hydrateAuthSession() {
+  if (!pendingAuthHydration) {
+    pendingAuthHydration = (async () => {
+      const token = getAuthToken();
+      const player = parseAuthPlayer(token);
+
+      if (!token || !getRefreshToken()) {
+        return token;
+      }
+
+      try {
+        const response = await refreshAuth();
+
+        return response?.token || getAuthToken();
+      } catch (error) {
+        if (error?.status === 0) {
+          return token;
+        }
+
+        if (player?.type !== 'Anonymous' || !canFallbackToGuestAuth(error)) {
+          return getAuthToken();
+        }
+
+        try {
+          const response = await refreshGuestAuth();
+
+          return response?.token || getAuthToken();
+        } catch (guestError) {
+          if (guestError?.status === 0) {
+            return token;
+          }
+
+          return getAuthToken();
+        }
+      }
+    })().finally(() => {
+      pendingAuthHydration = null;
+    });
+  }
+
+  return pendingAuthHydration;
 }
 
 export async function refreshAuthIfNeeded() {
@@ -409,10 +457,12 @@ export async function withAuthRetry(request, payload) {
 }
 
 export const authService = {
+  canRestoreAuthSession,
   clearAuthToken,
   getAuthPlayer,
   getAuthToken,
   getCurrentProfile,
+  hydrateAuthSession,
   isGoogleAuthenticated,
   loginWithGoogle,
   refreshAuth,

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { AlertCircle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { authService } from '@/services/authService.js';
 
 const ThemeContext = createContext(null);
 const ToastContext = createContext(null);
@@ -78,6 +79,9 @@ function ToastViewport({ onDismiss, toasts }) {
 
 export function AppProvider({ children }) {
   const timerIdsRef = useRef(new Map());
+  const [isAuthReady, setIsAuthReady] = useState(
+    () => !authService.canRestoreAuthSession(),
+  );
   const [toasts, setToasts] = useState([]);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
@@ -134,6 +138,24 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (isAuthReady) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    void authService.hydrateAuthSession().finally(() => {
+      if (isMounted) {
+        setIsAuthReady(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthReady]);
+
   const themeValue = useMemo(
     () => ({
       theme,
@@ -153,7 +175,7 @@ export function AppProvider({ children }) {
   return (
     <ThemeContext.Provider value={themeValue}>
       <ToastContext.Provider value={toastValue}>
-        {children}
+        {isAuthReady ? children : null}
         <ToastViewport onDismiss={dismissToast} toasts={toasts} />
       </ToastContext.Provider>
     </ThemeContext.Provider>
