@@ -18,13 +18,17 @@ export function classifyPlatform({ search = '', width = 0 } = {}) {
   );
 }
 
+export function getPlatformSearch(browser = globalThis.window) {
+  return browser?.location?.search || '';
+}
+
 export function getBrowserPlatform(browser = globalThis.window) {
   if (!browser) {
     return platforms.MOBILE;
   }
 
   return classifyPlatform({
-    search: browser.location?.search,
+    search: getPlatformSearch(browser),
     width: browser.innerWidth,
   });
 }
