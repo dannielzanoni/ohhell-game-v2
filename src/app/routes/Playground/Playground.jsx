@@ -1444,13 +1444,33 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
               ) : null}
 
               {isLoadingCards ? (
-                <div className="mt-5 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]">
+                <div
+                  className={cn(
+                    'mt-5 grid gap-3',
+                    isHellHand
+                      ? '[grid-template-columns:repeat(auto-fit,minmax(5.5rem,7rem))]'
+                      : '[grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]',
+                  )}
+                >
                   {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="h-72 animate-pulse rounded-lg bg-muted" />
+                    <div
+                      key={index}
+                      className={cn(
+                        'animate-pulse rounded-lg bg-muted',
+                        isHellHand ? 'h-36' : 'h-72',
+                      )}
+                    />
                   ))}
                 </div>
               ) : cards.length ? (
-                <div className="mt-5 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]">
+                <div
+                  className={cn(
+                    'mt-5 grid gap-3',
+                    isHellHand
+                      ? '[grid-template-columns:repeat(auto-fit,minmax(5.5rem,7rem))]'
+                      : '[grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]',
+                  )}
+                >
                   {cards.map((card) => {
                     const isOfficial = card.kind === 'official';
                     const canEditCard = currentUserId && card.creator_id === currentUserId;
@@ -1475,32 +1495,65 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                           ) : (
                             <div
                               className={cn(
-                                'grid size-full place-items-center p-6 text-center text-white',
+                                'grid size-full place-items-center text-center text-white',
+                                isHellHand ? 'p-2' : 'p-6',
                                 isOfficial
                                   ? 'bg-gradient-to-br from-amber-900 via-slate-950 to-yellow-600/70'
                                   : 'bg-gradient-to-br from-violet-950 via-slate-950 to-primary/60',
                               )}
                             >
                               <div>
-                                <Sparkles className="mx-auto size-9 text-violet-100" />
-                                <p className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-violet-100/80">
+                                <Sparkles
+                                  className={cn(
+                                    'mx-auto text-violet-100',
+                                    isHellHand ? 'size-5' : 'size-9',
+                                  )}
+                                />
+                                <p
+                                  className={cn(
+                                    'font-black uppercase text-violet-100/80',
+                                    isHellHand
+                                      ? 'mt-2 text-[0.55rem]'
+                                      : 'mt-4 text-xs tracking-[0.22em]',
+                                  )}
+                                >
                                   {t(getKindLabelKey(card.kind))}
                                 </p>
-                                <p className="mt-2 line-clamp-3 text-lg font-black leading-tight">
+                                <p
+                                  className={cn(
+                                    'mt-2 line-clamp-3 font-black leading-tight',
+                                    isHellHand ? 'text-xs' : 'text-lg',
+                                  )}
+                                >
                                   {card.name}
                                 </p>
                               </div>
                             </div>
                           )}
                         </div>
-                        <div className="grid gap-3 p-3">
+                        <div
+                          className={cn(
+                            'grid',
+                            isHellHand ? 'gap-1.5 p-1.5' : 'gap-3 p-3',
+                          )}
+                        >
                           <div>
-                            <p className="line-clamp-1 text-sm font-black">{card.name}</p>
-                            <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
-                              {card.description}
+                            <p
+                              className={cn(
+                                'line-clamp-1 font-black',
+                                isHellHand ? 'text-[0.65rem]' : 'text-sm',
+                              )}
+                            >
+                              {card.name}
                             </p>
+                            {!isHellHand ? (
+                              <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                                {card.description}
+                              </p>
+                            ) : null}
                           </div>
-                          <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                          {!isHellHand ? (
+                            <div className="flex flex-wrap gap-2 text-xs font-semibold">
                             <span
                               className={cn(
                                 'rounded-full border px-2.5 py-1',
@@ -1516,8 +1569,9 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                             <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-2.5 py-1 text-sky-700 dark:text-sky-200">
                               {t('pages.playground.fields.manaCost')}: {card.mana_cost ?? 0}
                             </span>
-                          </div>
-                          {card.script ? (
+                            </div>
+                          ) : null}
+                          {!isHellHand && card.script ? (
                             <details className="rounded-lg border border-border bg-muted/35 p-2 text-xs">
                               <summary className="cursor-pointer font-black">
                                 {t('pages.playground.luaScript')}
@@ -1527,22 +1581,27 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                               </pre>
                             </details>
                           ) : null}
-                          <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+                          {!isHellHand ? (
+                            <div className="flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
                             <UserRound className="size-4 shrink-0" />
                             <span className="min-w-0 flex-1 truncate">
                               {t('pages.powerDecks.createdBy', {
                                 name: getCreatorName(card, t),
                               })}
                             </span>
-                          </div>
+                            </div>
+                          ) : null}
                           {canEditCard ? (
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-9 w-full cursor-pointer gap-2"
+                              className={cn(
+                                'w-full cursor-pointer gap-2',
+                                isHellHand ? 'h-7 text-[0.65rem]' : 'h-9',
+                              )}
                               onClick={() => editCard(card)}
                             >
-                              <Pencil className="size-4" />
+                              <Pencil className={cn(isHellHand ? 'size-3' : 'size-4')} />
                               {t('pages.playground.editCard')}
                             </Button>
                           ) : null}
