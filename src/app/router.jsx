@@ -35,6 +35,7 @@ export function AppRouter() {
         <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />
         <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
         <Route path="/hell-hand/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
+        <Route path="/hell-hand/mercenaries/Carmen" element={<CharacterProfile characterId="carmen" />} />
         <Route path="/hell-hand/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />
         <Route path="/hell-hand/mercenaries/Gambler" element={<CharacterProfile characterId="gambler" />} />
         <Route path="/hell-hand/mercenaries/Leandro" element={<CharacterProfile characterId="leandro" />} />
@@ -49,6 +50,7 @@ export function AppRouter() {
           <Route path="/mercenaries" element={<Mercenaries />} />
           <Route path="/mercenaries/:mercenaryId" element={<CharacterProfileRoute />} />
           <Route path="/Artemis" element={<Navigate to="/mercenaries/Artemis" replace />} />
+          <Route path="/Carmen" element={<Navigate to="/mercenaries/Carmen" replace />} />
           <Route path="/Conjuruz" element={<Navigate to="/mercenaries/Conjuruz" replace />} />
           <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
           <Route path="/Leandro" element={<Navigate to="/mercenaries/Leandro" replace />} />

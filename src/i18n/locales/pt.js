@@ -331,6 +331,38 @@ export const pt = {
           temper: 'Paciente',
           title: 'Artemis',
         },
+        carmen: {
+          cards: {
+            carmenCard2: {
+              description:
+                'Uma carta de abertura para Carmen controlar o ritmo da mesa e preparar a proxima jogada.',
+              story:
+                'Carmen aprendeu cedo que toda divida tem uma melodia propria.',
+              title: 'Compasso Marcado',
+            },
+            carmenCard4: {
+              description:
+                'Pressiona jogadores que apostaram alto e recompensa Carmen quando a mesa hesita.',
+              story:
+                'Quando Carmen sorri, alguem ja aceitou um contrato sem perceber.',
+              title: 'Contrato Rubro',
+            },
+            carmenCard5: {
+              description:
+                'Transforma uma rodada perigosa em vantagem, punindo perdas mal calculadas.',
+              story:
+                'O ultimo acorde sempre chega depois que a mesa acredita que a musica acabou.',
+              title: 'Ultimo Acorde',
+            },
+          },
+          deck: 'Contratos e pressao',
+          history:
+            'Carmen negocia com sangue frio e joga como quem conhece o preco exato de cada promessa. Ela entra na mesa para cobrar dividas, torcer apostas e transformar pequenas hesitacoes em vantagem.',
+          style: 'Pressao',
+          subtitle: 'Uma cobradora de pactos que transforma promessas em dividas.',
+          temper: 'Calculista',
+          title: 'Carmen',
+        },
         conjuruz: {
           cards: {},
           deck: 'Rituais e pressagios',

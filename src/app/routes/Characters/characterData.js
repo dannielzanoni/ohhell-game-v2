@@ -4,6 +4,10 @@ import artemisCard2 from '@/assets/characters/artemis/cards/2.png';
 import artemisCard3 from '@/assets/characters/artemis/cards/3.png';
 import artemisCard4 from '@/assets/characters/artemis/cards/4.png';
 import artemisCard5 from '@/assets/characters/artemis/cards/5.png';
+import carmenBanner from '@/assets/characters/carmen/banner.png';
+import carmenCard2 from '@/assets/characters/carmen/cards/2.png';
+import carmenCard4 from '@/assets/characters/carmen/cards/4.png';
+import carmenCard5 from '@/assets/characters/carmen/cards/5.png';
 import conjuruzBanner from '@/assets/characters/conjuruz/banner.png';
 import gamblerBanner from '@/assets/characters/gambler/banner.png';
 import leandroBanner from '@/assets/characters/leandro/banner.png';
@@ -38,6 +42,18 @@ export const mercenaries = [
     cards: [],
     markerClass: 'bg-violet-500',
     path: `${hellHandMercenariesPath}/Conjuruz`,
+  },
+  {
+    id: 'carmen',
+    accentClass: 'from-rose-500/25 via-black/25 to-amber-500/20',
+    banner: carmenBanner,
+    cards: [
+      { id: 'carmenCard2', image: carmenCard2, manaCost: 2 },
+      { id: 'carmenCard4', image: carmenCard4, manaCost: 4 },
+      { id: 'carmenCard5', image: carmenCard5, manaCost: 5 },
+    ],
+    markerClass: 'bg-rose-500',
+    path: `${hellHandMercenariesPath}/Carmen`,
   },
   {
     id: 'gambler',

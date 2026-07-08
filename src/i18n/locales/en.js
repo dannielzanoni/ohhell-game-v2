@@ -331,6 +331,38 @@ export const en = {
           temper: 'Patient',
           title: 'Artemis',
         },
+        carmen: {
+          cards: {
+            carmenCard2: {
+              description:
+                'An opening card for Carmen to control the table tempo and prepare the next play.',
+              story:
+                'Carmen learned early that every debt has its own melody.',
+              title: 'Marked Tempo',
+            },
+            carmenCard4: {
+              description:
+                'Pressures players who bid high and rewards Carmen when the table hesitates.',
+              story:
+                'When Carmen smiles, someone has already accepted a contract without noticing.',
+              title: 'Crimson Contract',
+            },
+            carmenCard5: {
+              description:
+                'Turns a dangerous round into advantage by punishing poorly calculated losses.',
+              story:
+                'The final chord always arrives after the table believes the music is over.',
+              title: 'Final Chord',
+            },
+          },
+          deck: 'Contracts and pressure',
+          history:
+            'Carmen negotiates with cold blood and plays as if she knows the exact price of every promise. She enters the table to collect debts, twist bids, and turn small hesitations into advantage.',
+          style: 'Pressure',
+          subtitle: 'A pact collector who turns promises into debts.',
+          temper: 'Calculating',
+          title: 'Carmen',
+        },
         conjuruz: {
           cards: {},
           deck: 'Rituals and omens',
