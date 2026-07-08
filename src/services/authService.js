@@ -102,6 +102,28 @@ function parseAuthPlayer(token = getAuthToken()) {
   return null;
 }
 
+function getExplicitPlayerRole(player, claims) {
+  return (
+    player?.role ||
+    player?.data?.role ||
+    claims?.role ||
+    claims?.user?.role ||
+    claims?.user?.data?.role ||
+    null
+  );
+}
+
+function hasExplicitAuthRole(token) {
+  const claims = decodeAuthTokenPayload(token);
+  const player = parseAuthPlayer(token);
+
+  if (!claims || !player) {
+    return false;
+  }
+
+  return Boolean(getExplicitPlayerRole(player, claims));
+}
+
 function getPlayerNickname(player) {
   if (player?.type === 'Anonymous') {
     return player.data?.data?.nickname || player.data?.id || '';
@@ -126,8 +148,8 @@ function getPlayerPicture(player) {
   return player?.data?.picture || player?.picture || '';
 }
 
-function getPlayerRole(player) {
-  return player?.data?.role || 'Player';
+function getPlayerRole(player, claims) {
+  return getExplicitPlayerRole(player, claims) || 'Player';
 }
 
 export function isMissingAuthTokenError(error) {
@@ -268,7 +290,7 @@ export async function refreshAuthIfNeeded() {
     return null;
   }
 
-  if (!shouldRefreshAccessToken(token)) {
+  if (hasExplicitAuthRole(token) && !shouldRefreshAccessToken(token)) {
     return token;
   }
 
@@ -290,7 +312,10 @@ export async function refreshAuthIfNeeded() {
 export async function loginWithGoogle(credential) {
   const token = getAuthToken();
   const currentPlayer = parseAuthPlayer(token);
-  const shouldLinkGuestProfile = currentPlayer?.type === 'Anonymous';
+  const linkToken =
+    currentPlayer?.type === 'Anonymous' && hasExplicitAuthRole(token)
+      ? token
+      : null;
 
   const requestGoogleLogin = (authToken) =>
     apiRequest('/auth/google', {
@@ -302,9 +327,9 @@ export async function loginWithGoogle(credential) {
   let response;
 
   try {
-    response = await requestGoogleLogin(shouldLinkGuestProfile ? token : null);
+    response = await requestGoogleLogin(linkToken);
   } catch (error) {
-    if (!shouldLinkGuestProfile) {
+    if (!linkToken || !isInvalidAuthTokenError(error, Boolean(linkToken))) {
       throw error;
     }
 
@@ -312,21 +337,26 @@ export async function loginWithGoogle(credential) {
     response = await requestGoogleLogin(null);
   }
 
+  clearAuthToken();
   return persistAuth(response);
 }
 
 export async function saveGuestProfile(payload) {
   const guestProfile = getSavedGuestProfile(payload);
+  const existingToken = getAuthToken();
   const existingPlayer = getAuthPlayer();
 
-  if (!getAuthToken()) {
+  if (!existingToken) {
     return signUp(guestProfile);
   }
 
   try {
     return await updateProfile(guestProfile);
   } catch (error) {
-    if (existingPlayer?.type === 'Google' || !isInvalidAuthTokenError(error)) {
+    if (
+      (existingPlayer?.type === 'Google' && hasExplicitAuthRole(existingToken)) ||
+      !isInvalidAuthTokenError(error)
+    ) {
       throw error;
     }
 
@@ -353,28 +383,59 @@ export function getAuthPlayer() {
 }
 
 export function isCurrentUserAdmin() {
-  return String(getPlayerRole(getAuthPlayer())).toLowerCase() === 'admin';
+  const token = getAuthToken();
+  const claims = decodeAuthTokenPayload(token);
+  const player = parseAuthPlayer(token);
+
+  return String(getPlayerRole(player, claims)).toLowerCase() === 'admin';
 }
 
 export function getCurrentProfile() {
-  const player = getAuthPlayer();
+  const token = getAuthToken();
+  const claims = decodeAuthTokenPayload(token);
+  const player = parseAuthPlayer(token);
 
   return {
-    isGoogle: player?.type === 'Google',
+    isGoogle: player?.type === 'Google' && hasExplicitAuthRole(token),
     nickname: getPlayerNickname(player),
     picture: getPlayerPicture(player),
     player,
-    role: getPlayerRole(player),
+    role: getPlayerRole(player, claims),
   };
 }
 
 export function isGoogleAuthenticated() {
-  return getAuthPlayer()?.type === 'Google';
+  const token = getAuthToken();
+  const player = parseAuthPlayer(token);
+
+  return player?.type === 'Google' && hasExplicitAuthRole(token);
 }
 
 export async function withAuthRetry(request, payload) {
-  const tokenBeforeRequest = getAuthToken();
-  const playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
+  let tokenBeforeRequest = getAuthToken();
+  let playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
+
+  if (
+    tokenBeforeRequest &&
+    playerBeforeRequest &&
+    !hasExplicitAuthRole(tokenBeforeRequest)
+  ) {
+    try {
+      await refreshAuth();
+    } catch (refreshError) {
+      if (
+        playerBeforeRequest?.type !== 'Anonymous' ||
+        !canFallbackToGuestAuth(refreshError)
+      ) {
+        throw refreshError;
+      }
+
+      await refreshGuestAuth(payload);
+    }
+
+    tokenBeforeRequest = getAuthToken();
+    playerBeforeRequest = parseAuthPlayer(tokenBeforeRequest);
+  }
 
   try {
     return await request();
