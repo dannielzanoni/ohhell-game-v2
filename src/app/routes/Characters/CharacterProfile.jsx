@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
@@ -212,8 +211,6 @@ export function CharacterProfile({ characterId }) {
                   {title}
                 </h1>
                 <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/78 lg:text-sm lg:leading-6">
-                  {t(`pages.characters.items.${character.id}.subtitle`)}
-                <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/78">
                   {subtitle}
                 </p>
               </div>

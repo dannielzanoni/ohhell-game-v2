@@ -714,8 +714,14 @@ function sortPlayers(players, currentPlayerId) {
       return 1;
     }
 
-    return first.id.localeCompare(second.id);
+  return first.id.localeCompare(second.id);
   });
+}
+
+function hasPositiveLifes(player, defaultLifes) {
+  const playerLifes = Number(player?.lifes ?? defaultLifes);
+
+  return Number.isFinite(playerLifes) ? playerLifes > 0 : true;
 }
 
 function resolveCurrentPlayerId(playersById, currentPlayerId) {
@@ -1724,11 +1730,17 @@ export function Game() {
   }, [currentPlayerId, playersById]);
 
   const tablePlayers = useMemo(() => {
-    return sortPlayers(Object.values(playersById), resolvedCurrentPlayerId).slice(
+    const players = Object.values(playersById);
+    const visiblePlayers =
+      matchPhase === 'waiting'
+        ? players
+        : players.filter((player) => hasPositiveLifes(player, lifes));
+
+    return sortPlayers(visiblePlayers, resolvedCurrentPlayerId).slice(
       0,
       MAX_TABLE_PLAYERS,
     );
-  }, [playersById, resolvedCurrentPlayerId]);
+  }, [lifes, matchPhase, playersById, resolvedCurrentPlayerId]);
 
   const readyCount = tablePlayers.filter((player) => player.ready).length;
   const totalPlayers = tablePlayers.length;
