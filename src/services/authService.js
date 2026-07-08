@@ -304,10 +304,7 @@ export async function loginWithGoogle(credential) {
   try {
     response = await requestGoogleLogin(shouldLinkGuestProfile ? token : null);
   } catch (error) {
-    if (
-      !shouldLinkGuestProfile ||
-      !isInvalidAuthTokenError(error, Boolean(token))
-    ) {
+    if (!shouldLinkGuestProfile) {
       throw error;
     }
 
