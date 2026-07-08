@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import { LuaStudioFrame } from '@/components/lua/LuaStudioFrame.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
+import { environment } from '@/config/environment.js';
 import TiltedCard from '@/components/ui/TiltedCard.jsx';
 import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
 import switchCardSound from '@/assets/sounds/hell-hand/ui/switch_card.mp3';
@@ -137,8 +139,9 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
   );
 }
 
-const defaultPassiveScript = `return {
-    on_bid_placed = function(game, event, mercenary)
+const defaultPassiveScript = `---@type MercenaryPassiveScript
+return {
+    on_match_started = function(game, event, mercenary)
     end,
 }`;
 
@@ -269,10 +272,11 @@ function AdminMercenaryForm({ onCreated, t }) {
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
               {t('pages.characters.admin.passiveScript')}
-              <Textarea
-                className="min-h-36 resize-y font-mono text-xs"
-                value={draft.passiveScript}
-                onChange={(event) => updateDraft('passiveScript', event.target.value)}
+              <LuaStudioFrame
+                source={draft.passiveScript}
+                templateUrl={environment.luaMercenaryPassiveTemplateUrl}
+                title={t('pages.characters.admin.passiveScript')}
+                onSourceChange={(source) => updateDraft('passiveScript', source)}
               />
             </label>
           </div>

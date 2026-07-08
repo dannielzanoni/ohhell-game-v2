@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   Download,
@@ -16,8 +16,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
+import { LuaStudioFrame } from '@/components/lua/LuaStudioFrame.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
+import { environment } from '@/config/environment.js';
 import { cn } from '@/lib/utils.js';
 import { getAuthPlayer, isCurrentUserAdmin } from '@/services/authService.js';
 import {
@@ -38,8 +40,6 @@ const textFieldOptions = [
   { key: 'manaCost' },
 ];
 
-const LuaCodeEditor = lazy(() => import('@uiw/react-textarea-code-editor'));
-
 const defaultVisibleFields = {
   description: true,
   manaCost: true,
@@ -59,10 +59,9 @@ const defaultImageLayout = {
   y: 10,
 };
 
-const defaultLuaScript = `--Example of a card that removes lives from a player 
+const defaultLuaScript = `---@type PowerCardScript
 return {
     effect = function(game, card)
-        game.add_lives(card.target_player_id, -10)
     end,
 }`;
 
@@ -1325,34 +1324,13 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                         {t('pages.playground.removeLua')}
                       </Button>
                     </div>
-                    <div className="hell-hand-lua-editor" data-color-mode="light">
-                      <Suspense
-                        fallback={
-                          <div className="mt-3 grid min-h-48 place-items-center rounded-md border border-input bg-white text-xs font-semibold text-muted-foreground">
-                            {t('common.loading')}
-                          </div>
-                        }
-                      >
-                        <LuaCodeEditor
-                          aria-label={t('pages.playground.luaScript')}
-                          className="mt-3 rounded-md border border-input bg-white text-xs leading-5 text-slate-950"
-                          indentWidth={2}
-                          language="lua"
-                          minHeight={192}
-                          padding={12}
-                          spellCheck={false}
-                          style={{
-                            backgroundColor: '#ffffff',
-                            color: '#0f172a',
-                            fontFamily:
-                              'ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, Menlo, monospace',
-                            fontSize: 12,
-                          }}
-                          value={draft.luaScript}
-                          onChange={(event) => updateDraft('luaScript', event.target.value)}
-                        />
-                      </Suspense>
-                    </div>
+                    <LuaStudioFrame
+                      className="mt-3"
+                      source={draft.luaScript}
+                      templateUrl={environment.luaPowerCardTemplateUrl}
+                      title={t('pages.playground.luaScript')}
+                      onSourceChange={(source) => updateDraft('luaScript', source)}
+                    />
                   </div>
                 </div>
 
