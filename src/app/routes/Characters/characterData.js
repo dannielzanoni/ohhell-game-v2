@@ -29,7 +29,7 @@ export const mercenaries = [
     manaInicial: 1,
     manaTotal: 9,
     vidaInicial: 40,
-    vidaTotal: 100,
+    vidaTotal: 110,
     cards: [
       { id: 'bloodTransfusion', image: artemisCard1, manaCost: 2 },
       { id: 'deepRed', image: artemisCard2, manaCost: 8 },
@@ -59,7 +59,7 @@ export const mercenaries = [
     banner: carmenBanner,
     gameplayStyle: { icons: ['shield', 'mana'], label: 'Shield & Mana' },
     manaInicial: 1,
-    manaTotal: 12,
+    manaTotal: 8,
     cards: [
       { id: 'carmenCard2', image: carmenCard2, manaCost: 2 },
       { id: 'carmenCard4', image: carmenCard4, manaCost: 4 },
