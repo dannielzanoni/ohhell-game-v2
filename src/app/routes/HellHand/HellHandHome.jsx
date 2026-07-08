@@ -1,9 +1,9 @@
 import {
-  GalleryVerticalEnd,
   Play,
   Settings,
   UserRound,
   Users,
+  Wrench,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,9 +42,11 @@ const actions = [
     type: 'transition',
   },
   {
-    icon: GalleryVerticalEnd,
-    labelKey: 'pages.hellHandHome.actions.cards',
-    path: '/power-decks',
+    id: 'workshop',
+    icon: Wrench,
+    labelKey: 'pages.hellHandHome.actions.workshop',
+    path: '/hell-hand/workshop',
+    type: 'transition',
   },
   {
     id: 'settings',

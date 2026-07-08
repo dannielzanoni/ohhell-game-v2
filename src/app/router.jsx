@@ -8,6 +8,7 @@ import { HellHandGame } from './routes/HellHand/HellHandGame.jsx';
 import { Github } from './routes/Github/Github.jsx';
 import { HellHandHome } from './routes/HellHand/HellHandHome.jsx';
 import { HellHandRooms } from './routes/HellHand/HellHandRooms.jsx';
+import { HellHandWorkshop } from './routes/HellHand/HellHandWorkshop.jsx';
 import { Home } from './routes/Home/Home.jsx';
 import { HowToPlay } from './routes/HowToPlay/HowToPlay.jsx';
 import { Leaderboard } from './routes/Leaderboard/Leaderboard.jsx';
@@ -31,6 +32,7 @@ export function AppRouter() {
         <Route path="/hell-hand" element={<HellHandHome />} />
         <Route path="/hell-hand/game" element={<HellHandGame />} />
         <Route path="/hell-hand/rooms" element={<HellHandRooms />} />
+        <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />
         <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
         <Route path="/hell-hand/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
         <Route path="/hell-hand/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />

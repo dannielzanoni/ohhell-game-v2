@@ -58,8 +58,12 @@ function formatDate(value) {
   );
 }
 
-export function PowerDecks() {
+const hellHandEmbeddedThemeClassName =
+  '[&_.bg-background]:!bg-black/45 [&_.bg-card]:!bg-black/70 [&_.bg-muted]:!bg-red-950/30 [&_.border-border]:!border-red-200/12 [&_.border-input]:!border-red-200/20 [&_.text-muted-foreground]:!text-stone-400 [&_.text-primary]:!text-amber-300 [&_input]:!bg-black/55 [&_select]:!bg-black/55 [&_textarea]:!bg-black/55 [&_[data-slot=button][data-variant=default]]:!bg-amber-300 [&_[data-slot=button][data-variant=default]]:!text-black [&_[data-slot=button][data-variant=default]:hover]:!bg-amber-200 [&_[data-slot=button][data-variant=outline]]:!border-red-200/20 [&_[data-slot=button][data-variant=outline]]:!bg-black/55 [&_[data-slot=button][data-variant=outline]]:!text-stone-100 [&_[data-slot=button][data-variant=outline]:hover]:!border-amber-300/45 [&_[data-slot=button][data-variant=outline]:hover]:!bg-red-950/55';
+
+export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   const { t } = useTranslation();
+  const isHellHand = variant === 'hellHand';
   const [cards, setCards] = useState([]);
   const [decks, setDecks] = useState([]);
   const [mercenaries, setMercenaries] = useState([]);
@@ -176,8 +180,21 @@ export function PowerDecks() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+    <main
+      className={cn(
+        embedded
+          ? 'w-full text-foreground'
+          : 'min-h-screen bg-background px-4 py-6 text-foreground md:px-6',
+        isHellHand && 'text-stone-100',
+        isHellHand && hellHandEmbeddedThemeClassName,
+      )}
+    >
+      <section
+        className={cn(
+          'mx-auto flex w-full max-w-7xl flex-col gap-5',
+          embedded && 'max-w-none',
+        )}
+      >
         <header className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 shadow-sm lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">

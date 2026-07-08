@@ -356,6 +356,21 @@ select {
   animation: ohhell-life-loss-burst 1.25s ease-out infinite;
 }
 
+.hell-hand-lua-editor .w-tc-editor {
+  background-color: #ffffff !important;
+  color: #24292f !important;
+}
+
+.hell-hand-lua-editor .w-tc-editor textarea {
+  background-color: transparent !important;
+}
+
+.hell-hand-lua-editor .w-tc-editor-preview,
+.hell-hand-lua-editor .w-tc-editor-preview pre {
+  background-color: #ffffff !important;
+  color: #24292f !important;
+}
+
 @media (min-width: 640px) {
   .ohhell-life-loss-popup {
     left: auto;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   Download,
@@ -38,6 +38,14 @@ const textFieldOptions = [
   { key: 'manaCost' },
 ];
 
+const LuaCodeEditor = lazy(() => import('@uiw/react-textarea-code-editor'));
+
+const defaultVisibleFields = {
+  description: true,
+  manaCost: true,
+  title: true,
+};
+
 const defaultFieldLayout = {
   description: { case: 'none', color: '#1c1917', size: 15, width: 73, x: 12, y: 81.5 },
   manaCost: { case: 'none', color: '#fff7ed', size: 20, width: 16, x: 77.5, y: 91.8 },
@@ -50,6 +58,13 @@ const defaultImageLayout = {
   x: 8,
   y: 10,
 };
+
+const defaultLuaScript = `--Example of a card that removes lives from a player 
+return {
+    effect = function(game, card)
+        game.add_lives(card.target_player_id, -10)
+    end,
+}`;
 
 function createDefaultLayout() {
   return JSON.parse(JSON.stringify(defaultFieldLayout));
@@ -65,10 +80,11 @@ const emptyDraft = {
   image: '',
   imageLayout: createDefaultImageLayout(),
   layout: createDefaultLayout(),
-  luaScript: '',
+  luaScript: defaultLuaScript,
   manaCost: '',
   template: '',
   title: '',
+  visibleFields: { ...defaultVisibleFields },
 };
 
 function normalizeCard(card) {
@@ -103,6 +119,10 @@ function normalizeCard(card) {
     luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
     manaCost,
     cardType,
+    visibleFields: {
+      ...defaultVisibleFields,
+      ...(cleanedCard.visibleFields || {}),
+    },
   };
 }
 
@@ -208,6 +228,7 @@ function getCardAssetFingerprint(card) {
     manaCost: normalizedCard.manaCost,
     template: normalizedCard.template,
     title: normalizedCard.title,
+    visibleFields: normalizedCard.visibleFields,
   });
 }
 
@@ -260,6 +281,9 @@ function getKindBadgeClass(kind) {
     ? 'border-amber-400/60 bg-amber-400/15 text-amber-700 dark:text-amber-300'
     : 'border-primary/40 bg-primary/10 text-primary';
 }
+
+const hellHandEmbeddedThemeClassName =
+  '[&_.bg-background]:!bg-black/45 [&_.bg-card]:!bg-black/70 [&_.bg-muted]:!bg-red-950/30 [&_.border-border]:!border-red-200/12 [&_.border-input]:!border-red-200/20 [&_.text-muted-foreground]:!text-stone-400 [&_.text-primary]:!text-amber-300 [&_input]:!bg-black/55 [&_select]:!bg-black/55 [&_[data-slot=button][data-variant=default]]:!bg-amber-300 [&_[data-slot=button][data-variant=default]]:!text-black [&_[data-slot=button][data-variant=default]:hover]:!bg-amber-200 [&_[data-slot=button][data-variant=outline]]:!border-red-200/20 [&_[data-slot=button][data-variant=outline]]:!bg-black/55 [&_[data-slot=button][data-variant=outline]]:!text-stone-100 [&_[data-slot=button][data-variant=outline]:hover]:!border-amber-300/45 [&_[data-slot=button][data-variant=outline]:hover]:!bg-red-950/55 [&_[data-slot=button][data-variant=ghost]:hover]:!bg-red-950/45';
 
 function drawCoverImage(context, image, x, y, width, height) {
   const sourceRatio = image.width / image.height;
@@ -365,6 +389,10 @@ async function renderCardToBlob(card) {
   const textScale = EXPORT_CARD_WIDTH / PREVIEW_CARD_WIDTH;
 
   textFieldOptions.forEach((field) => {
+    if (normalizedCard.visibleFields?.[field.key] === false) {
+      return;
+    }
+
     const layout = normalizedCard.layout?.[field.key] || defaultFieldLayout[field.key];
     const rawValue = normalizedCard[field.key] ?? field.defaultValue ?? '';
     const text = applyTextCase(rawValue || field.defaultValue, layout.case);
@@ -415,6 +443,10 @@ async function renderCardToBlob(card) {
 }
 
 function CardTextField({ card, compact, fieldKey }) {
+  if (card.visibleFields?.[fieldKey] === false) {
+    return null;
+  }
+
   const layout = card.layout?.[fieldKey] || defaultFieldLayout[fieldKey];
   const field = textFieldOptions.find((item) => item.key === fieldKey);
   const rawValue = card[fieldKey] ?? field?.defaultValue ?? '';
@@ -452,7 +484,7 @@ function MagicCardPreview({ card, className, compact = false }) {
   return (
     <article
       className={cn(
-        'relative aspect-[768/1344] w-full max-w-[24rem] overflow-hidden rounded-lg bg-black shadow-2xl shadow-black/40 ring-1 ring-red-950/60',
+        'relative aspect-[768/1344] w-full max-w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-lg bg-black shadow-2xl shadow-black/40 ring-1 ring-red-950/60 sm:max-w-[24rem]',
         className,
       )}
     >
@@ -654,8 +686,26 @@ function ImageLayoutControls({ draft, onChange, t }) {
   );
 }
 
-export function Playground() {
+function FieldVisibilityToggle({ checked, displayLabel, fieldLabel, onChange }) {
+  return (
+    <label
+      className="inline-flex cursor-pointer items-center gap-2 text-xs font-black uppercase text-muted-foreground"
+      title={`${displayLabel} ${fieldLabel}`}
+    >
+      <span>{displayLabel}</span>
+      <input
+        type="checkbox"
+        className="size-4 cursor-pointer rounded border border-input accent-amber-500"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    </label>
+  );
+}
+
+export function Playground({ embedded = false, variant = 'default' } = {}) {
   const { t } = useTranslation();
+  const isHellHand = variant === 'hellHand';
   const assetInputRef = useRef(null);
   const assetUploadRef = useRef(null);
   const templateInputRef = useRef(null);
@@ -787,6 +837,17 @@ export function Playground() {
         ...createDefaultImageLayout(),
         ...(current.imageLayout || {}),
         [property]: normalizeNumber(value, defaultImageLayout[property]),
+      },
+    }));
+  };
+
+  const updateFieldVisibility = (fieldKey, isVisible) => {
+    setDraft((current) => ({
+      ...current,
+      visibleFields: {
+        ...defaultVisibleFields,
+        ...(current.visibleFields || {}),
+        [fieldKey]: isVisible,
       },
     }));
   };
@@ -968,9 +1029,22 @@ export function Playground() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main
+      className={cn(
+        embedded
+          ? 'w-full text-foreground'
+          : 'min-h-screen bg-background px-4 py-6 text-foreground md:px-6',
+        isHellHand && 'text-stone-100',
+        isHellHand && hellHandEmbeddedThemeClassName,
+      )}
+    >
+      <section
+        className={cn(
+          'mx-auto flex w-full max-w-[96rem] flex-col gap-5',
+          embedded && 'max-w-none',
+        )}
+      >
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <p className="text-sm font-semibold uppercase text-primary">
             {t('pages.playground.eyebrow')}
           </p>
@@ -983,11 +1057,11 @@ export function Playground() {
                 {t('pages.playground.description')}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap">
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 cursor-pointer gap-2"
+                className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
                 onClick={resetDraft}
               >
                 <Plus className="size-4" />
@@ -996,7 +1070,7 @@ export function Playground() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 cursor-pointer gap-2"
+                className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
                 disabled={isLoadingCards}
                 onClick={() => void loadCards()}
               >
@@ -1006,7 +1080,7 @@ export function Playground() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 cursor-pointer gap-2"
+                className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
                 disabled={!cards.length}
                 onClick={exportCards}
               >
@@ -1017,14 +1091,33 @@ export function Playground() {
           </div>
         </header>
 
-        <div className="grid gap-5 2xl:grid-cols-[minmax(50rem,1.15fr)_minmax(22rem,0.85fr)]">
-          <section className="grid gap-5 lg:grid-cols-[minmax(18rem,24rem)_minmax(24rem,1fr)] lg:items-start">
-            <div className="flex justify-center rounded-lg border border-border bg-card p-5 shadow-sm lg:sticky lg:top-6">
+        <div
+          className={cn(
+            'grid gap-5',
+            isHellHand
+              ? 'grid-cols-1'
+              : 'xl:grid-cols-[minmax(0,1.18fr)_minmax(20rem,0.82fr)]',
+          )}
+        >
+          <section
+            className={cn(
+              'grid min-w-0 gap-5',
+              isHellHand
+                ? 'xl:grid-cols-[minmax(14rem,0.3fr)_minmax(0,0.7fr)] xl:items-start'
+                : 'lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)] lg:items-start',
+            )}
+          >
+            <div
+              className={cn(
+                'flex justify-center rounded-lg border border-border bg-card p-3 shadow-sm sm:p-5',
+                isHellHand ? 'xl:sticky xl:top-4' : 'lg:sticky lg:top-6',
+              )}
+            >
               <MagicCardPreview card={draft} />
             </div>
 
             <form
-              className="rounded-lg border border-border bg-card p-5 shadow-sm"
+              className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5"
               onSubmit={saveCard}
             >
               <div className="flex items-center justify-between gap-3">
@@ -1050,7 +1143,15 @@ export function Playground() {
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-                  {t('pages.playground.fields.title')}
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{t('pages.playground.fields.title')}</span>
+                    <FieldVisibilityToggle
+                      checked={draft.visibleFields?.title !== false}
+                      displayLabel={t('pages.playground.displayOnCard')}
+                      fieldLabel={t('pages.playground.fields.title')}
+                      onChange={(isVisible) => updateFieldVisibility('title', isVisible)}
+                    />
+                  </span>
                   <Input
                     value={draft.title}
                     onChange={(event) => updateDraft('title', event.target.value)}
@@ -1058,7 +1159,17 @@ export function Playground() {
                 </label>
 
                 <label className="grid gap-2 text-sm font-semibold">
-                  {t('pages.playground.fields.manaCost')}
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{t('pages.playground.fields.manaCost')}</span>
+                    <FieldVisibilityToggle
+                      checked={draft.visibleFields?.manaCost !== false}
+                      displayLabel={t('pages.playground.displayOnCard')}
+                      fieldLabel={t('pages.playground.fields.manaCost')}
+                      onChange={(isVisible) =>
+                        updateFieldVisibility('manaCost', isVisible)
+                      }
+                    />
+                  </span>
                   <Input
                     min="0"
                     type="number"
@@ -1068,7 +1179,17 @@ export function Playground() {
                 </label>
 
                 <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-                  {t('pages.playground.fields.description')}
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{t('pages.playground.fields.description')}</span>
+                    <FieldVisibilityToggle
+                      checked={draft.visibleFields?.description !== false}
+                      displayLabel={t('pages.playground.displayOnCard')}
+                      fieldLabel={t('pages.playground.fields.description')}
+                      onChange={(isVisible) =>
+                        updateFieldVisibility('description', isVisible)
+                      }
+                    />
+                  </span>
                   <Textarea
                     className="min-h-28 resize-none"
                     value={draft.description}
@@ -1204,13 +1325,34 @@ export function Playground() {
                         {t('pages.playground.removeLua')}
                       </Button>
                     </div>
-                    <Textarea
-                      aria-label={t('pages.playground.luaScript')}
-                      className="mt-3 min-h-48 resize-y font-mono text-xs leading-5"
-                      spellCheck={false}
-                      value={draft.luaScript}
-                      onChange={(event) => updateDraft('luaScript', event.target.value)}
-                    />
+                    <div className="hell-hand-lua-editor" data-color-mode="light">
+                      <Suspense
+                        fallback={
+                          <div className="mt-3 grid min-h-48 place-items-center rounded-md border border-input bg-white text-xs font-semibold text-muted-foreground">
+                            {t('common.loading')}
+                          </div>
+                        }
+                      >
+                        <LuaCodeEditor
+                          aria-label={t('pages.playground.luaScript')}
+                          className="mt-3 rounded-md border border-input bg-white text-xs leading-5 text-slate-950"
+                          indentWidth={2}
+                          language="lua"
+                          minHeight={192}
+                          padding={12}
+                          spellCheck={false}
+                          style={{
+                            backgroundColor: '#ffffff',
+                            color: '#0f172a',
+                            fontFamily:
+                              'ui-monospace, SFMono-Regular, SF Mono, Consolas, Liberation Mono, Menlo, monospace',
+                            fontSize: 12,
+                          }}
+                          value={draft.luaScript}
+                          onChange={(event) => updateDraft('luaScript', event.target.value)}
+                        />
+                      </Suspense>
+                    </div>
                   </div>
                 </div>
 
@@ -1281,8 +1423,8 @@ export function Playground() {
             </form>
           </section>
 
-          <section className="flex flex-col gap-5">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <section className="flex min-w-0 flex-col gap-5">
+            <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -1302,13 +1444,13 @@ export function Playground() {
               ) : null}
 
               {isLoadingCards ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-5 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]">
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div key={index} className="h-72 animate-pulse rounded-lg bg-muted" />
                   ))}
                 </div>
               ) : cards.length ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-5 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))]">
                   {cards.map((card) => {
                     const isOfficial = card.kind === 'official';
                     const canEditCard = currentUserId && card.creator_id === currentUserId;
