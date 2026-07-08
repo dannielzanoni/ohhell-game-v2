@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Maximize2, Minus, Pencil, UserRound } from 'lucide-react';
+import { LogOut, Maximize2, Minus, Pencil, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
 import googleIcon from '@/assets/icons/google.svg';
@@ -251,6 +251,30 @@ export const LoginCard = forwardRef(function LoginCard(
     },
     [onSaved, syncProfileFromAuth, t],
   );
+
+  const handleGoogleLogout = useCallback(() => {
+    authService.clearAuthToken();
+    window.google?.accounts?.id?.disableAutoSelect?.();
+
+    const guestAvatar = getSavedAvatar();
+    const guestNickname = localStorage.getItem('ohhell_guest_nickname') || '';
+    const guestAvatarId = guestAvatar?.id || '';
+
+    setHasAuthToken(false);
+    setIsGoogleAuth(false);
+    setSelectedAvatar(guestAvatar);
+    setSavedAvatarId(guestAvatarId);
+    setNickname(guestNickname);
+    setSavedNickname(guestNickname);
+    setGoogleError('');
+    setSaveError('');
+
+    onSaved?.({
+      avatarId: guestAvatarId,
+      nickname: guestNickname || 'Guest',
+      token: null,
+    });
+  }, [onSaved]);
 
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
@@ -517,6 +541,7 @@ export const LoginCard = forwardRef(function LoginCard(
             ? 'relative rounded-lg border border-red-200/15 bg-black/70 p-3 text-stone-100 shadow-2xl shadow-black/50 backdrop-blur-md'
             : 'relative rounded-lg border border-border bg-card p-6 shadow-sm',
           compact && !isHellHand && 'p-3',
+          isGoogleAuth && (isHellHand ? 'pb-12' : 'pb-14'),
           className,
         )}
       >
@@ -753,6 +778,24 @@ export const LoginCard = forwardRef(function LoginCard(
               ) : null}
             </div>
           </>
+        ) : null}
+
+        {isGoogleAuth ? (
+          <button
+            type="button"
+            aria-label={t('auth.logoutGoogleAria')}
+            title={t('auth.logoutGoogleAria')}
+            className={cn(
+              'absolute bottom-3 right-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background/80 px-3 text-xs font-semibold text-muted-foreground shadow-sm transition hover:border-destructive/45 hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring',
+              compact && 'bottom-2 right-2 h-8 px-2 text-[0.68rem]',
+              isHellHand &&
+                'border-red-200/15 bg-black/55 text-red-100/70 hover:border-red-300/45 hover:bg-red-950/45 hover:text-red-100 focus:ring-red-500/35',
+            )}
+            onClick={handleGoogleLogout}
+          >
+            <LogOut className={cn('size-3.5', compact && 'size-3')} />
+            {t('auth.logoutGoogle')}
+          </button>
         ) : null}
       </section>
 

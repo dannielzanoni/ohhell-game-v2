@@ -8,6 +8,8 @@ export const en = {
     googleLoginError: 'Google login failed. Please try again.',
     googleUnavailable: 'Google login is unavailable right now.',
     loginGoogle: 'Login with Google',
+    logoutGoogle: 'Logout',
+    logoutGoogleAria: 'Logout from Google',
     nick: 'Nick',
     nickPlaceholder: 'Enter your nick',
     or: 'or',
