@@ -29,9 +29,11 @@ const actions = [
     type: 'play',
   },
   {
+    id: 'rooms',
     icon: Users,
     labelKey: 'pages.hellHandHome.actions.rooms',
-    path: '/rooms',
+    path: '/hell-hand/rooms',
+    type: 'transition',
   },
   {
     icon: UserRound,

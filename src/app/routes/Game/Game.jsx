@@ -714,7 +714,7 @@ function sortPlayers(players, currentPlayerId) {
       return 1;
     }
 
-  return first.id.localeCompare(second.id);
+    return first.id.localeCompare(second.id);
   });
 }
 
@@ -1719,6 +1719,7 @@ export function Game() {
   const [roundCardCount, setRoundCardCount] = useState(0);
   const [turnPlayerId, setTurnPlayerId] = useState(null);
   const [upcard, setUpcard] = useState(null);
+  const returnToRoomsPath = location.state?.returnToRooms || '/rooms';
 
   const selectedCardBackSrc = useMemo(
     () => getCardBackSrc(gamePreferences.cardBack),
@@ -2793,7 +2794,7 @@ export function Game() {
                 message: translateRef.current('pages.rooms.roomInactiveToast'),
                 variant: 'warning',
               });
-              navigate('/rooms', { replace: true });
+              navigate(returnToRoomsPath, { replace: true });
               return;
             }
 
@@ -2915,6 +2916,7 @@ export function Game() {
     lobbyId,
     location.state?.lifes,
     location.state?.gameType,
+    location.state?.returnToRooms,
     navigate,
     selectedMercenaryId,
     showToast,

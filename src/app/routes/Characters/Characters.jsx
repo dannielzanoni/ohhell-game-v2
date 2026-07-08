@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Eye,
-  Save,
   House,
+  Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -141,6 +143,7 @@ const defaultPassiveScript = `return {
 }`;
 
 function AdminMercenaryForm({ onCreated, t }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState({
     deck: '',
     description: '',
@@ -202,71 +205,85 @@ function AdminMercenaryForm({ onCreated, t }) {
   };
 
   return (
-    <form
-      className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 shadow-sm"
-      onSubmit={handleSubmit}
-    >
-      <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">
-        {t('pages.characters.admin.eyebrow')}
-      </p>
-      <h2 className="mt-1 text-xl font-black">
-        {t('pages.characters.admin.title')}
-      </h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.admin.id')}
-          <Input value={draft.id} onChange={(event) => updateDraft('id', event.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.admin.name')}
-          <Input value={draft.name} onChange={(event) => updateDraft('name', event.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold md:col-span-2">
-          {t('pages.characters.admin.subtitle')}
-          <Input
-            value={draft.subtitle}
-            onChange={(event) => updateDraft('subtitle', event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.stats.deck')}
-          <Input value={draft.deck} onChange={(event) => updateDraft('deck', event.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.stats.style')}
-          <Input value={draft.style} onChange={(event) => updateDraft('style', event.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.stats.temper')}
-          <Input value={draft.temper} onChange={(event) => updateDraft('temper', event.target.value)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold">
-          {t('pages.characters.admin.banner')}
-          <Input type="file" accept="image/*" onChange={(event) => setBannerFile(event.target.files?.[0] || null)} />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold md:col-span-2">
-          {t('pages.characters.admin.description')}
-          <Textarea
-            className="min-h-24 resize-none"
-            value={draft.description}
-            onChange={(event) => updateDraft('description', event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm font-semibold md:col-span-2">
-          {t('pages.characters.admin.passiveScript')}
-          <Textarea
-            className="min-h-36 resize-y font-mono text-xs"
-            value={draft.passiveScript}
-            onChange={(event) => updateDraft('passiveScript', event.target.value)}
-          />
-        </label>
-      </div>
-      <Button type="submit" className="mt-4 h-10 cursor-pointer gap-2" disabled={isSaving}>
-        {isSaving ? <i className="pi pi-spin pi-spinner text-sm" /> : <Save className="size-4" />}
-        {isSaving ? t('pages.characters.admin.saving') : t('pages.characters.admin.save')}
-      </Button>
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
-    </form>
+    <section className="rounded-lg border border-amber-300/30 bg-black/70 shadow-2xl shadow-black/30 backdrop-blur">
+      <button
+        type="button"
+        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-red-950/30 focus:outline-none focus:ring-2 focus:ring-amber-300"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>
+          <span className="block text-xs font-black uppercase text-amber-300/80">
+            {t('pages.characters.admin.eyebrow')}
+          </span>
+          <span className="mt-1 block text-lg font-black text-white lg:text-base">
+            {t('pages.characters.admin.title')}
+          </span>
+        </span>
+        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-amber-200/20 bg-amber-950/35 text-amber-200">
+          {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </span>
+      </button>
+
+      {isOpen ? (
+        <form className="border-t border-red-200/12 p-4 pt-3" onSubmit={handleSubmit}>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.admin.id')}
+              <Input value={draft.id} onChange={(event) => updateDraft('id', event.target.value)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.admin.name')}
+              <Input value={draft.name} onChange={(event) => updateDraft('name', event.target.value)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
+              {t('pages.characters.admin.subtitle')}
+              <Input
+                value={draft.subtitle}
+                onChange={(event) => updateDraft('subtitle', event.target.value)}
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.stats.deck')}
+              <Input value={draft.deck} onChange={(event) => updateDraft('deck', event.target.value)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.stats.style')}
+              <Input value={draft.style} onChange={(event) => updateDraft('style', event.target.value)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.stats.temper')}
+              <Input value={draft.temper} onChange={(event) => updateDraft('temper', event.target.value)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.admin.banner')}
+              <Input type="file" accept="image/*" onChange={(event) => setBannerFile(event.target.files?.[0] || null)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
+              {t('pages.characters.admin.description')}
+              <Textarea
+                className="min-h-24 resize-none"
+                value={draft.description}
+                onChange={(event) => updateDraft('description', event.target.value)}
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
+              {t('pages.characters.admin.passiveScript')}
+              <Textarea
+                className="min-h-36 resize-y font-mono text-xs"
+                value={draft.passiveScript}
+                onChange={(event) => updateDraft('passiveScript', event.target.value)}
+              />
+            </label>
+          </div>
+          <Button type="submit" className="mt-4 h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black hover:bg-amber-200" disabled={isSaving}>
+            {isSaving ? <i className="pi pi-spin pi-spinner text-sm" /> : <Save className="size-4" />}
+            {isSaving ? t('pages.characters.admin.saving') : t('pages.characters.admin.save')}
+          </Button>
+          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
+        </form>
+      ) : null}
+    </section>
   );
 }
 
