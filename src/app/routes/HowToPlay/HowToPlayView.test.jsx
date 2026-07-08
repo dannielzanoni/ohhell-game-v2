@@ -25,9 +25,9 @@ describe('HowToPlayView essential rules', () => {
     ]) {
       expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
     }
-    expect(screen.getByText(/server confirms the play/i)).toBeInTheDocument();
-    expect(screen.getByText(/valid bid options come from the server/i)).toBeInTheDocument();
-    expect(screen.getByText(/updated lives/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/server confirms the play/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/valid bid options come from the server/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/updated lives/i).length).toBeGreaterThan(0);
   });
 
   it('renders the reviewed Portuguese content from the same structure', async () => {
@@ -37,6 +37,6 @@ describe('HowToPlayView essential rules', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Como jogar' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Objetivo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Pontos e vidas' })).toBeInTheDocument();
-    expect(screen.getByText(/opções válidas de bid vêm do servidor/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/opções válidas de bid vêm do servidor/i).length).toBeGreaterThan(0);
   });
 });
