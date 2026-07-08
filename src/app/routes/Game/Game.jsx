@@ -2827,9 +2827,7 @@ export function Game() {
             if (nextGameType === gameTypes.FODINHA_POWER && nextCharacterId) {
               try {
                 selectMercenary(nextSocket, nextCharacterId);
-              } catch {
-                // The lobby can still run with legacy decks when no mercenary is required.
-              }
+              } catch {}
             }
           },
           token: latestToken,
