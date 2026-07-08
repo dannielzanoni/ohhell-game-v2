@@ -1,6 +1,6 @@
 const apiUrl = import.meta.env.VITE_API_BASE_URL;
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const luaStudioUrl = import.meta.env.MOONCODE_URL;
+const luaStudioUrl = import.meta.env.VITE_MOONCODE_URL;
 const websocketBaseUrl = import.meta.env.VITE_WS_BASE_URL;
 
 function trimTrailingSlash(value) {
