@@ -25,6 +25,11 @@ export const mercenaries = [
     accentClass: 'from-emerald-500/25 via-black/25 to-amber-500/20',
     banner: artemisBanner,
     bannerPosition: 'center 35%',
+    gameplayStyle: { icons: ['heart_1'], label: 'Lifes' },
+    manaInicial: 1,
+    manaTotal: 9,
+    vidaInicial: 40,
+    vidaTotal: 100,
     cards: [
       { id: 'bloodTransfusion', image: artemisCard1, manaCost: 2 },
       { id: 'deepRed', image: artemisCard2, manaCost: 8 },
@@ -40,13 +45,21 @@ export const mercenaries = [
     accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
     banner: conjuruzBanner,
     cards: [],
+    gameplayStyle: { icons: ['mana'], label: 'Mana' },
+    manaInicial: 1,
+    manaTotal: 18,
     markerClass: 'bg-violet-500',
     path: `${hellHandMercenariesPath}/Conjuruz`,
+    vidaInicial: 45,
+    vidaTotal: 100,
   },
   {
     id: 'carmen',
     accentClass: 'from-rose-500/25 via-black/25 to-amber-500/20',
     banner: carmenBanner,
+    gameplayStyle: { icons: ['shield', 'mana'], label: 'Shield & Mana' },
+    manaInicial: 1,
+    manaTotal: 12,
     cards: [
       { id: 'carmenCard2', image: carmenCard2, manaCost: 2 },
       { id: 'carmenCard4', image: carmenCard4, manaCost: 4 },
@@ -54,11 +67,16 @@ export const mercenaries = [
     ],
     markerClass: 'bg-rose-500',
     path: `${hellHandMercenariesPath}/Carmen`,
+    vidaInicial: 60,
+    vidaTotal: 100,
   },
   {
     id: 'gambler',
     accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
     banner: gamblerBanner,
+    gameplayStyle: { icons: ['bid'], label: 'High Stakes' },
+    manaInicial: 1,
+    manaTotal: 11,
     cards: [
       { id: 'isRightfullyMine', image: gamblerCard1, manaCost: 3 },
       { id: 'allIn', image: gamblerCard2, manaCost: 3 },
@@ -68,14 +86,21 @@ export const mercenaries = [
     ],
     markerClass: 'bg-red-500',
     path: `${hellHandMercenariesPath}/Gambler`,
+    vidaInicial: 45,
+    vidaTotal: 100,
   },
   {
     id: 'leandro',
     accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
     banner: leandroBanner,
     cards: [],
+    gameplayStyle: { icons: ['mana', 'magic'], label: 'Mana & Magic' },
+    manaInicial: 1,
+    manaTotal: 13,
     markerClass: 'bg-violet-500',
     path: `${hellHandMercenariesPath}/Leandro`,
+    vidaInicial: 50,
+    vidaTotal: 100,
   },
 ];
 
@@ -130,6 +155,18 @@ export function mergeMercenaries(remoteMercenaries = []) {
       cards: existing.cards || [],
       deck: remoteMercenary.deck || existing.deck,
       description: remoteMercenary.description || existing.description,
+      gameplayStyle:
+        remoteMercenary.gameplay_style ||
+        remoteMercenary.gameplayStyle ||
+        existing.gameplayStyle,
+      manaInicial:
+        remoteMercenary.mana_inicial ??
+        remoteMercenary.manaInicial ??
+        existing.manaInicial,
+      manaTotal:
+        remoteMercenary.mana_total ??
+        remoteMercenary.manaTotal ??
+        existing.manaTotal,
       markerClass:
         existing.markerClass || fallbackMarkerClasses[index % fallbackMarkerClasses.length],
       name: remoteMercenary.name || existing.name,
@@ -138,6 +175,14 @@ export function mergeMercenaries(remoteMercenaries = []) {
       style: remoteMercenary.style || existing.style,
       subtitle: remoteMercenary.subtitle || existing.subtitle,
       temper: remoteMercenary.temper || existing.temper,
+      vidaInicial:
+        remoteMercenary.vida_inicial ??
+        remoteMercenary.vidaInicial ??
+        existing.vidaInicial,
+      vidaTotal:
+        remoteMercenary.vida_total ??
+        remoteMercenary.vidaTotal ??
+        existing.vidaTotal,
     });
   });
 

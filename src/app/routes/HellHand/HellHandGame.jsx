@@ -11,6 +11,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import bidIcon from '@/assets/icons/hell-hand/bid.svg';
+import heartIcon from '@/assets/icons/hell-hand/heart_1.svg';
+import heartTwoIcon from '@/assets/icons/hell-hand/heart_2.svg';
+import magicIcon from '@/assets/icons/hell-hand/magic.svg';
+import manaIcon from '@/assets/icons/hell-hand/mana.png';
+import shieldIcon from '@/assets/icons/hell-hand/shield.svg';
 import lockCharacterSound from '@/assets/sounds/hell-hand/ui/lock_character.mp3';
 import selectMenuSound from '@/assets/sounds/hell-hand/ui/select_menu.mp3';
 import switchCardSound from '@/assets/sounds/hell-hand/ui/switch_card.mp3';
@@ -31,6 +37,25 @@ import {
 } from '../Characters/characterData.js';
 
 const hellHandDefaultLives = 50;
+const gameplayIconSources = {
+  bid: bidIcon,
+  heart: heartIcon,
+  heart_1: heartIcon,
+  heart_2: heartTwoIcon,
+  life: heartIcon,
+  lifes: heartIcon,
+  lives: heartIcon,
+  magic: magicIcon,
+  mana: manaIcon,
+  shield: shieldIcon,
+};
+
+function normalizeGameplayIconKey(icon) {
+  return String(icon || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\.(png|svg|jpg|jpeg|webp)$/i, '');
+}
 
 function getCarouselOffset(index, activeIndex, length) {
   let offset = index - activeIndex;
@@ -82,6 +107,74 @@ function playLockCharacterSound() {
   audio.play().catch(() => {});
 }
 
+function normalizeGameplayStyle(gameplayStyle) {
+  if (!gameplayStyle) {
+    return { icons: ['mana'], label: 'Mana' };
+  }
+
+  if (typeof gameplayStyle === 'string') {
+    return { icons: [gameplayStyle.toLowerCase()], label: gameplayStyle };
+  }
+
+  return {
+    icons: Array.isArray(gameplayStyle.icons)
+      ? gameplayStyle.icons
+      : [gameplayStyle.icon || gameplayStyle.label || 'mana'],
+    label: gameplayStyle.label || gameplayStyle.icon || 'Mana',
+  };
+}
+
+function StatIcon({ src, alt = '' }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="size-4 shrink-0 object-contain drop-shadow sm:size-5 lg:size-4"
+      draggable="false"
+    />
+  );
+}
+
+function MercenaryInfoPanel({ character }) {
+  const gameplayStyle = normalizeGameplayStyle(character.gameplayStyle);
+  const vidaInicial = character.vidaInicial ?? 40;
+  const vidaTotal = character.vidaTotal ?? 100;
+  const manaInicial = character.manaInicial ?? 1;
+  const manaTotal = character.manaTotal ?? 10;
+
+  return (
+    <div className="absolute right-3 top-3 z-10 grid w-[9.3rem] gap-1.5 rounded-lg border border-red-200/15 bg-black/62 p-2 text-[0.62rem] font-black uppercase leading-tight text-stone-100 shadow-xl shadow-black/35 backdrop-blur sm:right-4 sm:top-4 sm:w-[10.25rem] sm:p-2.5 sm:text-[0.68rem] lg:right-3 lg:top-3 lg:w-[8.9rem] lg:p-2 lg:text-[0.58rem] xl:w-[9.6rem] xl:text-[0.62rem]">
+      <span className="flex items-center justify-end gap-1.5 text-right">
+        <span>
+          {vidaInicial}/{vidaTotal} Life
+        </span>
+        <StatIcon src={heartIcon} />
+      </span>
+      <span className="flex items-center justify-end gap-1.5 text-right">
+        <span>
+          {manaInicial}/{manaTotal} Mana
+        </span>
+        <StatIcon src={manaIcon} />
+      </span>
+      <span className="flex flex-wrap items-center justify-end gap-1 text-right text-stone-300">
+        <span>Gameplay based on</span>
+        <span className="text-amber-200">{gameplayStyle.label}</span>
+        {gameplayStyle.icons.map((icon, iconIndex) => {
+          const iconKey = normalizeGameplayIconKey(icon);
+          const iconSrc = gameplayIconSources[iconKey] || manaIcon;
+
+          return (
+            <StatIcon
+              key={`${character.id}-${iconKey}-${iconIndex}`}
+              src={iconSrc}
+            />
+          );
+        })}
+      </span>
+    </div>
+  );
+}
+
 function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect, t }) {
   const title = getMercenaryTitle(character, t);
   const subtitle = getMercenarySubtitle(character, t);
@@ -89,18 +182,20 @@ function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect
     offset === 0
       ? '0rem'
       : offset > 0
-        ? 'clamp(7rem, 17vw, 13rem)'
-        : 'clamp(-13rem, -17vw, -7rem)';
+        ? 'clamp(8.5rem, 20vw, 16rem)'
+        : 'clamp(-16rem, -20vw, -8.5rem)';
 
   return (
     <article
       aria-current={isActive}
       className={cn(
-        'absolute left-1/2 top-1/2 h-[18rem] w-[min(86vw,34rem)] rounded-lg opacity-100 outline-none transition duration-300 sm:h-[21rem] sm:w-[36rem] lg:h-[14.5rem] lg:w-[30rem] xl:h-[16.5rem] xl:w-[32rem]',
+        'absolute left-1/2 top-1/2 h-[18rem] w-[min(86vw,34rem)] rounded-lg opacity-100 outline-none transition duration-300 sm:h-[21rem] sm:w-[36rem] lg:h-[min(20.9rem,calc(100dvh-28rem))] lg:w-[min(43.2rem,76vw)] xl:h-[min(23.75rem,calc(100dvh-28rem))] xl:w-[min(46.1rem,74vw)]',
         isLocked ? 'cursor-default' : 'cursor-pointer',
       )}
       style={{
-        transform: `translate(calc(-50% + ${xOffset}), -50%) rotate(0deg) scale(${isActive ? 1 : 0.82})`,
+        backfaceVisibility: 'hidden',
+        transform: `translate3d(calc(-50% + ${xOffset}), -50%, 0) rotate(0deg) scale(${isActive ? 1 : 0.82})`,
+        willChange: 'transform',
         zIndex: isActive ? 20 : 10 - Math.abs(offset),
       }}
     >
@@ -132,8 +227,9 @@ function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect
                 )}
               />
               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+              <MercenaryInfoPanel character={character} />
               {isActive && isLocked ? (
-                <span className="relative ml-auto grid size-9 place-items-center rounded-md border border-amber-200/20 bg-black/55 text-amber-200">
+                <span className="relative mr-auto grid size-9 place-items-center rounded-md border border-amber-200/20 bg-black/55 text-amber-200">
                   <Lock className="size-4" />
                 </span>
               ) : (
@@ -348,25 +444,17 @@ export function HellHandGame() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(245,158,11,0.18),transparent_26%),radial-gradient(circle_at_22%_28%,rgba(185,28,28,0.30),transparent_34%),linear-gradient(115deg,rgba(0,0,0,0.95),rgba(32,8,8,0.82)_48%,rgba(0,0,0,0.96))]" />
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/75 to-transparent" />
 
-      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-5 px-4 py-8 sm:px-6 lg:h-full lg:min-h-0 lg:gap-3 lg:px-8 lg:py-4">
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-5 px-4 py-8 sm:px-6 lg:h-full lg:min-h-0 lg:gap-1.5 lg:px-5 lg:py-2 xl:gap-2 xl:px-8 xl:py-2">
         <div className="max-w-3xl text-center lg:shrink-0">
-          <div className="flex items-center justify-center gap-3 text-amber-300">
-            <span className="h-px w-10 bg-amber-300/70" />
-            <span className="text-xs font-black uppercase tracking-[0.32em] lg:text-[0.68rem]">
-              {t('pages.hellHandGame.eyebrow')}
-            </span>
-            <span className="h-px w-10 bg-amber-300/70" />
-          </div>
-
-          <h1 className="mt-5 text-5xl font-black tracking-tight text-white sm:text-6xl md:text-7xl lg:mt-3 lg:text-5xl xl:text-6xl">
+          <h1 className="text-5xl font-black tracking-tight text-white sm:text-6xl md:text-7xl lg:text-3xl xl:text-4xl">
             {t('pages.hellHandGame.title')}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-stone-300 md:text-lg md:leading-8 lg:mt-2 lg:text-sm lg:leading-5">
+          <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-stone-300 md:text-lg md:leading-8 lg:mt-0.5 lg:text-xs lg:leading-4 xl:mt-1 xl:text-sm xl:leading-5">
             {t('pages.createGame.configureBefore')}
           </p>
         </div>
 
-        <section className="w-full max-w-5xl rounded-lg border border-red-200/12 bg-black/70 p-4 shadow-2xl shadow-black/45 backdrop-blur md:p-6 lg:min-h-0 lg:p-4">
+        <section className="w-full max-w-5xl rounded-lg border border-red-200/12 bg-black/70 p-4 shadow-2xl shadow-black/45 backdrop-blur md:p-6 lg:min-h-0 lg:p-2.5 xl:p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="grid size-11 place-items-center rounded-md border border-amber-200/15 bg-red-950/50 text-amber-200">
@@ -403,8 +491,8 @@ export function HellHandGame() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-5 lg:mt-3 lg:gap-3">
-            <section className="min-w-0 rounded-lg border border-red-200/12 bg-red-950/20 p-4 lg:p-3">
+          <div className="mt-5 grid gap-5 lg:mt-1.5 lg:gap-1.5 xl:mt-2 xl:gap-2">
+            <section className="min-w-0 rounded-lg border border-red-200/12 bg-red-950/20 p-4 lg:p-2 xl:p-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300/75">
@@ -441,7 +529,7 @@ export function HellHandGame() {
                 </div>
               </div>
 
-              <div className="relative mt-3 h-[25rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/65 lg:h-[17rem] xl:h-[19rem]">
+              <div className="relative mt-3 h-[25rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/65 lg:mt-1.5 lg:h-[min(24rem,calc(100dvh-24rem))] xl:mt-2 xl:h-[min(27rem,calc(100dvh-24rem))]">
                 {characters.map((character, index) => {
                   const offset = getCarouselOffset(
                     index,
@@ -479,12 +567,12 @@ export function HellHandGame() {
               </div>
             </section>
 
-            <label className="block min-w-0 rounded-lg border border-red-200/12 bg-red-950/20 p-4 lg:p-3">
+            <label className="block min-w-0 rounded-lg border border-red-200/12 bg-red-950/20 p-4 lg:p-2 xl:p-2.5">
               <span className="text-sm font-semibold text-stone-100">
                 {t('pages.createGame.powerDeck')}
               </span>
               <select
-                className="mt-3 h-11 w-full cursor-pointer rounded-full border border-red-200/15 bg-black/75 px-4 text-sm text-stone-100 outline-none transition hover:border-amber-300/50 focus-visible:border-amber-300 focus-visible:ring-3 focus-visible:ring-amber-300/30 disabled:cursor-not-allowed disabled:opacity-60 lg:mt-2 lg:h-10"
+                className="mt-3 h-11 w-full cursor-pointer rounded-full border border-red-200/15 bg-black/75 px-4 text-sm text-stone-100 outline-none transition hover:border-amber-300/50 focus-visible:border-amber-300 focus-visible:ring-3 focus-visible:ring-amber-300/30 disabled:cursor-not-allowed disabled:opacity-60 lg:mt-1 lg:h-9 xl:mt-2 xl:h-10"
                 disabled={isLoadingPowerDecks || !powerDecks.length}
                 value={powerDeckId}
                 onChange={handlePowerDeckChange}
@@ -501,7 +589,7 @@ export function HellHandGame() {
                   </option>
                 ))}
               </select>
-              <span className="mt-2 block text-sm leading-6 text-stone-400 lg:text-xs lg:leading-5">
+              <span className="mt-2 block text-sm leading-6 text-stone-400 lg:mt-1 lg:text-xs lg:leading-4 xl:mt-2 xl:leading-5">
                 {isLoadingPowerDecks
                   ? t('pages.createGame.loadingPowerDecks')
                   : powerDecks.length
@@ -519,7 +607,7 @@ export function HellHandGame() {
               <button
                 type="button"
                 disabled={isCreating || !canCreateGame}
-                className="inline-flex h-12 w-full min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-amber-300/40 bg-amber-300 px-6 text-base font-black text-black shadow-lg shadow-red-950/30 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 w-full min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-amber-300/40 bg-amber-300 px-6 text-base font-black text-black shadow-lg shadow-red-950/30 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-60 lg:h-10 xl:h-12"
                 onClick={handleCreateGame}
               >
                 {isCreating ? (
@@ -532,7 +620,7 @@ export function HellHandGame() {
 
               <Link
                 to="/hell-hand"
-                className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-red-200/15 bg-black/65 px-6 text-base font-semibold text-stone-100 transition hover:border-amber-300/50 hover:bg-red-950/45 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                className="inline-flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-red-200/15 bg-black/65 px-6 text-base font-semibold text-stone-100 transition hover:border-amber-300/50 hover:bg-red-950/45 focus:outline-none focus:ring-2 focus:ring-amber-300 lg:h-10 xl:h-12"
                 onClick={playSelectSound}
               >
                 <Home className="size-4" />

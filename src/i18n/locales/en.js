@@ -227,7 +227,7 @@ export const en = {
     hellHandGame: {
       characterEyebrow: 'Mercenary',
       characterRequired: 'Select a mercenary before playing.',
-      characterTitle: 'Choose your contract',
+      characterTitle: 'Choose your Mercenary',
       eyebrow: 'Table contract',
       selectCharacter: 'Select',
       title: 'Prepare Hell Hand',

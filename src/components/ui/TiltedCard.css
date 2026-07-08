@@ -21,6 +21,8 @@
 .tilted-card-inner {
   position: relative;
   transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .tilted-card-img {
@@ -29,8 +31,11 @@
   left: 0;
   object-fit: cover;
   border-radius: 8px;
+  backface-visibility: hidden;
+  filter: none;
+  image-rendering: auto;
+  transform: translate3d(0, 0, 0.1px);
   will-change: transform;
-  transform: translateZ(0);
 }
 
 .tilted-card-overlay {
