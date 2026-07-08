@@ -276,6 +276,7 @@ export const en = {
         eyebrow: 'Admin tools',
         id: 'Mercenary ID',
         idNameRequired: 'Enter a mercenary ID and name.',
+        luaFetchError: 'Could not load the latest Lua editor source.',
         name: 'Name',
         passiveRequired: 'Enter a passive Lua script.',
         passiveScript: 'Passive Lua script',
@@ -499,6 +500,7 @@ export const en = {
       importImage: 'Import image',
       importTemplate: 'Import template',
       loadError: 'Could not load card definitions.',
+      luaFetchError: 'Could not load the latest Lua editor source.',
       luaRequired: 'Enter a Lua script before saving.',
       luaScript: 'Lua effect script',
       layout: {

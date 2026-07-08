@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/mooncode-api/:path*",
+      "destination": "https://mooncode.loty.click/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

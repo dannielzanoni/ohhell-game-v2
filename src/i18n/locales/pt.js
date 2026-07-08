@@ -276,6 +276,7 @@ export const pt = {
         eyebrow: 'Ferramentas admin',
         id: 'ID do mercenario',
         idNameRequired: 'Informe o ID e o nome do mercenario.',
+        luaFetchError: 'Nao foi possivel carregar o codigo Lua mais recente do editor.',
         name: 'Nome',
         passiveRequired: 'Digite um script Lua passivo.',
         passiveScript: 'Script Lua passivo',
@@ -499,6 +500,7 @@ export const pt = {
       importImage: 'Importar imagem',
       importTemplate: 'Importar template',
       loadError: 'Nao foi possivel carregar as definicoes de cartas.',
+      luaFetchError: 'Nao foi possivel carregar o codigo Lua mais recente do editor.',
       luaRequired: 'Digite um script Lua antes de salvar.',
       luaScript: 'Script Lua do efeito',
       layout: {

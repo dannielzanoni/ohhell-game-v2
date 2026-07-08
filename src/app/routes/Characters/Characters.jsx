@@ -12,7 +12,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
-import { LuaStudioFrame } from '@/components/lua/LuaStudioFrame.jsx';
+import {
+  fetchLuaStudioSnippetSource,
+  LuaStudioFrame,
+} from '@/components/lua/LuaStudioFrame.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { environment } from '@/config/environment.js';
 import TiltedCard from '@/components/ui/TiltedCard.jsx';
@@ -159,6 +162,8 @@ function AdminMercenaryForm({ onCreated, t }) {
   });
   const [bannerFile, setBannerFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [luaEditorKey, setLuaEditorKey] = useState(0);
+  const [luaSnippetId, setLuaSnippetId] = useState('');
   const [error, setError] = useState('');
 
   const updateDraft = (field, value) => {
@@ -179,15 +184,27 @@ function AdminMercenaryForm({ onCreated, t }) {
       return;
     }
 
-    if (!draft.passiveScript.trim()) {
-      setError(t('pages.characters.admin.passiveRequired'));
-      return;
-    }
-
     setIsSaving(true);
 
     try {
-      await createMercenary({ ...draft, bannerFile });
+      let passiveScript = draft.passiveScript;
+
+      if (luaSnippetId) {
+        try {
+          passiveScript = await fetchLuaStudioSnippetSource(luaSnippetId);
+          updateDraft('passiveScript', passiveScript);
+        } catch (requestError) {
+          setError(requestError.message || t('pages.characters.admin.luaFetchError'));
+          return;
+        }
+      }
+
+      if (!passiveScript.trim()) {
+        setError(t('pages.characters.admin.passiveRequired'));
+        return;
+      }
+
+      await createMercenary({ ...draft, bannerFile, passiveScript });
       setDraft({
         deck: '',
         description: '',
@@ -199,6 +216,8 @@ function AdminMercenaryForm({ onCreated, t }) {
         temper: '',
       });
       setBannerFile(null);
+      setLuaSnippetId('');
+      setLuaEditorKey((current) => current + 1);
       await onCreated();
     } catch (requestError) {
       setError(requestError.message || t('pages.characters.admin.createError'));
@@ -273,6 +292,8 @@ function AdminMercenaryForm({ onCreated, t }) {
             <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
               {t('pages.characters.admin.passiveScript')}
               <LuaStudioFrame
+                key={luaEditorKey}
+                onSnippetChange={setLuaSnippetId}
                 source={draft.passiveScript}
                 templateUrl={environment.luaMercenaryPassiveTemplateUrl}
                 title={t('pages.characters.admin.passiveScript')}

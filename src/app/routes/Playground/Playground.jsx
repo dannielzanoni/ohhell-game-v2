@@ -16,7 +16,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
-import { LuaStudioFrame } from '@/components/lua/LuaStudioFrame.jsx';
+import {
+  fetchLuaStudioSnippetSource,
+  LuaStudioFrame,
+} from '@/components/lua/LuaStudioFrame.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { environment } from '@/config/environment.js';
@@ -714,6 +717,8 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
   const [editingCardId, setEditingCardId] = useState(null);
   const [imageError, setImageError] = useState('');
   const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [luaEditorKey, setLuaEditorKey] = useState(0);
+  const [luaSnippetId, setLuaSnippetId] = useState('');
   const [isOfficialCard, setIsOfficialCard] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [publishSuccess, setPublishSuccess] = useState('');
@@ -899,6 +904,8 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
     setDraft(normalizeCard(emptyDraft));
     setEditingCardId(null);
     setIsOfficialCard(false);
+    setLuaSnippetId('');
+    setLuaEditorKey((current) => current + 1);
     setImageError('');
     setPublishError('');
     setPublishSuccess('');
@@ -916,6 +923,8 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
     setDraft(createDraftFromDefinition(card));
     setEditingCardId(card.id);
     setIsOfficialCard(card.kind === 'official');
+    setLuaSnippetId('');
+    setLuaEditorKey((current) => current + 1);
     setImageError('');
     setPublishError('');
     setPublishSuccess('');
@@ -960,18 +969,27 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
       return;
     }
 
-    if (!draft.luaScript.trim()) {
-      setPublishError(t('pages.playground.luaRequired'));
-      return;
-    }
-
     setIsPublishing(true);
     setPublishError('');
     setPublishSuccess('');
 
     try {
-      const manaCost = draft.manaCost === '' ? '' : normalizeNumber(draft.manaCost, 0);
-      const fingerprint = draftAssetFingerprint;
+      let luaScript = draft.luaScript;
+
+      if (luaSnippetId) {
+        luaScript = await fetchLuaStudioSnippetSource(luaSnippetId);
+        updateDraft('luaScript', luaScript);
+      }
+
+      const draftForSave = normalizeCard({ ...draft, luaScript });
+
+      if (!draftForSave.luaScript.trim()) {
+        setPublishError(t('pages.playground.luaRequired'));
+        return;
+      }
+
+      const manaCost = draftForSave.manaCost === '' ? '' : normalizeNumber(draftForSave.manaCost, 0);
+      const fingerprint = getCardAssetFingerprint(draftForSave);
       let assetId = !editingCardId && stagedAsset?.fingerprint === fingerprint
         ? stagedAsset.asset_id
         : null;
@@ -985,17 +1003,17 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
         }
       }
 
-      const imageBlob = assetId || !draft.template ? null : await renderCardToBlob(draft);
+      const imageBlob = assetId || !draftForSave.template ? null : await renderCardToBlob(draftForSave);
       const cardPayload = {
         assetId,
-        cardType: draft.cardType,
-        description: draft.description,
+        cardType: draftForSave.cardType,
+        description: draftForSave.description,
         imageBlob,
         kind: canCreateOfficial && isOfficialCard ? 'official' : 'community',
         manaCost,
-        name: draft.title.trim() || t('pages.playground.untitled'),
-        scriptFileName: `${slugifyFileName(draft.title)}.lua`,
-        scriptText: draft.luaScript,
+        name: draftForSave.title.trim() || t('pages.playground.untitled'),
+        scriptFileName: `${slugifyFileName(draftForSave.title)}.lua`,
+        scriptText: draftForSave.luaScript,
       };
       const card = editingCardId
         ? await updateCardDefinition({
@@ -1011,17 +1029,22 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
       setDraft(normalizeCard(emptyDraft));
       setEditingCardId(null);
       setIsOfficialCard(false);
+      setLuaSnippetId('');
+      setLuaEditorKey((current) => current + 1);
       setStagedAsset(null);
       assetUploadRef.current = null;
       setImageError('');
 
       setPublishSuccess(
         t(editingCardId ? 'pages.playground.updateSuccess' : 'pages.playground.publishSuccess', {
-          name: card.name || draft.title,
+          name: card.name || draftForSave.title,
         }),
       );
     } catch (error) {
-      setPublishError(error.message || t('pages.playground.publishError'));
+      setPublishError(
+        error.message ||
+          (luaSnippetId ? t('pages.playground.luaFetchError') : t('pages.playground.publishError')),
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -1325,7 +1348,9 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                       </Button>
                     </div>
                     <LuaStudioFrame
+                      key={luaEditorKey}
                       className="mt-3"
+                      onSnippetChange={setLuaSnippetId}
                       source={draft.luaScript}
                       templateUrl={environment.luaPowerCardTemplateUrl}
                       title={t('pages.playground.luaScript')}
