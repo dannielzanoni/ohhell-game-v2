@@ -290,11 +290,30 @@ export async function refreshAuthIfNeeded() {
 export async function loginWithGoogle(credential) {
   const token = getAuthToken();
   const currentPlayer = parseAuthPlayer(token);
-  const response = await apiRequest('/auth/google', {
-    method: 'POST',
-    body: { credential },
-    token: currentPlayer?.type === 'Anonymous' ? token : null,
-  });
+  const shouldLinkGuestProfile = currentPlayer?.type === 'Anonymous';
+
+  const requestGoogleLogin = (authToken) =>
+    apiRequest('/auth/google', {
+      method: 'POST',
+      body: { credential },
+      token: authToken,
+    });
+
+  let response;
+
+  try {
+    response = await requestGoogleLogin(shouldLinkGuestProfile ? token : null);
+  } catch (error) {
+    if (
+      !shouldLinkGuestProfile ||
+      !isInvalidAuthTokenError(error, Boolean(token))
+    ) {
+      throw error;
+    }
+
+    clearAuthToken();
+    response = await requestGoogleLogin(null);
+  }
 
   return persistAuth(response);
 }
