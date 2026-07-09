@@ -31,6 +31,7 @@ import {
   putBid,
   selectMercenary,
   setPlayerReady,
+  skipPowerPhase,
   usePowerCard,
 } from '@/services/gameSocketService.js';
 import {
@@ -1304,7 +1305,9 @@ function ActionTimer({ onExpire, timer }) {
       ? t('game.timerBid')
       : timer.type === 'cards'
         ? t('game.timerCards')
-        : t('game.timerPlay');
+        : timer.type === 'power'
+          ? t('game.timerPower')
+          : t('game.timerPlay');
 
   return (
     <div
@@ -1547,15 +1550,17 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
 }
 
 function PowerCardHand({
+  canSkipPowerPhase,
   canUsePowerCards,
   cards,
   onPowerCardDragEnd,
   onPowerCardDragStart,
+  onSkipPowerPhase,
   onUsePowerCard,
 }) {
   const { t } = useTranslation();
 
-  if (!cards.length) {
+  if (!cards.length && !canSkipPowerPhase) {
     return null;
   }
 
@@ -1620,6 +1625,15 @@ function PowerCardHand({
           </button>
         );
       })}
+      {canSkipPowerPhase ? (
+        <Button
+          type="button"
+          className="min-h-24 shrink-0 rounded-2xl border border-amber-200/40 bg-black/80 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-amber-100 shadow-2xl shadow-black/50 transition hover:-translate-y-1 hover:border-amber-200 hover:bg-black"
+          onClick={onSkipPowerPhase}
+        >
+          {t('game.skipPowerPhase')}
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -1839,6 +1853,12 @@ export function Game() {
     currentPlayer?.turnToPlay ||
       (turnPlayerId && localPlayerIds.includes(turnPlayerId)),
   );
+  const isCurrentPowerTurn = Boolean(
+    gameType === gameTypes.FODINHA_POWER &&
+      gameStage === 'power' &&
+      hasGameSocket &&
+      isCurrentPlayerTurn,
+  );
   const canPlayCards = Boolean(
     gameStage === 'dealing' &&
       hasGameSocket &&
@@ -1846,12 +1866,10 @@ export function Game() {
       playerDeck.length,
   );
   const canUsePowerCards = Boolean(
-    gameType === gameTypes.FODINHA_POWER &&
-      gameStage === 'bidding' &&
-      hasGameSocket &&
-      isCurrentPlayerTurn &&
+    isCurrentPowerTurn &&
       powerCards.length,
   );
+  const canSkipPowerPhase = isCurrentPowerTurn;
   const hasEnoughPlayers = totalPlayers > 1;
   const needsMercenarySelection = Boolean(
     gameType === gameTypes.FODINHA_POWER &&
@@ -2194,7 +2212,13 @@ export function Game() {
       setMatchPhase('playing');
       updateUpcard(gameInfo.upcard || null);
       setTurnPlayerId(gameInfo.current_player || null);
-      setGameStage(gameInfo.stage?.type === 'Bidding' ? 'bidding' : 'dealing');
+      setGameStage(
+        gameInfo.stage?.type === 'Bidding'
+          ? 'bidding'
+          : gameInfo.stage?.type === 'Power'
+            ? 'power'
+            : 'dealing',
+      );
 
       if (localPlayerId) {
         setCurrentPlayerId(localPlayerId);
@@ -2224,6 +2248,17 @@ export function Game() {
           getActionCardCount(
             Math.max(...(gameInfo.stage.data?.possible_bids || [0])),
           ),
+          nextGameType,
+          nextPowerCardCount,
+        );
+        playTurnPromptSound('bid', gameInfo.current_player);
+      } else if (
+        gameInfo.stage?.type === 'Power' &&
+        localPlayerIds.includes(gameInfo.current_player)
+      ) {
+        startActionTimer(
+          'power',
+          0,
           nextGameType,
           nextPowerCardCount,
         );
@@ -2422,6 +2457,25 @@ export function Game() {
             return nextPlayers;
           });
           break;
+        case 'PlayersLifesChanged':
+          showLifeLossHighlight(message.data || {}, nextLifes);
+          setPlayersById((previousPlayers) => {
+            const nextPlayers = { ...previousPlayers };
+
+            Object.entries(message.data || {}).forEach(([playerId, life]) => {
+              const existing =
+                nextPlayers[playerId] || createFallbackPlayer(playerId, nextLifes);
+
+              nextPlayers[playerId] = {
+                ...existing,
+                lifes: life,
+              };
+            });
+
+            playersByIdRef.current = nextPlayers;
+            return nextPlayers;
+          });
+          break;
         case 'RoundEnded':
           clearTurnPromptSound();
           clearActionTimer();
@@ -2478,6 +2532,37 @@ export function Game() {
             );
           });
           break;
+        case 'PlayerPowerTurn':
+          setIsReadySending(false);
+          setGameStage('power');
+          setMatchPhase('playing');
+          setPossibleBids([]);
+          setTurnPlayerId(message.data.player_id);
+          if (isLocalPlayerId(message.data.player_id)) {
+            startActionTimer(
+              'power',
+              0,
+              nextGameType,
+              powerCardCountRef.current,
+            );
+            playTurnPromptSound('bid', message.data.player_id);
+          } else {
+            clearActionTimer();
+          }
+          setPlayersById((previousPlayers) => {
+            return Object.entries(previousPlayers).reduce(
+              (nextPlayers, [playerId, player]) => {
+                nextPlayers[playerId] = {
+                  ...player,
+                  turnToPlay: playerId === message.data.player_id,
+                };
+
+                return nextPlayers;
+              },
+              {},
+            );
+          });
+          break;
         case 'PlayerDeck':
           setIsReadySending(false);
           setMatchPhase('playing');
@@ -2505,6 +2590,8 @@ export function Game() {
           }
           break;
         case 'PowerCardPlayed': {
+          clearTurnPromptSound();
+          clearActionTimer();
           const effectLifes = message.data?.lifes || {};
 
           if (isLocalPlayerId(message.data?.player_id)) {
@@ -3068,7 +3155,12 @@ export function Game() {
       return;
     }
 
-    if (!canUsePowerCards) {
+    if (gameStage !== 'power') {
+      setJoinError(t('game.waitPower'));
+      return;
+    }
+
+    if (!isCurrentPowerTurn) {
       setJoinError(t('game.waitTurn'));
       return;
     }
@@ -3080,8 +3172,58 @@ export function Game() {
 
     try {
       setJoinError('');
+      clearTurnPromptSound();
+      clearActionTimer();
       usePowerCard(socketRef.current, card.id, targetPlayerId);
       setDraggingPowerCard(null);
+      setPlayersById((previousPlayers) => {
+        if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
+          return previousPlayers;
+        }
+
+        return {
+          ...previousPlayers,
+          [resolvedCurrentPlayerId]: {
+            ...previousPlayers[resolvedCurrentPlayerId],
+            turnToPlay: false,
+          },
+        };
+      });
+    } catch (error) {
+      setJoinError(error.message || t('game.powerCardUseError'));
+    }
+  };
+
+  const handleSkipPowerPhase = () => {
+    if (!socketRef.current) {
+      setJoinError(t('game.connectionNotReady'));
+      return;
+    }
+
+    if (!isCurrentPowerTurn) {
+      setJoinError(t('game.waitTurn'));
+      return;
+    }
+
+    try {
+      setJoinError('');
+      setDraggingPowerCard(null);
+      clearTurnPromptSound();
+      clearActionTimer();
+      skipPowerPhase(socketRef.current);
+      setPlayersById((previousPlayers) => {
+        if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
+          return previousPlayers;
+        }
+
+        return {
+          ...previousPlayers,
+          [resolvedCurrentPlayerId]: {
+            ...previousPlayers[resolvedCurrentPlayerId],
+            turnToPlay: false,
+          },
+        };
+      });
     } catch (error) {
       setJoinError(error.message || t('game.powerCardUseError'));
     }
@@ -3100,6 +3242,11 @@ export function Game() {
 
     if (randomBid !== null) {
       sendBid(randomBid);
+      return;
+    }
+
+    if (isCurrentPowerTurn) {
+      handleSkipPowerPhase();
       return;
     }
 
@@ -3196,10 +3343,12 @@ export function Game() {
 
       <BidControls onBid={sendBid} possibleBids={hasGameSocket ? possibleBids : []} />
       <PowerCardHand
+        canSkipPowerPhase={canSkipPowerPhase}
         canUsePowerCards={canUsePowerCards}
         cards={powerCards}
         onPowerCardDragEnd={() => setDraggingPowerCard(null)}
         onPowerCardDragStart={setDraggingPowerCard}
+        onSkipPowerPhase={handleSkipPowerPhase}
         onUsePowerCard={handleUsePowerCard}
       />
       <PlayerHand

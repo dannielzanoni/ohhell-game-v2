@@ -115,6 +115,15 @@ export function usePowerCard(socket, cardId, targetPlayerId) {
   );
 }
 
+export function skipPowerPhase(socket) {
+  sendGameCommand(
+    socket,
+    buildGameCommand({
+      type: 'SkipPowerPhase',
+    }),
+  );
+}
+
 export function setPlayerReady(socket, ready) {
   sendGameCommand(socket, {
     type: 'PlayerStatusChange',
@@ -142,5 +151,6 @@ export const gameSocketService = {
   selectMercenary,
   sendGameCommand,
   setPlayerReady,
+  skipPowerPhase,
   usePowerCard,
 };
