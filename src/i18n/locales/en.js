@@ -547,17 +547,19 @@ export const en = {
       viewCommunityCards: 'Create a power deck',
     },
     powerDecks: {
-      bucket: 'Card bucket',
-      bucketHint: '{{generic}} generic selected. {{mercenary}} selected in the active bucket.',
+      bucket: 'Link cards to',
+      bucketHint: '{{generic}} table copies. {{mercenary}} linked copies in the active bucket.',
       cardsEyebrow: 'Card definitions',
       cardsRequired: 'Select at least one card.',
       cardsTitle: 'Official and community cards',
+      copies: 'Copies',
       create: 'Create deck',
       createError: 'Could not create the deck.',
       createEyebrow: 'Deck builder',
       createTitle: 'Create a Fodinha Power deck',
       createdBy: 'By {{name}}',
       creating: 'Creating...',
+      decreaseCopies: 'Decrease copies',
       deckCardCount: '{{count}} cards',
       description:
         'Build named Fodinha Power decks from official cards and cards published by the community.',
@@ -568,7 +570,8 @@ export const en = {
         description: 'Description',
         name: 'Deck name',
       },
-      genericBucket: 'Generic cards',
+      genericBucket: 'Table deck',
+      increaseCopies: 'Increase copies',
       cardTypes: {
         instant: 'Instant',
         interactive: 'Interactive',
@@ -593,7 +596,8 @@ export const en = {
       saveAsDraftHint:
         'Drafts are visible only to you and cannot be used to start a match.',
       selectedCards: '{{count}} selected cards',
-      selectedHint: 'Selected cards become the power-card pool for this deck.',
+      selectedHint:
+        'Create cards first, then assign copy counts to the table deck or to a mercenary bucket.',
       status: {
         draft: 'Draft',
         valid: 'Playable',

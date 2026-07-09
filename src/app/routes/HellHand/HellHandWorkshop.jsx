@@ -14,6 +14,7 @@ import { Playground } from '@/app/routes/Playground/Playground.jsx';
 import { PowerDecks } from '@/app/routes/PowerDecks/PowerDecks.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
+import { isCurrentUserAdmin } from '@/services/authService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
 
 const workshopTabs = [
@@ -128,13 +129,21 @@ function WorkshopPanel({ activeTab, t }) {
 
 export function HellHandWorkshop() {
   const { t } = useTranslation();
-  const [activeTabId, setActiveTabId] = useState(workshopTabs[0].id);
+  const isAdmin = isCurrentUserAdmin();
+  const visibleTabs = workshopTabs.filter((tab) => isAdmin || tab.id !== 'playground');
+  const [activeTabId, setActiveTabId] = useState(visibleTabs[0]?.id || workshopTabs[0].id);
   const activeTab =
-    workshopTabs.find((tab) => tab.id === activeTabId) || workshopTabs[0];
+    visibleTabs.find((tab) => tab.id === activeTabId) || visibleTabs[0] || workshopTabs[0];
 
   useEffect(() => {
     startHellHandHomeTheme();
   }, []);
+
+  useEffect(() => {
+    if (!visibleTabs.some((tab) => tab.id === activeTabId) && visibleTabs[0]) {
+      setActiveTabId(visibleTabs[0].id);
+    }
+  }, [activeTabId, visibleTabs]);
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-4">
@@ -177,7 +186,7 @@ export function HellHandWorkshop() {
         </header>
 
         <nav className="grid gap-2 rounded-lg border border-red-200/12 bg-black/68 p-2 shadow-2xl shadow-black/35 backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
-          {workshopTabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = tab.id === activeTab.id;
 

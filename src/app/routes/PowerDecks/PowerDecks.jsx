@@ -58,6 +58,39 @@ function formatDate(value) {
   );
 }
 
+function sumCardCounts(cardCounts) {
+  return Object.values(cardCounts || {}).reduce(
+    (total, count) => total + Math.max(0, Number(count) || 0),
+    0,
+  );
+}
+
+function selectedCardIds(cardCounts) {
+  return Object.entries(cardCounts || {})
+    .filter(([, count]) => (Number(count) || 0) > 0)
+    .map(([cardId]) => cardId);
+}
+
+function updateCardCountMap(cardCounts, cardId, nextCount) {
+  const normalizedCount = Math.max(0, Math.trunc(Number(nextCount) || 0));
+
+  if (!normalizedCount) {
+    const { [cardId]: _removed, ...remaining } = cardCounts || {};
+    return remaining;
+  }
+
+  return {
+    ...(cardCounts || {}),
+    [cardId]: normalizedCount,
+  };
+}
+
+function expandCardCounts(cardCounts) {
+  return Object.entries(cardCounts || {}).flatMap(([cardId, count]) =>
+    Array.from({ length: Math.max(0, Math.trunc(Number(count) || 0)) }, () => cardId),
+  );
+}
+
 const hellHandEmbeddedThemeClassName =
   '[&_.bg-background]:!bg-black/45 [&_.bg-card]:!bg-black/70 [&_.bg-muted]:!bg-red-950/30 [&_.border-border]:!border-red-200/12 [&_.border-input]:!border-red-200/20 [&_.text-muted-foreground]:!text-stone-400 [&_.text-primary]:!text-amber-300 [&_input]:!bg-black/55 [&_select]:!bg-black/55 [&_textarea]:!bg-black/55 [&_[data-slot=button][data-variant=default]]:!bg-amber-300 [&_[data-slot=button][data-variant=default]]:!text-black [&_[data-slot=button][data-variant=default]:hover]:!bg-amber-200 [&_[data-slot=button][data-variant=outline]]:!border-red-200/20 [&_[data-slot=button][data-variant=outline]]:!bg-black/55 [&_[data-slot=button][data-variant=outline]]:!text-stone-100 [&_[data-slot=button][data-variant=outline]:hover]:!border-amber-300/45 [&_[data-slot=button][data-variant=outline]:hover]:!bg-red-950/55';
 
@@ -68,8 +101,8 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   const [decks, setDecks] = useState([]);
   const [mercenaries, setMercenaries] = useState([]);
   const [activeBucket, setActiveBucket] = useState('generic');
-  const [selectedGenericCardIds, setSelectedGenericCardIds] = useState([]);
-  const [selectedMercenaryCardIds, setSelectedMercenaryCardIds] = useState({});
+  const [selectedGenericCardCounts, setSelectedGenericCardCounts] = useState({});
+  const [selectedMercenaryCardCounts, setSelectedMercenaryCardCounts] = useState({});
   const [deckName, setDeckName] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
   const [deckKind, setDeckKind] = useState('community');
@@ -79,14 +112,15 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const canCreateOfficial = isCurrentUserAdmin();
-  const activeSelectedCardIds =
+  const activeSelectedCardCounts =
     activeBucket === 'generic'
-      ? selectedGenericCardIds
-      : selectedMercenaryCardIds[activeBucket] || [];
+      ? selectedGenericCardCounts
+      : selectedMercenaryCardCounts[activeBucket] || {};
+  const activeSelectedCardIds = selectedCardIds(activeSelectedCardCounts);
   const totalSelectedCount =
-    selectedGenericCardIds.length +
-    Object.values(selectedMercenaryCardIds).reduce(
-      (total, cardIds) => total + cardIds.length,
+    sumCardCounts(selectedGenericCardCounts) +
+    Object.values(selectedMercenaryCardCounts).reduce(
+      (total, cardCounts) => total + sumCardCounts(cardCounts),
       0,
     );
 
@@ -116,26 +150,23 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   }, []);
 
   const toggleCard = (cardId) => {
+    const currentCount = Number(activeSelectedCardCounts[cardId] || 0);
+
+    setCardCopies(cardId, currentCount > 0 ? 0 : 1);
+  };
+
+  const setCardCopies = (cardId, nextCount) => {
     if (activeBucket === 'generic') {
-      setSelectedGenericCardIds((current) =>
-        current.includes(cardId)
-          ? current.filter((id) => id !== cardId)
-          : [...current, cardId],
+      setSelectedGenericCardCounts((current) =>
+        updateCardCountMap(current, cardId, nextCount),
       );
       return;
     }
 
-    setSelectedMercenaryCardIds((current) => {
-      const bucketCardIds = current[activeBucket] || [];
-      const nextBucketCardIds = bucketCardIds.includes(cardId)
-        ? bucketCardIds.filter((id) => id !== cardId)
-        : [...bucketCardIds, cardId];
-
-      return {
-        ...current,
-        [activeBucket]: nextBucketCardIds,
-      };
-    });
+    setSelectedMercenaryCardCounts((current) => ({
+      ...current,
+      [activeBucket]: updateCardCountMap(current[activeBucket], cardId, nextCount),
+    }));
   };
 
   const handleCreateDeck = async (event) => {
@@ -158,9 +189,13 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
       await createPowerDeck({
         cardIds: [],
         description: deckDescription,
-        genericCardIds: selectedGenericCardIds,
+        genericCardIds: expandCardCounts(selectedGenericCardCounts),
         kind: canCreateOfficial ? deckKind : 'community',
-        mercenaryCardIds: selectedMercenaryCardIds,
+        mercenaryCardIds: Object.fromEntries(
+          Object.entries(selectedMercenaryCardCounts)
+            .map(([mercenaryId, cardCounts]) => [mercenaryId, expandCardCounts(cardCounts)])
+            .filter(([, cardIds]) => cardIds.length),
+        ),
         name: deckName,
         status: deckStatus,
       });
@@ -169,8 +204,8 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
       setDeckDescription('');
       setDeckKind('community');
       setDeckStatus('valid');
-      setSelectedGenericCardIds([]);
-      setSelectedMercenaryCardIds({});
+      setSelectedGenericCardCounts({});
+      setSelectedMercenaryCardCounts({});
       await loadData();
     } catch (requestError) {
       setCreateError(requestError.message || t('pages.powerDecks.createError'));
@@ -303,19 +338,22 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
                 </label>
               </div>
 
-              <div className="mt-4 rounded-lg border border-border bg-background/50 p-3 text-sm">
-                <p className="font-semibold">
-                  {t('pages.powerDecks.selectedCards', {
-                    count: totalSelectedCount,
-                  })}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {t('pages.powerDecks.bucketHint', {
-                    generic: selectedGenericCardIds.length,
-                    mercenary: activeSelectedCardIds.length,
-                  })}
-                </p>
-              </div>
+                <div className="mt-4 rounded-lg border border-border bg-background/50 p-3 text-sm">
+                  <p className="font-semibold">
+                    {t('pages.powerDecks.selectedCards', {
+                      count: totalSelectedCount,
+                    })}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {t('pages.powerDecks.bucketHint', {
+                      generic: sumCardCounts(selectedGenericCardCounts),
+                      mercenary: sumCardCounts(activeSelectedCardCounts),
+                    })}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {t('pages.powerDecks.selectedHint')}
+                  </p>
+                </div>
 
               <Button
                 type="submit"
@@ -418,7 +456,8 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
             ) : cards.length ? (
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {cards.map((card) => {
-                  const isSelected = activeSelectedCardIds.includes(card.id);
+                  const selectedCopies = Number(activeSelectedCardCounts[card.id] || 0);
+                  const isSelected = selectedCopies > 0;
                   const isOfficial = card.kind === 'official';
                   const SelectIcon = isSelected ? CheckSquare : Square;
 
@@ -524,6 +563,37 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
                           </div>
                         </div>
                       </button>
+                      <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+                        <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">
+                          {t('pages.powerDecks.copies')}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                            aria-label={t('pages.powerDecks.decreaseCopies')}
+                            disabled={!selectedCopies}
+                            onClick={() => setCardCopies(card.id, selectedCopies - 1)}
+                          >
+                            <span className="text-base font-black">-</span>
+                          </Button>
+                          <span className="min-w-8 text-center text-sm font-black">
+                            {selectedCopies}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                            aria-label={t('pages.powerDecks.increaseCopies')}
+                            onClick={() => setCardCopies(card.id, selectedCopies + 1)}
+                          >
+                            <span className="text-base font-black">+</span>
+                          </Button>
+                        </div>
+                      </div>
                     </article>
                   );
                 })}

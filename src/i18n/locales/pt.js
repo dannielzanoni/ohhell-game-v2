@@ -547,17 +547,19 @@ export const pt = {
       viewCommunityCards: 'Criar deck de poder',
     },
     powerDecks: {
-      bucket: 'Grupo de cartas',
-      bucketHint: '{{generic}} genericas selecionadas. {{mercenary}} selecionadas no grupo ativo.',
+      bucket: 'Vincular cartas a',
+      bucketHint: '{{generic}} copias na mesa. {{mercenary}} copias vinculadas no grupo ativo.',
       cardsEyebrow: 'Definicoes de cartas',
       cardsRequired: 'Selecione pelo menos uma carta.',
       cardsTitle: 'Cartas oficiais e da comunidade',
+      copies: 'Copias',
       create: 'Criar deck',
       createError: 'Nao foi possivel criar o deck.',
       createEyebrow: 'Construtor de deck',
       createTitle: 'Criar deck do Fodinha Power',
       createdBy: 'Por {{name}}',
       creating: 'Criando...',
+      decreaseCopies: 'Diminuir copias',
       deckCardCount: '{{count}} cartas',
       description:
         'Monte decks nomeados do Fodinha Power com cartas oficiais e cartas publicadas pela comunidade.',
@@ -568,7 +570,8 @@ export const pt = {
         description: 'Descricao',
         name: 'Nome do deck',
       },
-      genericBucket: 'Cartas genericas',
+      genericBucket: 'Deck da mesa',
+      increaseCopies: 'Aumentar copias',
       cardTypes: {
         instant: 'Instantanea',
         interactive: 'Interativa',
@@ -593,7 +596,8 @@ export const pt = {
       saveAsDraftHint:
         'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
       selectedCards: '{{count}} cartas selecionadas',
-      selectedHint: 'As cartas selecionadas viram o pool de cartas de poder deste deck.',
+      selectedHint:
+        'Crie as cartas primeiro e depois defina quantas copias vao para a mesa ou para o grupo de um mercenario.',
       status: {
         draft: 'Rascunho',
         valid: 'Jogavel',

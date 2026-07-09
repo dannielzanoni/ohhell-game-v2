@@ -17,11 +17,20 @@ import { PowerDecks } from './routes/PowerDecks/PowerDecks.jsx';
 import { Rooms } from './routes/Rooms/Rooms.jsx';
 import { Settings } from './routes/Settings/Settings.jsx';
 import { AppLayout } from '@/components/layout/AppLayout.jsx';
+import { isCurrentUserAdmin } from '@/services/authService.js';
 
 function CharacterProfileRoute() {
   const { mercenaryId } = useParams();
 
   return <CharacterProfile characterId={mercenaryId} />;
+}
+
+function AdminOnlyRoute({ element, redirectTo = '/home' }) {
+  if (!isCurrentUserAdmin()) {
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return element;
 }
 
 export function AppRouter() {
@@ -55,7 +64,10 @@ export function AppRouter() {
           <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
           <Route path="/Leandro" element={<Navigate to="/mercenaries/Leandro" replace />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
-          <Route path="/playground" element={<Playground />} />
+          <Route
+            path="/playground"
+            element={<AdminOnlyRoute element={<Playground />} />}
+          />
           <Route path="/power-decks" element={<PowerDecks />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/github" element={<Github />} />
