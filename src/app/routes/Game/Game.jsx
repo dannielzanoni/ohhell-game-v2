@@ -1662,28 +1662,32 @@ function PowerCardHand({
     <div className="absolute bottom-[11.25rem] left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-2 overflow-x-auto px-2 pb-2 sm:bottom-[13.75rem] sm:max-w-[min(92vw,56rem)] sm:justify-center sm:overflow-visible sm:px-0">
       {cards.map((card, index) => {
         const isTargetable = card.type === 'targetable';
-        const canDrag = canUsePowerCards && isTargetable;
+        const cardReady = card?.state?.ready !== false;
+        const canUseCard = canUsePowerCards && cardReady;
+        const canDrag = canUseCard && isTargetable;
 
         return (
           <button
             key={`${card.id}-${index}`}
             type="button"
-            disabled={!canUsePowerCards}
+            disabled={!canUseCard}
             draggable={canDrag}
             title={
-              isTargetable
+              !cardReady
+                ? card.state?.reason || card.description || card.name
+                : isTargetable
                 ? t('game.powerCardDragToTarget')
                 : card.description || card.name
             }
             className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
-              canUsePowerCards
+              canUseCard
                 ? isTargetable
                   ? 'cursor-grab hover:-translate-y-1 hover:border-violet-200 active:cursor-grabbing active:translate-y-0'
                   : 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
                 : 'cursor-not-allowed opacity-70'
             }`}
             onClick={() => {
-              if (!isTargetable) {
+              if (canUseCard && !isTargetable) {
                 onUsePowerCard(card);
               }
             }}
@@ -3365,6 +3369,10 @@ export function Game() {
 
     if (!isCurrentPowerTurn) {
       setJoinError(t('game.waitTurn'));
+      return;
+    }
+
+    if (card?.state && card.state.ready === false) {
       return;
     }
 
