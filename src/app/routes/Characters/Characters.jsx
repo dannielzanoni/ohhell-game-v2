@@ -228,7 +228,7 @@ function CharacterIconSelect({
                 onBlur={() => onHover(null)}
               >
                 <img
-                  src={character.banner}
+                  src={character.icon || character.banner}
                   alt=""
                   className="size-full object-cover transition duration-200 group-hover:scale-105"
                   draggable="false"

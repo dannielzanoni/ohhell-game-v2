@@ -1,16 +1,21 @@
 import artemisBanner from '@/assets/characters/artemis/banner.png';
+import artemisIcon from '@/assets/characters/artemis/icon.png';
 import artemisCard1 from '@/assets/characters/artemis/cards/1.png';
 import artemisCard2 from '@/assets/characters/artemis/cards/2.png';
 import artemisCard3 from '@/assets/characters/artemis/cards/3.png';
 import artemisCard4 from '@/assets/characters/artemis/cards/4.png';
 import artemisCard5 from '@/assets/characters/artemis/cards/5.png';
 import carmenBanner from '@/assets/characters/carmen/banner.png';
+import carmenIcon from '@/assets/characters/carmen/icon.png';
 import carmenCard2 from '@/assets/characters/carmen/cards/2.png';
 import carmenCard4 from '@/assets/characters/carmen/cards/4.png';
 import carmenCard5 from '@/assets/characters/carmen/cards/5.png';
 import conjuruzBanner from '@/assets/characters/conjuruz/banner.png';
+import conjuruzIcon from '@/assets/characters/conjuruz/icon.png';
 import gamblerBanner from '@/assets/characters/gambler/banner.png';
+import gamblerIcon from '@/assets/characters/gambler/icon.png';
 import leandroBanner from '@/assets/characters/leandro/banner.png';
+import leandroIcon from '@/assets/characters/leandro/leandro.png';
 import gamblerCard1 from '@/assets/characters/gambler/cards/1.png'; 
 import gamblerCard2 from '@/assets/characters/gambler/cards/2.png';
 import gamblerCard3 from '@/assets/characters/gambler/cards/3.png';
@@ -25,6 +30,7 @@ export const mercenaries = [
     accentClass: 'from-emerald-500/25 via-black/25 to-amber-500/20',
     banner: artemisBanner,
     bannerPosition: 'center 35%',
+    icon: artemisIcon,
     gameplayStyle: { icons: ['heart_1'], label: 'Lifes' },
     manaInicial: 1,
     manaTotal: 9,
@@ -45,6 +51,7 @@ export const mercenaries = [
     accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
     banner: conjuruzBanner,
     cards: [],
+    icon: conjuruzIcon,
     gameplayStyle: { icons: ['mana'], label: 'Mana' },
     manaInicial: 1,
     manaTotal: 18,
@@ -57,6 +64,7 @@ export const mercenaries = [
     id: 'carmen',
     accentClass: 'from-rose-500/25 via-black/25 to-amber-500/20',
     banner: carmenBanner,
+    icon: carmenIcon,
     gameplayStyle: { icons: ['shield', 'mana'], label: 'Shield & Mana' },
     manaInicial: 1,
     manaTotal: 8,
@@ -74,6 +82,7 @@ export const mercenaries = [
     id: 'gambler',
     accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
     banner: gamblerBanner,
+    icon: gamblerIcon,
     gameplayStyle: { icons: ['bid'], label: 'High Stakes' },
     manaInicial: 1,
     manaTotal: 11,
@@ -94,6 +103,7 @@ export const mercenaries = [
     accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
     banner: leandroBanner,
     cards: [],
+    icon: leandroIcon,
     gameplayStyle: { icons: ['mana', 'magic'], label: 'Mana & Magic' },
     manaInicial: 1,
     manaTotal: 13,
@@ -159,6 +169,7 @@ export function mergeMercenaries(remoteMercenaries = []) {
         remoteMercenary.gameplay_style ||
         remoteMercenary.gameplayStyle ||
         existing.gameplayStyle,
+      icon: remoteMercenary.icon_url || remoteMercenary.icon || existing.icon,
       manaInicial:
         remoteMercenary.mana_inicial ??
         remoteMercenary.manaInicial ??

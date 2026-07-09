@@ -349,7 +349,7 @@ function HellHandCharacterIconSelect({
                 onBlur={() => onHover(null)}
               >
                 <img
-                  src={character.banner}
+                  src={character.icon || character.banner}
                   alt=""
                   className={cn(
                     'size-full object-cover transition duration-200',
