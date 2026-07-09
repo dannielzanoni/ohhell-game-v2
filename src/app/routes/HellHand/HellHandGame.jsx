@@ -2,6 +2,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
+  Images,
+  LayoutGrid,
   Lock,
   LockOpen,
   Play,
@@ -257,11 +259,142 @@ function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect
   );
 }
 
+function HellHandCharacterPreviewCard({ character, isLocked, t }) {
+  const title = getMercenaryTitle(character, t);
+  const subtitle = getMercenarySubtitle(character, t);
+
+  return (
+    <article className="relative h-full min-h-0 overflow-hidden rounded-lg border border-red-200/15 bg-black/70 text-white shadow-2xl shadow-black/45">
+      <img
+        src={character.banner}
+        alt={title}
+        className="absolute inset-0 size-full object-cover"
+        draggable="false"
+      />
+      <div
+        className={cn(
+          'absolute inset-0 bg-gradient-to-br',
+          character.accentClass,
+        )}
+      />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+      <MercenaryInfoPanel character={character} />
+      {isLocked ? (
+        <span className="absolute left-4 top-4 z-10 grid size-9 place-items-center rounded-md border border-amber-200/20 bg-black/55 text-amber-200">
+          <Lock className="size-4" />
+        </span>
+      ) : null}
+      <div className="relative flex size-full flex-col justify-end p-4 sm:p-5">
+        <span
+          className={cn(
+            'mb-2 block h-1.5 w-14 rounded-full sm:mb-3',
+            character.markerClass,
+          )}
+        />
+        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-white/78 sm:leading-6">
+          {subtitle}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function HellHandCharacterIconSelect({
+  activeIndex,
+  characters,
+  hoveredIndex,
+  isLocked,
+  onHover,
+  onSelect,
+  t,
+}) {
+  const previewCharacter = characters[hoveredIndex ?? activeIndex] || characters[0];
+
+  return (
+    <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[minmax(12rem,16rem)_1fr]">
+      <div className="min-h-0 overflow-y-auto rounded-lg border border-red-200/12 bg-black/55 p-3 shadow-inner">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+          {characters.map((character, index) => {
+            const title = getMercenaryTitle(character, t);
+            const isActive = index === activeIndex;
+
+            return (
+              <button
+                key={character.id}
+                type="button"
+                aria-label={t('pages.characters.chooseCharacter', {
+                  name: title,
+                })}
+                aria-disabled={isLocked}
+                className={cn(
+                  'group relative aspect-square overflow-hidden rounded-md border bg-black shadow-lg shadow-black/25 outline-none transition focus-visible:ring-2 focus-visible:ring-amber-300',
+                  isLocked ? 'cursor-not-allowed' : 'cursor-pointer',
+                  isActive && isLocked
+                    ? 'border-amber-300 ring-2 ring-amber-300/60'
+                    : isActive
+                      ? 'border-amber-300 ring-2 ring-amber-300/35'
+                      : 'border-red-200/15 hover:border-amber-300/55',
+                )}
+                onClick={() => {
+                  if (!isLocked) {
+                    onSelect(index);
+                  }
+                }}
+                onMouseEnter={() => onHover(index)}
+                onMouseLeave={() => onHover(null)}
+                onFocus={() => onHover(index)}
+                onBlur={() => onHover(null)}
+              >
+                <img
+                  src={character.banner}
+                  alt=""
+                  className={cn(
+                    'size-full object-cover transition duration-200',
+                    !isLocked && 'group-hover:scale-105',
+                  )}
+                  draggable="false"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <span
+                  className={cn(
+                    'absolute inset-x-1 bottom-1 h-1 rounded-full',
+                    character.markerClass,
+                  )}
+                />
+                {isActive && isLocked ? (
+                  <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-sm border border-amber-200/30 bg-black/70 text-amber-200">
+                    <Lock className="size-3" />
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="min-h-[18rem] lg:min-h-0">
+        {previewCharacter ? (
+          <HellHandCharacterPreviewCard
+            character={previewCharacter}
+            isLocked={isLocked && previewCharacter.id === characters[activeIndex]?.id}
+            t={t}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function HellHandGame() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeCharacterIndex, setActiveCharacterIndex] = useState(0);
   const [characters, setCharacters] = useState(mercenaries);
+  const [hoveredCharacterIndex, setHoveredCharacterIndex] = useState(null);
+  const [selectionViewMode, setSelectionViewMode] = useState('icons');
   const [selectedCharacterId, setSelectedCharacterId] = useState('');
   const [powerDeckId, setPowerDeckId] = useState('');
   const [powerDecks, setPowerDecks] = useState([]);
@@ -367,6 +500,11 @@ export function HellHandGame() {
 
     playSwitchCardSound();
     setActiveCharacterIndex(index);
+  };
+
+  const toggleSelectionViewMode = () => {
+    setHoveredCharacterIndex(null);
+    setSelectionViewMode((current) => (current === 'cards' ? 'icons' : 'cards'));
   };
 
   const handleCharacterLockToggle = () => {
@@ -519,6 +657,29 @@ export function HellHandGame() {
                     type="button"
                     variant="outline"
                     size="icon-lg"
+                    aria-label={
+                      selectionViewMode === 'cards'
+                        ? 'Show mercenaries as icons'
+                        : 'Show mercenaries as cards'
+                    }
+                    title={
+                      selectionViewMode === 'cards'
+                        ? 'Show mercenaries as icons'
+                        : 'Show mercenaries as cards'
+                    }
+                    className="cursor-pointer border-red-200/15 bg-black/55 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/45"
+                    onClick={toggleSelectionViewMode}
+                  >
+                    {selectionViewMode === 'cards' ? (
+                      <LayoutGrid className="size-4" />
+                    ) : (
+                      <Images className="size-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-lg"
                     aria-label={t('pages.characters.next')}
                     className="cursor-pointer border-red-200/15 bg-black/55 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/45 disabled:cursor-not-allowed disabled:opacity-45"
                     disabled={isCharacterLocked}
@@ -530,25 +691,39 @@ export function HellHandGame() {
               </div>
 
               <div className="relative mt-3 h-[25rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/65 lg:mt-1.5 lg:h-[min(24rem,calc(100dvh-24rem))] xl:mt-2 xl:h-[min(27rem,calc(100dvh-24rem))]">
-                {characters.map((character, index) => {
-                  const offset = getCarouselOffset(
-                    index,
-                    activeCharacterIndex,
-                    characters.length,
-                  );
-
-                  return (
-                    <HellHandCharacterCard
-                      key={character.id}
-                      character={character}
-                      isActive={index === activeCharacterIndex}
+                {selectionViewMode === 'icons' ? (
+                  <div className="size-full p-3">
+                    <HellHandCharacterIconSelect
+                      activeIndex={activeCharacterIndex}
+                      characters={characters}
+                      hoveredIndex={hoveredCharacterIndex}
                       isLocked={isCharacterLocked}
-                      offset={offset}
                       t={t}
-                      onSelect={() => handleCharacterDotSelect(index)}
+                      onHover={setHoveredCharacterIndex}
+                      onSelect={handleCharacterDotSelect}
                     />
-                  );
-                })}
+                  </div>
+                ) : (
+                  characters.map((character, index) => {
+                    const offset = getCarouselOffset(
+                      index,
+                      activeCharacterIndex,
+                      characters.length,
+                    );
+
+                    return (
+                      <HellHandCharacterCard
+                        key={character.id}
+                        character={character}
+                        isActive={index === activeCharacterIndex}
+                        isLocked={isCharacterLocked}
+                        offset={offset}
+                        t={t}
+                        onSelect={() => handleCharacterDotSelect(index)}
+                      />
+                    );
+                  })
+                )}
 
                 <Button
                   type="button"

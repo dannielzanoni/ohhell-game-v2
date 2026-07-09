@@ -8,6 +8,8 @@ import {
   ChevronUp,
   Eye,
   House,
+  LayoutGrid,
+  Images,
   Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
@@ -139,6 +141,115 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
         </Button>
       ) : null}
     </article>
+  );
+}
+
+function CharacterPreviewCard({ character, t }) {
+  const title = getMercenaryTitle(character, t);
+  const subtitle = getMercenarySubtitle(character, t);
+
+  return (
+    <article className="relative h-full min-h-0 overflow-hidden rounded-lg border border-red-200/15 bg-black/70 text-white shadow-2xl shadow-black/45">
+      <img
+        src={character.banner}
+        alt={title}
+        className="absolute inset-0 size-full object-cover"
+        draggable="false"
+      />
+      <div
+        className={cn(
+          'absolute inset-0 bg-gradient-to-br',
+          character.accentClass,
+        )}
+      />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/92 via-black/54 to-transparent" />
+      <div className="relative flex size-full flex-col justify-end p-4 sm:p-5 lg:p-4">
+        <span
+          className={cn(
+            'mb-2 block h-1.5 w-14 rounded-full sm:mb-3',
+            character.markerClass,
+          )}
+        />
+        <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-stone-200/85 sm:leading-6 lg:max-w-[22rem] lg:leading-5">
+          {subtitle}
+        </p>
+        <Button
+          asChild
+          className="mt-4 h-10 w-fit cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
+        >
+          <Link to={character.path}>
+            <Eye className="size-4" />
+            {t('pages.characters.inspect')}
+          </Link>
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+function CharacterIconSelect({
+  activeIndex,
+  characters,
+  hoveredIndex,
+  onHover,
+  onSelect,
+  t,
+}) {
+  const previewCharacter = characters[hoveredIndex ?? activeIndex] || characters[0];
+
+  return (
+    <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[minmax(13rem,17rem)_1fr]">
+      <div className="min-h-0 overflow-y-auto rounded-lg border border-red-200/12 bg-black/55 p-3 shadow-inner">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+          {characters.map((character, index) => {
+            const title = getMercenaryTitle(character, t);
+            const isActive = index === activeIndex;
+
+            return (
+              <button
+                key={character.id}
+                type="button"
+                aria-label={t('pages.characters.chooseCharacter', {
+                  name: title,
+                })}
+                className={cn(
+                  'group relative aspect-square overflow-hidden rounded-md border bg-black shadow-lg shadow-black/25 outline-none transition focus-visible:ring-2 focus-visible:ring-amber-300',
+                  isActive
+                    ? 'border-amber-300 ring-2 ring-amber-300/35'
+                    : 'border-red-200/15 hover:border-amber-300/55',
+                )}
+                onClick={() => onSelect(index)}
+                onMouseEnter={() => onHover(index)}
+                onMouseLeave={() => onHover(null)}
+                onFocus={() => onHover(index)}
+                onBlur={() => onHover(null)}
+              >
+                <img
+                  src={character.banner}
+                  alt=""
+                  className="size-full object-cover transition duration-200 group-hover:scale-105"
+                  draggable="false"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <span
+                  className={cn(
+                    'absolute inset-x-1 bottom-1 h-1 rounded-full',
+                    character.markerClass,
+                  )}
+                />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="min-h-[18rem] lg:min-h-0">
+        {previewCharacter ? <CharacterPreviewCard character={previewCharacter} t={t} /> : null}
+      </div>
+    </div>
   );
 }
 
@@ -314,6 +425,8 @@ export function Mercenaries() {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const [characters, setCharacters] = useState(mercenaries);
+  const [hoveredCharacterIndex, setHoveredCharacterIndex] = useState(null);
+  const [selectionViewMode, setSelectionViewMode] = useState('icons');
   const [loadError, setLoadError] = useState('');
   const [isAdminToolsOpen, setIsAdminToolsOpen] = useState(false);
   const canCreateMercenary = isCurrentUserAdmin();
@@ -354,6 +467,11 @@ export function Mercenaries() {
 
     playSwitchCardSound();
     setActiveIndex(index);
+  };
+
+  const toggleSelectionViewMode = () => {
+    setHoveredCharacterIndex(null);
+    setSelectionViewMode((current) => (current === 'cards' ? 'icons' : 'cards'));
   };
 
   return (
@@ -458,6 +576,29 @@ export function Mercenaries() {
                   type="button"
                   variant="outline"
                   size="icon-lg"
+                  aria-label={
+                    selectionViewMode === 'cards'
+                      ? 'Show mercenaries as icons'
+                      : 'Show mercenaries as cards'
+                  }
+                  title={
+                    selectionViewMode === 'cards'
+                      ? 'Show mercenaries as icons'
+                      : 'Show mercenaries as cards'
+                  }
+                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
+                  onClick={toggleSelectionViewMode}
+                >
+                  {selectionViewMode === 'cards' ? (
+                    <LayoutGrid className="size-4" />
+                  ) : (
+                    <Images className="size-4" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-lg"
                   aria-label={t('pages.characters.next')}
                   className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
                   onClick={goToNext}
@@ -468,24 +609,37 @@ export function Mercenaries() {
             </div>
 
             <div className="relative mt-3 h-[34rem] overflow-hidden rounded-lg border border-red-200/12 bg-black/55 shadow-inner sm:h-[38rem] lg:mt-2 lg:min-h-0 lg:flex-1">
-              {characters.map((character, index) => {
-                const offset = getCarouselOffset(
-                  index,
-                  activeIndex,
-                  characters.length,
-                );
-
-                return (
-                  <CharacterCard
-                    key={character.id}
-                    character={character}
-                    isActive={index === activeIndex}
-                    offset={offset}
+              {selectionViewMode === 'icons' ? (
+                <div className="size-full p-3">
+                  <CharacterIconSelect
+                    activeIndex={activeIndex}
+                    characters={characters}
+                    hoveredIndex={hoveredCharacterIndex}
                     t={t}
-                    onSelect={() => handleCharacterSelect(index)}
+                    onHover={setHoveredCharacterIndex}
+                    onSelect={handleCharacterSelect}
                   />
-                );
-              })}
+                </div>
+              ) : (
+                characters.map((character, index) => {
+                  const offset = getCarouselOffset(
+                    index,
+                    activeIndex,
+                    characters.length,
+                  );
+
+                  return (
+                    <CharacterCard
+                      key={character.id}
+                      character={character}
+                      isActive={index === activeIndex}
+                      offset={offset}
+                      t={t}
+                      onSelect={() => handleCharacterSelect(index)}
+                    />
+                  );
+                })
+              )}
             </div>
           </section>
         </div>
