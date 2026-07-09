@@ -7,9 +7,7 @@ export function getMercenaries() {
 
 export function createMercenary({
   bannerFile,
-  deck,
   description,
-  id,
   name,
   passiveScript,
   style,
@@ -18,11 +16,9 @@ export function createMercenary({
 }) {
   const form = new FormData();
 
-  form.set('id', id || '');
   form.set('name', name || 'Untitled mercenary');
   form.set('subtitle', subtitle || '');
   form.set('description', description || '');
-  form.set('deck', deck || '');
   form.set('style', style || '');
   form.set('temper', temper || '');
 

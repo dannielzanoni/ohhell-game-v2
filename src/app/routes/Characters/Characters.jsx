@@ -146,14 +146,14 @@ const defaultPassiveScript = `---@type MercenaryPassiveScript
 return {
     on_match_started = function(game, event, mercenary)
     end,
+    on_round_start = function(game, event, mercenary)
+    end,
 }`;
 
 function AdminMercenaryForm({ onCreated, t }) {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState({
-    deck: '',
     description: '',
-    id: '',
     name: '',
     passiveScript: defaultPassiveScript,
     style: '',
@@ -174,8 +174,8 @@ function AdminMercenaryForm({ onCreated, t }) {
     event.preventDefault();
     setError('');
 
-    if (!draft.id.trim() || !draft.name.trim()) {
-      setError(t('pages.characters.admin.idNameRequired'));
+    if (!draft.name.trim()) {
+      setError(t('pages.characters.admin.nameRequired'));
       return;
     }
 
@@ -206,9 +206,7 @@ function AdminMercenaryForm({ onCreated, t }) {
 
       await createMercenary({ ...draft, bannerFile, passiveScript });
       setDraft({
-        deck: '',
         description: '',
-        id: '',
         name: '',
         passiveScript: defaultPassiveScript,
         style: '',
@@ -250,11 +248,7 @@ function AdminMercenaryForm({ onCreated, t }) {
       {isOpen ? (
         <form className="border-t border-red-200/12 p-4 pt-3" onSubmit={handleSubmit}>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="grid gap-1 text-sm font-semibold text-stone-100">
-              {t('pages.characters.admin.id')}
-              <Input value={draft.id} onChange={(event) => updateDraft('id', event.target.value)} />
-            </label>
-            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+            <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
               {t('pages.characters.admin.name')}
               <Input value={draft.name} onChange={(event) => updateDraft('name', event.target.value)} />
             </label>
@@ -264,10 +258,6 @@ function AdminMercenaryForm({ onCreated, t }) {
                 value={draft.subtitle}
                 onChange={(event) => updateDraft('subtitle', event.target.value)}
               />
-            </label>
-            <label className="grid gap-1 text-sm font-semibold text-stone-100">
-              {t('pages.characters.stats.deck')}
-              <Input value={draft.deck} onChange={(event) => updateDraft('deck', event.target.value)} />
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100">
               {t('pages.characters.stats.style')}
