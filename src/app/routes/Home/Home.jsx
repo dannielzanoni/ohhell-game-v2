@@ -11,9 +11,9 @@ import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
 import { cn } from '@/lib/utils.js';
-import { authService, isCurrentUserAdmin } from '@/services/authService.js';
+import { authService } from '@/services/authService.js';
 import { getMyStats } from '@/services/statsService.js';
-import { getVisiblePageLinks } from '../pageLinks.js';
+import { pageLinks } from '../pageLinks.js';
 
 const cardGroups = [
   {
@@ -115,9 +115,6 @@ function PlayerStatsPanel({ error, isLoading, stats, t }) {
 
 export function Home() {
   const { t } = useTranslation();
-  const visiblePageLinks = getVisiblePageLinks({
-    isAdmin: isCurrentUserAdmin(),
-  });
   const [hasAuthToken, setHasAuthToken] = useState(() =>
     Boolean(authService.getAuthToken()),
   );
@@ -234,7 +231,7 @@ export function Home() {
           <LoginCard className="lg:p-5" onSaved={handleProfileSaved} />
 
           <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-            {visiblePageLinks.map((page) => {
+            {pageLinks.map((page) => {
               const Icon = page.icon;
               const label = page.labelKey ? t(page.labelKey) : page.label;
               const description = page.descriptionKey

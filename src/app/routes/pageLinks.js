@@ -44,7 +44,6 @@ export const pageLinks = [
   {
     description: 'Create and save custom magic cards.',
     descriptionKey: 'pages.links.playground.description',
-    adminOnly: true,
     icon: Sparkles,
     label: 'Playground',
     labelKey: 'pages.links.playground.label',
@@ -68,7 +67,3 @@ export const pageLinks = [
     primeIcon: 'pi pi-github',
   },
 ];
-
-export function getVisiblePageLinks({ isAdmin = false } = {}) {
-  return pageLinks.filter((page) => !page.adminOnly || isAdmin);
-}

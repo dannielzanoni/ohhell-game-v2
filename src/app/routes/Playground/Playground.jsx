@@ -64,6 +64,9 @@ const defaultImageLayout = {
 
 const defaultLuaScript = `---@type PowerCardScript
 return {
+    type = PowerCardType.Instant,
+    mana_cost = 1,
+    quantity = 1,
     effect = function(game, card)
     end,
 }`;
@@ -84,22 +87,51 @@ const emptyDraft = {
   layout: createDefaultLayout(),
   luaScript: defaultLuaScript,
   manaCost: '',
+  quantity: 1,
   template: '',
   title: '',
   visibleFields: { ...defaultVisibleFields },
 };
 
+function readScriptCardMetadata(luaScript, fallback = {}) {
+  const script = String(luaScript || '');
+  const typeMatch = script.match(/\btype\s*=\s*PowerCardType\.(Instant|Targetable|Interactive)\b/);
+  const manaCostMatch = script.match(/\bmana_cost\s*=\s*(-?\d+)\b/);
+  const quantityMatch = script.match(/\bquantity\s*=\s*(\d+)\b/);
+  const normalizedType = {
+    Instant: 'instant',
+    Interactive: 'interactive',
+    Targetable: 'targetable',
+  }[typeMatch?.[1]];
+
+  return {
+    cardType:
+      normalizedType ||
+      (['instant', 'targetable', 'interactive'].includes(fallback.cardType)
+        ? fallback.cardType
+        : 'instant'),
+    manaCost:
+      manaCostMatch?.[1] ??
+      fallback.manaCost ??
+      fallback.mana_cost ??
+      fallback.life ??
+      '',
+    quantity: Math.max(
+      1,
+      Number.parseInt(quantityMatch?.[1] ?? fallback.quantity ?? 1, 10) || 1,
+    ),
+  };
+}
+
 function normalizeCard(card) {
   const cleanedCard = { ...card };
-  const manaCost = cleanedCard.manaCost ?? cleanedCard.mana_cost ?? cleanedCard.life ?? '';
+  const luaScript = typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '';
+  const scriptMetadata = readScriptCardMetadata(luaScript, cleanedCard);
   delete cleanedCard.cost;
   delete cleanedCard.mana_cost;
   delete cleanedCard.luaScriptName;
   delete cleanedCard.power;
   delete cleanedCard.rarity;
-  const cardType = ['instant', 'targetable', 'interactive'].includes(cleanedCard.cardType)
-    ? cleanedCard.cardType
-    : 'instant';
 
   const sourceLayout = cleanedCard.layout || {};
   const layout = {};
@@ -118,9 +150,10 @@ function normalizeCard(card) {
       ...(cleanedCard.imageLayout || {}),
     },
     layout,
-    luaScript: typeof cleanedCard.luaScript === 'string' ? cleanedCard.luaScript : '',
-    manaCost,
-    cardType,
+    luaScript,
+    manaCost: scriptMetadata.manaCost,
+    cardType: scriptMetadata.cardType,
+    quantity: scriptMetadata.quantity,
     visibleFields: {
       ...defaultVisibleFields,
       ...(cleanedCard.visibleFields || {}),
@@ -1198,12 +1231,9 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                       }
                     />
                   </span>
-                  <Input
-                    min="0"
-                    type="number"
-                    value={draft.manaCost}
-                    onChange={(event) => updateDraft('manaCost', event.target.value)}
-                  />
+                  <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                    {draft.manaCost === '' ? t('pages.playground.luaDefinedValue') : draft.manaCost}
+                  </div>
                 </label>
 
                 <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
@@ -1229,15 +1259,14 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
 
                 <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
                   {t('pages.playground.fields.cardType')}
-                  <select
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    value={draft.cardType}
-                    onChange={(event) => updateDraft('cardType', event.target.value)}
-                  >
-                    <option value="instant">{t('pages.playground.cardTypes.instant')}</option>
-                    <option value="targetable">{t('pages.playground.cardTypes.targetable')}</option>
-                    <option value="interactive">{t('pages.playground.cardTypes.interactive')}</option>
-                  </select>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                      {t(getCardTypeLabelKey(draft.cardType))}
+                    </div>
+                    <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                      {t('pages.playground.fields.quantity')}: {draft.quantity ?? 1}
+                    </div>
+                  </div>
                 </label>
 
                 {canCreateOfficial ? (
@@ -1577,6 +1606,9 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                             </span>
                             <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-2.5 py-1 text-sky-700 dark:text-sky-200">
                               {t('pages.playground.fields.manaCost')}: {card.mana_cost ?? 0}
+                            </span>
+                            <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-200">
+                              {t('pages.playground.fields.quantity')}: {card.quantity ?? 1}
                             </span>
                             </div>
                           ) : null}

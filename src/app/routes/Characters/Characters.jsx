@@ -255,6 +255,8 @@ function CharacterIconSelect({
 
 const defaultPassiveScript = `---@type MercenaryPassiveScript
 return {
+    base_life = 50,
+    initial_mana = 2,
     on_match_started = function(game, event, mercenary)
     end,
     on_round_start = function(game, event, mercenary)

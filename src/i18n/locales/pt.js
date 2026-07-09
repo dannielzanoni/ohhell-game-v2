@@ -55,6 +55,7 @@ export const pt = {
     gameEnded: 'Fim de jogo',
     lastPlayerStanding: '\u00daltimo jogador de p\u00e9.',
     lifeLossEvent: 'Jo\u00e3o plays',
+    selectedDeckLabel: 'Deck selecionado',
     lostLives_one: 'Perdeu {{count}} vida',
     lostLives_other: 'Perdeu {{count}} vidas',
     noWinners: 'Sem vencedores',
@@ -63,6 +64,8 @@ export const pt = {
     lives_one: '{{count}} vida',
     lives_other: '{{count}} vidas',
     missingAuth: 'Cadastre seu guest antes de entrar na sala.',
+    lifeMultiplierDisplay: 'Multiplicador de vida: {{multiplier}}',
+    powerLobbySettings: 'Configuracoes da Lobby Power',
     playCardError: 'Não foi possível jogar a carta.',
     powerCard: 'Carta de poder',
     powerCardDragToTarget: 'Arraste esta carta de poder até o avatar de um jogador.',
@@ -133,7 +136,19 @@ export const pt = {
       configurations: 'Configurações do jogo',
       createError: 'Não foi possível criar a sala.',
       creating: 'Criando...',
+      communityDeckConsentHint:
+        'Entendo que esta partida vai usar cartas e balanceamento criados por jogadores, e que todos da lobby vao jogar com este deck da comunidade.',
+      communityDeckConsentLabel: 'Confirmar uso de deck da comunidade',
+      communityDeckConsentRequired:
+        'Confirme o aviso do deck da comunidade antes de criar a sala.',
+      communityDeckWarningDescription:
+        'Decks da comunidade podem incluir scripts experimentais, balanceamento incomum e pools de cartas criados por jogadores. Use conscientemente.',
+      communityDeckWarningTitle: 'Aviso de Deck da Comunidade',
       enablePublicRoom: 'Ativar sala pública',
+      lifeMultiplier: 'Multiplicador de vida',
+      lifeMultiplierError: 'Informe um multiplicador de vida maior que 0.',
+      lifeMultiplierHint:
+        'Cada mercenario mantém sua propria vida base, e este multiplicador e aplicado sobre esse valor para todos na lobby.',
       liveTable: 'Mesa ao vivo',
       loadingPowerDecks: 'Carregando decks de poder...',
       livesNumber: 'Número de vidas',
@@ -145,8 +160,21 @@ export const pt = {
       powerDeckEmpty: 'Nenhum deck de poder disponivel ainda. Crie um deck antes de iniciar Fodinha Power.',
       powerDeckHint:
         'Todos na lobby jogam com o deck exato selecionado pelo criador da sala.',
+      powerDeckCardCount: '{{count}} cartas',
+      powerDeckCreatedBy: 'Por {{name}}',
       powerDeckLoadError: 'Nao foi possivel carregar os decks de poder.',
+      powerDeckGroupCommunity: 'Decks da comunidade',
+      powerDeckGroupCommunityHint:
+        'Decks montados por jogadores com combinacoes proprias de cartas, separados de forma clara para voce saber quando esta escolhendo conteudo da comunidade.',
+      powerDeckGroupOfficial: 'Decks oficiais',
+      powerDeckGroupOfficialHint:
+        'Decks curados que servem como base oficial do Fodinha Power.',
+      powerDeckOfficialCreator: 'Oficial',
       powerDeckOption: '{{name}} ({{count}} cartas)',
+      powerDeckSelected: 'Selecionado',
+      powerLivesDefinedByMercenary: 'As vidas sao definidas pelo mercenario selecionado',
+      powerLivesDefinedByMercenaryHint:
+        'A vida base e a mana inicial do Fodinha Power agora vem do script Lua do mercenario, e nao do formulario da lobby.',
       powerDeckRequired: 'Selecione um deck do Fodinha Power.',
       publicRoom: 'Sala pública',
       selectPowerDeck: 'Selecione um deck',
@@ -492,6 +520,7 @@ export const pt = {
         cardType: 'Tipo da carta',
         description: 'Descricao',
         manaCost: 'Custo de mana',
+        quantity: 'Quantidade no deck',
         title: 'Titulo',
       },
       imageError: 'Nao foi possivel importar a imagem.',
@@ -506,6 +535,7 @@ export const pt = {
       importTemplate: 'Importar template',
       loadError: 'Nao foi possivel carregar as definicoes de cartas.',
       luaFetchError: 'Nao foi possivel carregar o codigo Lua mais recente do editor.',
+      luaDefinedValue: 'Definido pelo script Lua',
       luaRequired: 'Digite um script Lua antes de salvar.',
       luaScript: 'Script Lua do efeito',
       layout: {
@@ -548,18 +578,16 @@ export const pt = {
     },
     powerDecks: {
       bucket: 'Vincular cartas a',
-      bucketHint: '{{generic}} copias na mesa. {{mercenary}} copias vinculadas no grupo ativo.',
+      bucketHint: '{{generic}} cartas na mesa. {{mercenary}} cartas vinculadas no grupo ativo.',
       cardsEyebrow: 'Definicoes de cartas',
       cardsRequired: 'Selecione pelo menos uma carta.',
       cardsTitle: 'Cartas oficiais e da comunidade',
-      copies: 'Copias',
       create: 'Criar deck',
       createError: 'Nao foi possivel criar o deck.',
       createEyebrow: 'Construtor de deck',
       createTitle: 'Criar deck do Fodinha Power',
       createdBy: 'Por {{name}}',
       creating: 'Criando...',
-      decreaseCopies: 'Diminuir copias',
       deckCardCount: '{{count}} cartas',
       description:
         'Monte decks nomeados do Fodinha Power com cartas oficiais e cartas publicadas pela comunidade.',
@@ -571,7 +599,6 @@ export const pt = {
         name: 'Nome do deck',
       },
       genericBucket: 'Deck da mesa',
-      increaseCopies: 'Aumentar copias',
       cardTypes: {
         instant: 'Instantanea',
         interactive: 'Interativa',
@@ -590,6 +617,7 @@ export const pt = {
       officialDeck: 'Criar como deck oficial',
       officialDeckHint:
         'Somente admins podem salvar decks oficiais. Os demais decks sao da comunidade.',
+      quantity: 'Quantidade no deck',
       savedEyebrow: 'Decks salvos',
       savedTitle: 'Decks: {{count}}',
       saveAsDraft: 'Salvar como rascunho',
@@ -597,7 +625,7 @@ export const pt = {
         'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
       selectedCards: '{{count}} cartas selecionadas',
       selectedHint:
-        'Crie as cartas primeiro e depois defina quantas copias vao para a mesa ou para o grupo de um mercenario.',
+        'Crie as cartas primeiro e depois vincule cada carta ao deck da mesa ou ao grupo de um mercenario. A quantidade vem do script Lua da carta.',
       status: {
         draft: 'Rascunho',
         valid: 'Jogavel',

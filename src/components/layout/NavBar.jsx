@@ -10,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '@/app/provider.jsx';
-import { getVisiblePageLinks } from '@/app/routes/pageLinks.js';
+import { pageLinks } from '@/app/routes/pageLinks.js';
 import aceIcon from '@/assets/icons/ace.svg';
 import {
   LanguageNavButton,
@@ -19,7 +19,6 @@ import {
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
-import { isCurrentUserAdmin } from '@/services/authService.js';
 
 export function NavBar({ isCollapsed, onToggle }) {
   const { theme, toggleTheme } = useTheme();
@@ -28,7 +27,7 @@ export function NavBar({ isCollapsed, onToggle }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navItems = [
     { label: 'Home', labelKey: 'common.home', path: '/home', icon: Home },
-    ...getVisiblePageLinks({ isAdmin: isCurrentUserAdmin() }),
+    ...pageLinks,
   ];
 
   return (

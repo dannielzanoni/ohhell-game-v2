@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, Play } from 'lucide-react';
+import { Check, Crown, Home, Play, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
@@ -14,6 +14,7 @@ import {
 } from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import { cn } from '@/lib/utils.js';
 import { getPowerDecks } from '@/services/cardDefinitionsService.js';
 import { gameTypeOptions, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
@@ -32,6 +33,9 @@ const lifeSettingsByGameType = {
     roundDamage: 10,
   },
 };
+
+const DEFAULT_POWER_BASE_LIFES = 50;
+const DEFAULT_POWER_LIFE_MULTIPLIER = '1';
 
 function getLifeSettings(gameType) {
   return lifeSettingsByGameType[gameType] || lifeSettingsByGameType[gameTypes.FODINHA_CLASSIC];
@@ -75,14 +79,147 @@ function getLivesValidationError(value, settings) {
   return null;
 }
 
+function getLifeMultiplierValidationError(value) {
+  const multiplier = Number(value);
+
+  if (!Number.isFinite(multiplier) || multiplier <= 0) {
+    return { key: 'pages.createGame.lifeMultiplierError' };
+  }
+
+  return null;
+}
+
+function getPowerDeckCreatorName(deck, t) {
+  if (deck?.kind === 'official' || deck?.creator_id === 'official') {
+    return t('pages.createGame.powerDeckOfficialCreator');
+  }
+
+  return deck?.creator_id || '';
+}
+
+function PowerDeckGroupSection({
+  decks,
+  description,
+  isOfficial = false,
+  selectedDeckId,
+  title,
+  t,
+  onSelect,
+}) {
+  if (!decks.length) {
+    return null;
+  }
+
+  const Icon = isOfficial ? Crown : Sparkles;
+
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border p-3',
+        isOfficial
+          ? 'border-amber-400/35 bg-amber-400/8'
+          : 'border-violet-400/25 bg-violet-400/8',
+      )}
+    >
+      <div className="mb-3 flex items-start gap-3">
+        <span
+          className={cn(
+            'grid size-10 shrink-0 place-items-center rounded-2xl border',
+            isOfficial
+              ? 'border-amber-400/45 bg-amber-400/12 text-amber-700'
+              : 'border-violet-400/35 bg-violet-400/12 text-violet-700 dark:text-violet-200',
+          )}
+        >
+          <Icon className="size-4" />
+        </span>
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.16em] text-foreground">
+            {title}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {decks.map((deck) => {
+          const isSelected = deck.id === selectedDeckId;
+
+          return (
+            <button
+              key={deck.id}
+              type="button"
+              className={cn(
+                'w-full rounded-2xl border bg-background/95 p-4 text-left shadow-sm transition hover:-translate-y-0.5',
+                isSelected
+                  ? isOfficial
+                    ? 'border-amber-400 bg-amber-400/10 shadow-lg shadow-amber-950/10'
+                    : 'border-violet-400 bg-violet-400/10 shadow-lg shadow-violet-950/10'
+                  : isOfficial
+                    ? 'border-amber-300/25 hover:border-amber-400/45'
+                    : 'border-violet-300/20 hover:border-violet-400/40',
+              )}
+              onClick={() => onSelect(deck.id)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-black text-foreground">
+                    {deck.name}
+                  </p>
+                  {deck.description ? (
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                      {deck.description}
+                    </p>
+                  ) : null}
+                </div>
+
+                {isSelected ? (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.14em]',
+                      isOfficial
+                        ? 'border-amber-400/60 bg-amber-400/15 text-amber-700'
+                        : 'border-violet-400/50 bg-violet-400/12 text-violet-700 dark:text-violet-200',
+                    )}
+                  >
+                    <Check className="size-3" />
+                    {t('pages.createGame.powerDeckSelected')}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-full border border-border px-2.5 py-1 text-foreground">
+                  {t('pages.createGame.powerDeckCardCount', {
+                    count: deck.card_count,
+                  })}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-muted-foreground">
+                  <UserRound className="size-3.5" />
+                  {t('pages.createGame.powerDeckCreatedBy', {
+                    name: getPowerDeckCreatorName(deck, t),
+                  })}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function CreateGame() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [gameType, setGameType] = useState(() => getInitialGameType(location.search));
   const [livesByGameType, setLivesByGameType] = useState(createDefaultLivesByGameType);
+  const [powerLifeMultiplier, setPowerLifeMultiplier] = useState(
+    DEFAULT_POWER_LIFE_MULTIPLIER,
+  );
   const [powerDeckId, setPowerDeckId] = useState('');
   const [powerDecks, setPowerDecks] = useState([]);
+  const [acknowledgedCommunityDeckId, setAcknowledgedCommunityDeckId] = useState('');
   const [isLoadingPowerDecks, setIsLoadingPowerDecks] = useState(false);
   const [powerDeckError, setPowerDeckError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -93,7 +230,17 @@ export function CreateGame() {
     (option) => option.value === gameType,
   );
   const isPowerGame = gameType === gameTypes.FODINHA_POWER;
-  const isPowerDeckUnavailable = isPowerGame && (isLoadingPowerDecks || !powerDeckId);
+  const officialPowerDecks = powerDecks.filter((deck) => deck.kind === 'official');
+  const communityPowerDecks = powerDecks.filter((deck) => deck.kind !== 'official');
+  const selectedPowerDeck = powerDecks.find((deck) => deck.id === powerDeckId) || null;
+  const selectedPowerDeckIsCommunity = selectedPowerDeck?.kind === 'community';
+  const needsCommunityDeckConsent =
+    isPowerGame &&
+    selectedPowerDeckIsCommunity &&
+    acknowledgedCommunityDeckId !== powerDeckId;
+  const isPowerDeckUnavailable =
+    isPowerGame &&
+    (isLoadingPowerDecks || !powerDeckId || needsCommunityDeckConsent);
   const gameTypeItems = gameTypeOptions.map((option) => ({
     label: t(option.labelKey),
     value: option.value,
@@ -125,6 +272,9 @@ export function CreateGame() {
 
             return nextDecks[0]?.id || '';
           });
+          if (nextDecks[0]?.kind === 'official') {
+            setAcknowledgedCommunityDeckId(nextDecks[0].id);
+          }
         }
       } catch (error) {
         if (isActive) {
@@ -163,19 +313,52 @@ export function CreateGame() {
     }));
   };
 
+  const handlePowerDeckSelect = (deckId) => {
+    const nextDeck = powerDecks.find((deck) => deck.id === deckId) || null;
+
+    setPowerDeckId(deckId);
+    if (!nextDeck) {
+      setAcknowledgedCommunityDeckId('');
+      return;
+    }
+
+    if (nextDeck.kind === 'official') {
+      setAcknowledgedCommunityDeckId(deckId);
+      return;
+    }
+
+    if (deckId !== powerDeckId) {
+      setAcknowledgedCommunityDeckId('');
+    }
+  };
+
   const handleCreateGame = async () => {
     setCreateError('');
 
     const selectedGameType = gameType || gameTypes.FODINHA_CLASSIC;
-    const selectedLives = Number(lives);
-    const validationError = getLivesValidationError(
-      lives,
-      getLifeSettings(selectedGameType),
+    const selectedLifeMultiplier =
+      selectedGameType === gameTypes.FODINHA_POWER
+        ? Number(powerLifeMultiplier)
+        : null;
+    const estimatedPowerLifes = Math.max(
+      1,
+      Math.round(DEFAULT_POWER_BASE_LIFES * (selectedLifeMultiplier || 1)),
     );
+    const selectedLives =
+      selectedGameType === gameTypes.FODINHA_POWER
+        ? estimatedPowerLifes
+        : Number(lives);
 
-    if (validationError) {
-      setCreateError(t(validationError.key, validationError.values));
-      return;
+    if (selectedGameType !== gameTypes.FODINHA_POWER) {
+      const validationError = getLivesValidationError(
+        lives,
+        getLifeSettings(selectedGameType),
+      );
+
+      if (validationError) {
+        setCreateError(t(validationError.key, validationError.values));
+        return;
+      }
     }
 
     const selectedPowerDeckId =
@@ -186,12 +369,28 @@ export function CreateGame() {
       return;
     }
 
+    if (selectedGameType === gameTypes.FODINHA_POWER) {
+      const multiplierError = getLifeMultiplierValidationError(powerLifeMultiplier);
+
+      if (multiplierError) {
+        setCreateError(t(multiplierError.key));
+        return;
+      }
+
+      if (needsCommunityDeckConsent) {
+        setCreateError(t('pages.createGame.communityDeckConsentRequired'));
+        return;
+      }
+    }
+
     setIsCreating(true);
 
     try {
       const lobby = await createLobby({
         gameType: selectedGameType,
-        lifes: selectedLives,
+        lifes:
+          selectedGameType === gameTypes.FODINHA_POWER ? undefined : selectedLives,
+        lifeMultiplier: selectedLifeMultiplier,
         powerDeckId: selectedPowerDeckId,
       });
       const lobbyGameType = lobby.game_type || selectedGameType;
@@ -207,8 +406,19 @@ export function CreateGame() {
           selectedPowerDeckId,
         );
       }
+      if (selectedGameType === gameTypes.FODINHA_POWER && selectedLifeMultiplier) {
+        localStorage.setItem(
+          `ohhell_lobby_power_life_multiplier_${lobby.lobby_id}`,
+          String(selectedLifeMultiplier),
+        );
+      }
       navigate(`/game/${lobby.lobby_id}`, {
-        state: { gameType: lobbyGameType, lifes: selectedLives, powerDeckId: selectedPowerDeckId },
+        state: {
+          gameType: lobbyGameType,
+          lifeMultiplier: selectedLifeMultiplier,
+          lifes: selectedLives,
+          powerDeckId: selectedPowerDeckId,
+        },
       });
     } catch (error) {
       setCreateError(error.message || t('pages.createGame.createError'));
@@ -289,7 +499,8 @@ export function CreateGame() {
               ) : null}
             </div>
 
-            <div className="block min-w-0">
+            {!isPowerGame ? (
+              <div className="block min-w-0">
               <span className="text-sm font-semibold text-foreground">
                 {t('pages.createGame.livesNumber')}
               </span>
@@ -310,31 +521,49 @@ export function CreateGame() {
                   roundDamage: selectedLifeSettings.roundDamage,
                 })}
               </p>
-            </div>
+              </div>
+            ) : (
+              <div className="block min-w-0 rounded-lg border border-border bg-background/55 p-4">
+                <p className="text-sm font-semibold text-foreground">
+                  {t('pages.createGame.powerLivesDefinedByMercenary')}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t('pages.createGame.powerLivesDefinedByMercenaryHint')}
+                </p>
+                <label className="mt-4 block">
+                  <span className="text-sm font-semibold text-foreground">
+                    {t('pages.createGame.lifeMultiplier')}
+                  </span>
+                  <Input
+                    className="mt-3 h-11 rounded-full border-input bg-background px-4 text-sm text-foreground"
+                    inputMode="decimal"
+                    min="0.1"
+                    step="0.1"
+                    type="number"
+                    value={powerLifeMultiplier}
+                    onChange={(event) => setPowerLifeMultiplier(event.target.value)}
+                  />
+                </label>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t('pages.createGame.lifeMultiplierHint', {
+                    baseLives: DEFAULT_POWER_BASE_LIFES,
+                    estimatedLives: Math.max(
+                      1,
+                      Math.round(
+                        DEFAULT_POWER_BASE_LIFES * (Number(powerLifeMultiplier) || 1),
+                      ),
+                    ),
+                    multiplier: Number(powerLifeMultiplier) || 1,
+                  })}
+                </p>
+              </div>
+            )}
 
             {isPowerGame ? (
               <div className="block min-w-0 rounded-lg border border-border bg-background/55 p-4">
-                <label className="text-sm font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {t('pages.createGame.powerDeck')}
-                  <select
-                    className="mt-3 h-11 w-full rounded-full border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                    disabled={isLoadingPowerDecks || !powerDecks.length}
-                    value={powerDeckId}
-                    onChange={(event) => setPowerDeckId(event.target.value)}
-                  >
-                    <option value="" disabled>
-                      {t('pages.createGame.selectPowerDeck')}
-                    </option>
-                    {powerDecks.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {t('pages.createGame.powerDeckOption', {
-                          count: deck.card_count,
-                          name: deck.name,
-                        })}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                </p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {isLoadingPowerDecks
                     ? t('pages.createGame.loadingPowerDecks')
@@ -342,6 +571,57 @@ export function CreateGame() {
                       ? t('pages.createGame.powerDeckHint')
                       : t('pages.createGame.powerDeckEmpty')}
                 </p>
+                {powerDecks.length ? (
+                  <div className="mt-4 grid gap-4">
+                    <PowerDeckGroupSection
+                      decks={officialPowerDecks}
+                      description={t('pages.createGame.powerDeckGroupOfficialHint')}
+                      isOfficial
+                      selectedDeckId={powerDeckId}
+                      title={t('pages.createGame.powerDeckGroupOfficial')}
+                      t={t}
+                      onSelect={handlePowerDeckSelect}
+                    />
+                    <PowerDeckGroupSection
+                      decks={communityPowerDecks}
+                      description={t('pages.createGame.powerDeckGroupCommunityHint')}
+                      selectedDeckId={powerDeckId}
+                      title={t('pages.createGame.powerDeckGroupCommunity')}
+                      t={t}
+                      onSelect={handlePowerDeckSelect}
+                    />
+                  </div>
+                ) : null}
+                {selectedPowerDeckIsCommunity ? (
+                  <div className="mt-4 rounded-2xl border border-violet-400/35 bg-violet-400/8 p-4">
+                    <p className="text-sm font-black uppercase tracking-[0.14em] text-violet-700 dark:text-violet-200">
+                      {t('pages.createGame.communityDeckWarningTitle')}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {t('pages.createGame.communityDeckWarningDescription')}
+                    </p>
+                    <label className="mt-4 flex items-start gap-3 rounded-xl border border-violet-300/30 bg-background/80 p-3 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mt-1 size-4 cursor-pointer accent-violet-500"
+                        checked={acknowledgedCommunityDeckId === powerDeckId}
+                        onChange={(event) =>
+                          setAcknowledgedCommunityDeckId(
+                            event.target.checked ? powerDeckId : '',
+                          )
+                        }
+                      />
+                      <span>
+                        <span className="font-black text-foreground">
+                          {t('pages.createGame.communityDeckConsentLabel')}
+                        </span>
+                        <span className="mt-1 block leading-6 text-muted-foreground">
+                          {t('pages.createGame.communityDeckConsentHint')}
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                ) : null}
                 {powerDeckError ? (
                   <p className="mt-2 text-sm text-destructive">{powerDeckError}</p>
                 ) : null}

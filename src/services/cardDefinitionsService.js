@@ -62,10 +62,8 @@ export function uploadCardDefinitionAsset({
 
 function createCardDefinitionFromAsset({
   assetId,
-  cardType,
   description,
   kind = 'community',
-  manaCost,
   name,
 }) {
   return withAuthRetry(() =>
@@ -75,9 +73,7 @@ function createCardDefinitionFromAsset({
         asset_id: assetId,
         description,
         kind,
-        mana_cost: manaCost === '' ? undefined : manaCost,
         name,
-        type: cardType || 'instant',
       },
       method: 'POST',
     }),
@@ -86,11 +82,9 @@ function createCardDefinitionFromAsset({
 
 export function createCardDefinition({
   assetId,
-  cardType,
   description,
   imageBlob,
   kind = 'community',
-  manaCost,
   name,
   scriptFileName = 'effect.lua',
   scriptText,
@@ -98,10 +92,8 @@ export function createCardDefinition({
   if (assetId) {
     return createCardDefinitionFromAsset({
       assetId,
-      cardType,
       description,
       kind,
-      manaCost,
       name,
     });
   }
@@ -111,11 +103,6 @@ export function createCardDefinition({
   form.set('name', name || 'Untitled card');
   form.set('description', description || '');
   form.set('kind', kind || 'community');
-  form.set('type', cardType || 'instant');
-
-  if (manaCost !== undefined && manaCost !== null && manaCost !== '') {
-    form.set('mana_cost', String(manaCost));
-  }
 
   form.set('image', imageBlob, `${name || 'card'}.png`);
   form.set(
@@ -135,11 +122,9 @@ export function createCardDefinition({
 
 export function updateCardDefinition({
   cardId,
-  cardType,
   description,
   imageBlob,
   kind = 'community',
-  manaCost,
   name,
   scriptFileName = 'effect.lua',
   scriptText,
@@ -149,11 +134,6 @@ export function updateCardDefinition({
   form.set('name', name || 'Untitled card');
   form.set('description', description || '');
   form.set('kind', kind || 'community');
-  form.set('type', cardType || 'instant');
-
-  if (manaCost !== undefined && manaCost !== null && manaCost !== '') {
-    form.set('mana_cost', String(manaCost));
-  }
 
   if (imageBlob) {
     form.set('image', imageBlob, `${name || 'card'}.png`);

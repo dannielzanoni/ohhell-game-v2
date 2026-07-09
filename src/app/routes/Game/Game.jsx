@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Link as LinkIcon, LogIn, UserRound } from 'lucide-react';
+import { Check, Copy, Crown, Link as LinkIcon, LogIn, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import heartIcon from '@/assets/icons/heart.png';
@@ -34,6 +34,7 @@ import {
   skipPowerPhase,
   usePowerCard,
 } from '@/services/gameSocketService.js';
+import { getPowerDecks } from '@/services/cardDefinitionsService.js';
 import {
   deckTypes,
   getGamePreferences,
@@ -410,6 +411,18 @@ function getLobbyCharacterId(lobbyId, routeCharacterId) {
   return '';
 }
 
+function getLobbyPowerDeckId(lobbyId, routePowerDeckId) {
+  if (routePowerDeckId) {
+    return routePowerDeckId;
+  }
+
+  if (lobbyId) {
+    return localStorage.getItem(`ohhell_lobby_power_deck_${lobbyId}`) || '';
+  }
+
+  return '';
+}
+
 function getClaimsPlayerId(player) {
   if (!player) {
     return null;
@@ -591,11 +604,11 @@ function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
 
 function getLobbyStatusMap(lobbyInfo) {
   if (lobbyInfo?.type === 'NotStarted') {
-    return lobbyInfo.data;
+    return lobbyInfo.data?.players || lobbyInfo.data;
   }
 
   if (lobbyInfo?.NotStarted) {
-    return lobbyInfo.NotStarted;
+    return lobbyInfo.NotStarted?.players || lobbyInfo.NotStarted;
   }
 
   return null;
@@ -613,9 +626,29 @@ function getLobbyGameInfo(lobbyInfo) {
   return null;
 }
 
+function getWaitingLobbySettings(container) {
+  if (container?.type === 'Waiting') {
+    return container.data?.settings || null;
+  }
+
+  if (container?.type === 'NotStarted') {
+    return container.data?.settings || null;
+  }
+
+  if (container?.Waiting?.settings) {
+    return container.Waiting.settings;
+  }
+
+  if (container?.NotStarted?.settings) {
+    return container.NotStarted.settings;
+  }
+
+  return null;
+}
+
 function getSnapshotStatusMap(snapshot) {
   if (snapshot?.type === 'Waiting') {
-    return snapshot.data;
+    return snapshot.data?.players || snapshot.data;
   }
 
   if (snapshot?.type === 'Playing') {
@@ -623,6 +656,26 @@ function getSnapshotStatusMap(snapshot) {
   }
 
   return null;
+}
+
+function getLobbyLifeMultiplier(lobbyId, routeLifeMultiplier) {
+  const normalizedRouteMultiplier = Number(routeLifeMultiplier);
+
+  if (Number.isFinite(normalizedRouteMultiplier) && normalizedRouteMultiplier > 0) {
+    return normalizedRouteMultiplier;
+  }
+
+  if (lobbyId) {
+    const savedMultiplier = Number(
+      localStorage.getItem(`ohhell_lobby_power_life_multiplier_${lobbyId}`),
+    );
+
+    if (Number.isFinite(savedMultiplier) && savedMultiplier > 0) {
+      return savedMultiplier;
+    }
+  }
+
+  return 1;
 }
 
 function getGameInfoFromSnapshot(snapshot) {
@@ -833,6 +886,47 @@ function ReadyControls({
       <span className="rounded-xl border border-white/10 bg-black/75 px-4 py-2 text-center text-xs font-semibold text-white shadow-lg sm:rounded-full">
         {t('game.playersReady', { readyCount, totalPlayers })}
       </span>
+    </div>
+  );
+}
+
+function WaitingPowerLobbyInfo({ deckInfo, deckKind, deckName, lifeMultiplier }) {
+  const { t } = useTranslation();
+  const KindIcon = deckKind === 'official' ? Crown : Sparkles;
+  const kindLabel =
+    deckKind === 'official'
+      ? t('pages.createGame.powerDeckGroupOfficial')
+      : t('pages.createGame.powerDeckGroupCommunity');
+
+  return (
+    <div className="absolute left-1/2 top-20 z-20 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl border border-violet-300/25 bg-black/82 px-4 py-3 text-center text-white shadow-2xl shadow-black/40 backdrop-blur">
+      <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-violet-200/85">
+        {t('game.powerLobbySettings')}
+      </p>
+      <p className="mt-2 text-sm font-semibold leading-6 text-stone-200">
+        {t('game.lifeMultiplierDisplay', {
+          multiplier: `${Number(lifeMultiplier || 1).toLocaleString(undefined, {
+            maximumFractionDigits: 2,
+          })}x`,
+        })}
+      </p>
+      {deckName ? (
+        <div className="mt-3 rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-left">
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
+            {t('game.selectedDeckLabel')}
+          </p>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <strong className="truncate text-sm text-white">{deckName}</strong>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-stone-200">
+              <KindIcon className="size-3" />
+              {kindLabel}
+            </span>
+          </div>
+          {deckInfo ? (
+            <p className="mt-1 text-xs text-stone-400">{deckInfo}</p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1739,6 +1833,13 @@ export function Game() {
   const [lifes, setLifes] = useState(() =>
     getLobbyLifes(lobbyId, location.state?.lifes),
   );
+  const [waitingLifeMultiplier, setWaitingLifeMultiplier] = useState(() =>
+    getLobbyLifeMultiplier(lobbyId, location.state?.lifeMultiplier),
+  );
+  const [waitingPowerDeckId, setWaitingPowerDeckId] = useState(() =>
+    getLobbyPowerDeckId(lobbyId, location.state?.powerDeckId),
+  );
+  const [waitingPowerDeckMeta, setWaitingPowerDeckMeta] = useState(null);
   const [gameType, setGameType] = useState(() =>
     getLobbyGameType(lobbyId, location.state?.gameType),
   );
@@ -1843,6 +1944,53 @@ export function Game() {
     startHellHandHomeTheme();
     return () => stopHellHandHomeTheme();
   }, [gameType]);
+
+  useEffect(() => {
+    if (
+      gameType !== gameTypes.FODINHA_POWER ||
+      !waitingPowerDeckId ||
+      matchPhase !== 'waiting'
+    ) {
+      setWaitingPowerDeckMeta(null);
+      return undefined;
+    }
+
+    let isActive = true;
+
+    const loadPowerDeckMeta = async () => {
+      try {
+        const decks = await getPowerDecks();
+
+        if (!isActive) {
+          return;
+        }
+
+        const deck = (Array.isArray(decks) ? decks : []).find(
+          (candidate) => candidate.id === waitingPowerDeckId,
+        );
+
+        setWaitingPowerDeckMeta(
+          deck
+            ? {
+                cardCount: deck.card_count,
+                kind: deck.kind,
+                name: deck.name,
+              }
+            : null,
+        );
+      } catch {
+        if (isActive) {
+          setWaitingPowerDeckMeta(null);
+        }
+      }
+    };
+
+    void loadPowerDeckMeta();
+
+    return () => {
+      isActive = false;
+    };
+  }, [gameType, matchPhase, waitingPowerDeckId]);
 
   const playedCountsByPlayer = useMemo(
     () => getPlayedCountsByPlayer(pile),
@@ -2072,14 +2220,31 @@ export function Game() {
   useEffect(() => {
     const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
     const nextGameType = getLobbyGameType(lobbyId, location.state?.gameType);
+    const nextLifeMultiplier = getLobbyLifeMultiplier(
+      lobbyId,
+      location.state?.lifeMultiplier,
+    );
+    const nextPowerDeckId = getLobbyPowerDeckId(
+      lobbyId,
+      location.state?.powerDeckId,
+    );
     const nextCharacterId = selectedMercenaryId;
     const nextCurrentPlayerId = getCurrentPlayerId();
     const token = getAuthToken();
 
     setLifes(nextLifes);
     setGameType(nextGameType);
+    setWaitingLifeMultiplier(nextLifeMultiplier);
+    setWaitingPowerDeckId(nextPowerDeckId);
     if (lobbyId) {
       localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, nextGameType);
+      localStorage.setItem(
+        `ohhell_lobby_power_life_multiplier_${lobbyId}`,
+        String(nextLifeMultiplier),
+      );
+      if (nextPowerDeckId) {
+        localStorage.setItem(`ohhell_lobby_power_deck_${lobbyId}`, nextPowerDeckId);
+      }
     }
     setCurrentPlayerId(nextCurrentPlayerId);
     setGameStage('waiting');
@@ -2184,6 +2349,42 @@ export function Game() {
 
         return applyGameInfo(normalizedPlayers, gameInfo, nextLifes);
       });
+    };
+
+    const applyWaitingSettings = (waitingSettings) => {
+      if (!waitingSettings) {
+        return;
+      }
+
+      if (waitingSettings.game_type) {
+        setGameType(waitingSettings.game_type);
+      }
+
+      if (
+        waitingSettings.game_type === gameTypes.FODINHA_POWER &&
+        Number.isFinite(Number(waitingSettings.life_multiplier)) &&
+        Number(waitingSettings.life_multiplier) > 0
+      ) {
+        const nextMultiplier = Number(waitingSettings.life_multiplier);
+
+        setWaitingLifeMultiplier(nextMultiplier);
+        if (lobbyId) {
+          localStorage.setItem(
+            `ohhell_lobby_power_life_multiplier_${lobbyId}`,
+            String(nextMultiplier),
+          );
+        }
+      }
+
+      if (waitingSettings.power_deck_id) {
+        setWaitingPowerDeckId(waitingSettings.power_deck_id);
+        if (lobbyId) {
+          localStorage.setItem(
+            `ohhell_lobby_power_deck_${lobbyId}`,
+            waitingSettings.power_deck_id,
+          );
+        }
+      }
     };
 
     const getLocalPlayerIds = (gameInfo, statusMap) => {
@@ -2349,6 +2550,7 @@ export function Game() {
           const gameInfo = getGameInfoFromSnapshot(message.data);
 
           if (statusMap) {
+            applyWaitingSettings(getWaitingLobbySettings(message.data));
             applyStatusMap(statusMap, gameInfo);
           }
           if (gameInfo) {
@@ -2990,6 +3192,7 @@ export function Game() {
 
         if (statusMap) {
           setMatchPhase('waiting');
+          applyWaitingSettings(getWaitingLobbySettings(lobbyInfo));
           applyStatusMap(statusMap);
         }
 
@@ -3282,6 +3485,21 @@ export function Game() {
       />
 
       <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
+
+      {isWaitingForReady && gameType === gameTypes.FODINHA_POWER ? (
+        <WaitingPowerLobbyInfo
+          deckInfo={
+            waitingPowerDeckMeta?.cardCount
+              ? t('pages.createGame.powerDeckCardCount', {
+                  count: waitingPowerDeckMeta.cardCount,
+                })
+              : ''
+          }
+          deckKind={waitingPowerDeckMeta?.kind}
+          deckName={waitingPowerDeckMeta?.name || waitingPowerDeckId}
+          lifeMultiplier={waitingLifeMultiplier}
+        />
+      ) : null}
 
       {isWaitingForReady && lobbyId ? <RoomLinkCopy lobbyId={lobbyId} /> : null}
 

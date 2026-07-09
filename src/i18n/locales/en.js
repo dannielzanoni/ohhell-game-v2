@@ -55,6 +55,7 @@ export const en = {
     gameEnded: 'Game ended',
     lastPlayerStanding: 'Last player standing.',
     lifeLossEvent: 'Jo\u00e3o plays',
+    selectedDeckLabel: 'Selected deck',
     lostLives_one: 'Lost {{count}} life',
     lostLives_other: 'Lost {{count}} lives',
     noWinners: 'No winners',
@@ -63,6 +64,8 @@ export const en = {
     lives_one: '{{count}} life',
     lives_other: '{{count}} lives',
     missingAuth: 'Register your guest before entering the room.',
+    lifeMultiplierDisplay: 'Life multiplier: {{multiplier}}',
+    powerLobbySettings: 'Power Lobby Settings',
     playCardError: 'Could not play the card.',
     powerCard: 'Power card',
     powerCardDragToTarget: 'Drag this power card onto a player avatar.',
@@ -133,7 +136,19 @@ export const en = {
       configurations: 'Game Configurations',
       createError: 'Could not create the room.',
       creating: 'Creating...',
+      communityDeckConsentHint:
+        'I understand this match will use player-created cards and balance, and everyone joining the lobby will play with this exact community deck.',
+      communityDeckConsentLabel: 'Confirm community deck use',
+      communityDeckConsentRequired:
+        'Confirm the community deck warning before creating the room.',
+      communityDeckWarningDescription:
+        'Community decks can include experimental scripts, unusual balance, and player-authored card pools. Use them intentionally.',
+      communityDeckWarningTitle: 'Community Deck Warning',
       enablePublicRoom: 'Enable public room',
+      lifeMultiplier: 'Life multiplier',
+      lifeMultiplierError: 'Enter a life multiplier greater than 0.',
+      lifeMultiplierHint:
+        'Each mercenary keeps its own base life, and this multiplier is applied to that value for everyone in the lobby.',
       liveTable: 'Live table',
       loadingPowerDecks: 'Loading power decks...',
       livesNumber: 'Number of Lives',
@@ -145,8 +160,21 @@ export const en = {
       powerDeckEmpty: 'No power decks are available yet. Create a deck before starting Fodinha Power.',
       powerDeckHint:
         'Everyone in the lobby plays with the exact deck selected by the lobby creator.',
+      powerDeckCardCount: '{{count}} cards',
+      powerDeckCreatedBy: 'By {{name}}',
       powerDeckLoadError: 'Could not load power decks.',
+      powerDeckGroupCommunity: 'Community decks',
+      powerDeckGroupCommunityHint:
+        'Player-built decks with their own card mixes, kept separate so you know exactly when you are opting into community content.',
+      powerDeckGroupOfficial: 'Official decks',
+      powerDeckGroupOfficialHint:
+        'Curated decks maintained as the default competitive baseline for Fodinha Power.',
+      powerDeckOfficialCreator: 'Official',
       powerDeckOption: '{{name}} ({{count}} cards)',
+      powerDeckSelected: 'Selected',
+      powerLivesDefinedByMercenary: 'Lives are defined by the selected mercenary',
+      powerLivesDefinedByMercenaryHint:
+        'Fodinha Power base life and initial mana now come from the mercenary Lua script instead of the lobby form.',
       powerDeckRequired: 'Select a Fodinha Power deck.',
       publicRoom: 'Public room',
       selectPowerDeck: 'Select a deck',
@@ -492,6 +520,7 @@ export const en = {
         cardType: 'Card type',
         description: 'Description',
         manaCost: 'Mana cost',
+        quantity: 'Deck quantity',
         title: 'Title',
       },
       imageError: 'Could not import the image.',
@@ -506,6 +535,7 @@ export const en = {
       importTemplate: 'Import template',
       loadError: 'Could not load card definitions.',
       luaFetchError: 'Could not load the latest Lua editor source.',
+      luaDefinedValue: 'Defined by Lua script',
       luaRequired: 'Enter a Lua script before saving.',
       luaScript: 'Lua effect script',
       layout: {
@@ -548,18 +578,16 @@ export const en = {
     },
     powerDecks: {
       bucket: 'Link cards to',
-      bucketHint: '{{generic}} table copies. {{mercenary}} linked copies in the active bucket.',
+      bucketHint: '{{generic}} table cards. {{mercenary}} linked cards in the active bucket.',
       cardsEyebrow: 'Card definitions',
       cardsRequired: 'Select at least one card.',
       cardsTitle: 'Official and community cards',
-      copies: 'Copies',
       create: 'Create deck',
       createError: 'Could not create the deck.',
       createEyebrow: 'Deck builder',
       createTitle: 'Create a Fodinha Power deck',
       createdBy: 'By {{name}}',
       creating: 'Creating...',
-      decreaseCopies: 'Decrease copies',
       deckCardCount: '{{count}} cards',
       description:
         'Build named Fodinha Power decks from official cards and cards published by the community.',
@@ -571,7 +599,6 @@ export const en = {
         name: 'Deck name',
       },
       genericBucket: 'Table deck',
-      increaseCopies: 'Increase copies',
       cardTypes: {
         instant: 'Instant',
         interactive: 'Interactive',
@@ -590,6 +617,7 @@ export const en = {
       officialDeck: 'Create as official deck',
       officialDeckHint:
         'Only admin users can save official decks. Other decks are community decks.',
+      quantity: 'Deck quantity',
       savedEyebrow: 'Saved decks',
       savedTitle: 'Decks: {{count}}',
       saveAsDraft: 'Save as draft',
@@ -597,7 +625,7 @@ export const en = {
         'Drafts are visible only to you and cannot be used to start a match.',
       selectedCards: '{{count}} selected cards',
       selectedHint:
-        'Create cards first, then assign copy counts to the table deck or to a mercenary bucket.',
+        'Create cards first, then link each card once to the table deck or to a mercenary bucket. Card quantity comes from the Lua script.',
       status: {
         draft: 'Draft',
         valid: 'Playable',
