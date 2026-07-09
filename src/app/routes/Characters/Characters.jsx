@@ -150,7 +150,7 @@ return {
     end,
 }`;
 
-function AdminMercenaryForm({ onCreated, t }) {
+function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState({
     description: '',
@@ -168,6 +168,14 @@ function AdminMercenaryForm({ onCreated, t }) {
 
   const updateDraft = (field, value) => {
     setDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleToggleOpen = () => {
+    setIsOpen((current) => {
+      const nextIsOpen = !current;
+      onOpenChange?.(nextIsOpen);
+      return nextIsOpen;
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -230,7 +238,7 @@ function AdminMercenaryForm({ onCreated, t }) {
         type="button"
         className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-red-950/30 focus:outline-none focus:ring-2 focus:ring-amber-300"
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={handleToggleOpen}
       >
         <span>
           <span className="block text-xs font-black uppercase text-amber-300/80">
@@ -307,6 +315,7 @@ export function Mercenaries() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [characters, setCharacters] = useState(mercenaries);
   const [loadError, setLoadError] = useState('');
+  const [isAdminToolsOpen, setIsAdminToolsOpen] = useState(false);
   const canCreateMercenary = isCurrentUserAdmin();
 
   const loadMercenaries = async () => {
@@ -348,7 +357,12 @@ export function Mercenaries() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-3">
+    <main
+      className={cn(
+        'relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:py-3',
+        isAdminToolsOpen ? 'lg:overflow-y-auto' : 'lg:overflow-hidden',
+      )}
+    >
       <img
         src={hellHandBg}
         alt=""
@@ -405,7 +419,13 @@ export function Mercenaries() {
           </div>
         </header>
 
-        {canCreateMercenary ? <AdminMercenaryForm t={t} onCreated={loadMercenaries} /> : null}
+        {canCreateMercenary ? (
+          <AdminMercenaryForm
+            t={t}
+            onCreated={loadMercenaries}
+            onOpenChange={setIsAdminToolsOpen}
+          />
+        ) : null}
         {loadError ? (
           <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {loadError}
