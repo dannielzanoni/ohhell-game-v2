@@ -587,7 +587,6 @@ export const pt = {
       bucket: 'Vincular cartas a',
       bucketHint: '{{generic}} cartas na mesa. {{mercenary}} cartas vinculadas no grupo ativo.',
       cardsEyebrow: 'Definicoes de cartas',
-      cardsRequired: 'Selecione pelo menos uma carta.',
       cardsTitle: 'Cartas oficiais e da comunidade',
       create: 'Criar deck',
       createError: 'Nao foi possivel criar o deck.',

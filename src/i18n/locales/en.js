@@ -587,7 +587,6 @@ export const en = {
       bucket: 'Link cards to',
       bucketHint: '{{generic}} table cards. {{mercenary}} linked cards in the active bucket.',
       cardsEyebrow: 'Card definitions',
-      cardsRequired: 'Select at least one card.',
       cardsTitle: 'Official and community cards',
       create: 'Create deck',
       createError: 'Could not create the deck.',

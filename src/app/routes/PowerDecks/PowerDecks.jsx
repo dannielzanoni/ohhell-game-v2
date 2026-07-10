@@ -147,11 +147,6 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
       return;
     }
 
-    if (!totalSelectedCount) {
-      setCreateError(t('pages.powerDecks.cardsRequired'));
-      return;
-    }
-
     setIsCreating(true);
 
     try {
