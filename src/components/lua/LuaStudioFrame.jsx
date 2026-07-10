@@ -148,8 +148,8 @@ export function LuaStudioFrame({
   const [isReopeningFrame, setIsReopeningFrame] = useState(false);
   const [openTabError, setOpenTabError] = useState('');
   const editorUrl = useMemo(
-    () => (snippetId ? buildEmbeddedEditorUrl(snippetId) : buildSetupEditorUrl(templateUrl)),
-    [snippetId, templateUrl],
+    () => buildSetupEditorUrl(templateUrl),
+    [templateUrl],
   );
   const luaStudioOrigin = useMemo(
     () => parseOrigin(environment.luaStudioUrl),
