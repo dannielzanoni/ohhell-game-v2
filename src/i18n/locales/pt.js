@@ -640,7 +640,7 @@ export const pt = {
         'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
       selectedCards: '{{count}} cartas selecionadas',
       selectedHint:
-        'Crie as cartas primeiro e depois vincule cada carta ao deck da mesa ou ao grupo de um mercenario. A quantidade vem do script Lua da carta.',
+        'As cartas sao opcionais. Vincule cada carta uma vez ao deck da mesa ou ao grupo de um mercenario. A quantidade vem do script Lua da carta.',
       status: {
         draft: 'Rascunho',
         valid: 'Jogavel',

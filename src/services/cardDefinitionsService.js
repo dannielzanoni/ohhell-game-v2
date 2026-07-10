@@ -10,7 +10,6 @@ export function getPowerDecks() {
 }
 
 export function createPowerDeck({
-  cardIds,
   description,
   genericCardIds,
   kind = 'community',
@@ -22,7 +21,6 @@ export function createPowerDeck({
     apiRequest('/power-decks', {
       auth: true,
       body: {
-        card_ids: cardIds,
         description,
         generic_card_ids: genericCardIds,
         kind,
@@ -36,7 +34,6 @@ export function createPowerDeck({
 }
 
 export function updatePowerDeck({
-  cardIds,
   deckId,
   description,
   genericCardIds,
@@ -49,7 +46,6 @@ export function updatePowerDeck({
     apiRequest(`/power-decks/${encodeURIComponent(deckId)}`, {
       auth: true,
       body: {
-        card_ids: cardIds,
         description,
         generic_card_ids: genericCardIds,
         kind,

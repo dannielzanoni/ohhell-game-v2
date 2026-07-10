@@ -640,7 +640,7 @@ export const en = {
         'Drafts are visible only to you and cannot be used to start a match.',
       selectedCards: '{{count}} selected cards',
       selectedHint:
-        'Create cards first, then link each card once to the table deck or to a mercenary bucket. Card quantity comes from the Lua script.',
+        'Cards are optional. Link each card once to the table deck or to a mercenary bucket. Card quantity comes from the Lua script.',
       status: {
         draft: 'Draft',
         valid: 'Playable',

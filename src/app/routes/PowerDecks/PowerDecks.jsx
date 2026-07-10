@@ -277,7 +277,6 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
 
     try {
       const payload = {
-        cardIds: [],
         description: deckDescription,
         genericCardIds: uniqueCardIds(selectedGenericCardIds),
         kind: canCreateOfficial ? deckKind : 'community',
