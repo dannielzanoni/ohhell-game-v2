@@ -26,7 +26,11 @@ import switchCardSound from '@/assets/sounds/hell-hand/ui/switch_card.mp3';
 import { cn } from '@/lib/utils.js';
 import { getGamePreferences } from '@/services/gamePreferencesService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
-import { createMercenary, getMercenaries } from '@/services/mercenariesService.js';
+import {
+  createMercenary,
+  getMercenaries,
+  updateMercenary,
+} from '@/services/mercenariesService.js';
 import { isCurrentUserAdmin } from '@/services/authService.js';
 import {
   getMercenarySubtitle,
@@ -263,16 +267,21 @@ return {
     end,
 }`;
 
-function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [draft, setDraft] = useState({
+function emptyDraft() {
+  return {
     description: '',
     name: '',
     passiveScript: defaultPassiveScript,
     style: '',
     subtitle: '',
     temper: '',
-  });
+  };
+}
+
+function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [draft, setDraft] = useState(emptyDraft);
+  const [editingId, setEditingId] = useState('');
   const [bannerFile, setBannerFile] = useState(null);
   const [iconFile, setIconFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -292,6 +301,36 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
     });
   };
 
+  const startEditing = (id) => {
+    const mercenary = characters.find((character) => character.id === id);
+
+    setEditingId(id);
+    setBannerFile(null);
+    setIconFile(null);
+    setLuaSnippetId('');
+    setError('');
+    setDraft({
+      ...emptyDraft(),
+      description: mercenary?.description || '',
+      name: mercenary?.name || '',
+      passiveScript: mercenary?.passiveScript || defaultPassiveScript,
+      style: mercenary?.style || '',
+      subtitle: mercenary?.subtitle || '',
+      temper: mercenary?.temper || '',
+    });
+    setLuaEditorKey((current) => current + 1);
+  };
+
+  const startCreating = () => {
+    setEditingId('');
+    setDraft(emptyDraft());
+    setBannerFile(null);
+    setIconFile(null);
+    setLuaSnippetId('');
+    setError('');
+    setLuaEditorKey((current) => current + 1);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -301,12 +340,12 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
       return;
     }
 
-    if (!bannerFile) {
+    if (!editingId && !bannerFile) {
       setError(t('pages.characters.admin.bannerRequired'));
       return;
     }
 
-    if (!iconFile) {
+    if (!editingId && !iconFile) {
       setError(t('pages.characters.admin.iconRequired'));
       return;
     }
@@ -331,22 +370,27 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
         return;
       }
 
-      await createMercenary({ ...draft, bannerFile, iconFile, passiveScript });
-      setDraft({
-        description: '',
-        name: '',
-        passiveScript: defaultPassiveScript,
-        style: '',
-        subtitle: '',
-        temper: '',
-      });
+      const fields = { ...draft, bannerFile, iconFile, passiveScript };
+
+      if (editingId) {
+        await updateMercenary(editingId, fields);
+      } else {
+        await createMercenary(fields);
+      }
+
+      startCreating();
       setBannerFile(null);
       setIconFile(null);
       setLuaSnippetId('');
       setLuaEditorKey((current) => current + 1);
       await onCreated();
     } catch (requestError) {
-      setError(requestError.message || t('pages.characters.admin.createError'));
+      setError(
+        requestError.message ||
+          (editingId
+            ? t('pages.characters.admin.updateError')
+            : t('pages.characters.admin.createError')),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -365,7 +409,9 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
             {t('pages.characters.admin.eyebrow')}
           </span>
           <span className="mt-1 block text-lg font-black text-white lg:text-base">
-            {t('pages.characters.admin.title')}
+            {editingId
+              ? t('pages.characters.admin.editTitle')
+              : t('pages.characters.admin.title')}
           </span>
         </span>
         <span className="grid size-9 shrink-0 place-items-center rounded-md border border-amber-200/20 bg-amber-950/35 text-amber-200">
@@ -375,6 +421,39 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
 
       {isOpen ? (
         <form className="border-t border-red-200/12 p-4 pt-3" onSubmit={handleSubmit}>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+            <label className="grid flex-1 gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.admin.editExisting')}
+              <select
+                className="h-10 rounded-md border border-red-200/20 bg-black/70 px-3 text-sm text-stone-100 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-300/30"
+                value={editingId}
+                onChange={(event) =>
+                  event.target.value
+                    ? startEditing(event.target.value)
+                    : startCreating()
+                }
+              >
+                <option value="">{t('pages.characters.admin.newMercenary')}</option>
+                {characters
+                  .filter((character) => character.passiveScript)
+                  .map((character) => (
+                    <option key={character.id} value={character.id}>
+                      {getMercenaryTitle(character, t)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            {editingId ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 cursor-pointer border-red-200/20 bg-black/55 text-stone-100 hover:border-amber-300/45 hover:bg-red-950/55 hover:text-amber-100"
+                onClick={startCreating}
+              >
+                {t('pages.characters.admin.createNew')}
+              </Button>
+            ) : null}
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
               {t('pages.characters.admin.name')}
@@ -397,10 +476,20 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100">
               {t('pages.characters.admin.banner')}
+              {editingId ? (
+                <span className="text-xs font-normal text-stone-400">
+                  {t('pages.characters.admin.imageOptional')}
+                </span>
+              ) : null}
               <Input type="file" accept="image/*" onChange={(event) => setBannerFile(event.target.files?.[0] || null)} />
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100">
               {t('pages.characters.admin.icon')}
+              {editingId ? (
+                <span className="text-xs font-normal text-stone-400">
+                  {t('pages.characters.admin.imageOptional')}
+                </span>
+              ) : null}
               <Input type="file" accept="image/*" onChange={(event) => setIconFile(event.target.files?.[0] || null)} />
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
@@ -425,7 +514,11 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
           </div>
           <Button type="submit" className="mt-4 h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black hover:bg-amber-200" disabled={isSaving}>
             {isSaving ? <i className="pi pi-spin pi-spinner text-sm" /> : <Save className="size-4" />}
-            {isSaving ? t('pages.characters.admin.saving') : t('pages.characters.admin.save')}
+            {isSaving
+              ? t('pages.characters.admin.saving')
+              : editingId
+                ? t('pages.characters.admin.update')
+                : t('pages.characters.admin.save')}
           </Button>
           {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
         </form>
@@ -552,6 +645,7 @@ export function Mercenaries() {
 
         {canCreateMercenary ? (
           <AdminMercenaryForm
+            characters={characters}
             t={t}
             onCreated={loadMercenaries}
             onOpenChange={setIsAdminToolsOpen}

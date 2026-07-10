@@ -5,7 +5,27 @@ export function getMercenaries() {
   return withAuthRetry(() => apiRequest('/mercenaries', { auth: true }));
 }
 
-export function createMercenary({
+export function createMercenary(fields) {
+  return withAuthRetry(() =>
+    apiRequest('/mercenaries', {
+      auth: true,
+      body: createMercenaryForm(fields),
+      method: 'POST',
+    }),
+  );
+}
+
+export function updateMercenary(id, fields) {
+  return withAuthRetry(() =>
+    apiRequest(`/mercenaries/${encodeURIComponent(id)}`, {
+      auth: true,
+      body: createMercenaryForm(fields),
+      method: 'PUT',
+    }),
+  );
+}
+
+function createMercenaryForm({
   bannerFile,
   iconFile,
   description,
@@ -37,16 +57,11 @@ export function createMercenary({
     'passive.lua',
   );
 
-  return withAuthRetry(() =>
-    apiRequest('/mercenaries', {
-      auth: true,
-      body: form,
-      method: 'POST',
-    }),
-  );
+  return form;
 }
 
 export const mercenariesService = {
   createMercenary,
   getMercenaries,
+  updateMercenary,
 };
