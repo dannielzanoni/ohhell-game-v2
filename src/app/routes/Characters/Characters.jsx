@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -31,12 +31,11 @@ import {
   getMercenaries,
   updateMercenary,
 } from '@/services/mercenariesService.js';
-import { isCurrentUserAdmin } from '@/services/authService.js';
+import { isCurrentUserAdmin, isMissingAuthTokenError } from '@/services/authService.js';
 import {
   getMercenarySubtitle,
   getMercenaryTitle,
-  mercenaries,
-  mergeMercenaries,
+  normalizeRemoteMercenaries,
 } from './characterData.js';
 
 function getCarouselOffset(index, activeIndex, length) {
@@ -530,31 +529,56 @@ function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
 export function Mercenaries() {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [characters, setCharacters] = useState(mercenaries);
+  const [characters, setCharacters] = useState([]);
   const [hoveredCharacterIndex, setHoveredCharacterIndex] = useState(null);
   const [selectionViewMode, setSelectionViewMode] = useState('icons');
   const [loadError, setLoadError] = useState('');
   const [isAdminToolsOpen, setIsAdminToolsOpen] = useState(false);
   const canCreateMercenary = isCurrentUserAdmin();
 
-  const loadMercenaries = async () => {
+  const loadMercenaries = useCallback(async () => {
     setLoadError('');
 
     try {
       const response = await getMercenaries();
-      setCharacters(mergeMercenaries(Array.isArray(response) ? response : []));
+      setCharacters(normalizeRemoteMercenaries(Array.isArray(response) ? response : []));
     } catch (requestError) {
-      setLoadError(requestError.message || t('pages.characters.loadError'));
-      setCharacters(mercenaries);
+      setCharacters([]);
+
+      if (!isMissingAuthTokenError(requestError)) {
+        setLoadError(requestError.message || t('pages.characters.loadError'));
+      }
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void loadMercenaries();
     startHellHandHomeTheme();
-  }, []);
+  }, [loadMercenaries]);
+
+  useEffect(() => {
+    const handleAuthCompleted = () => {
+      void loadMercenaries();
+    };
+
+    window.addEventListener('ohhell:auth-completed', handleAuthCompleted);
+
+    return () => {
+      window.removeEventListener('ohhell:auth-completed', handleAuthCompleted);
+    };
+  }, [loadMercenaries]);
+
+  useEffect(() => {
+    if (characters.length && activeIndex >= characters.length) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, characters.length]);
 
   const goToPrevious = () => {
+    if (!characters.length) {
+      return;
+    }
+
     playSwitchCardSound();
     setActiveIndex((current) =>
       current === 0 ? characters.length - 1 : current - 1,
@@ -562,12 +586,16 @@ export function Mercenaries() {
   };
 
   const goToNext = () => {
+    if (!characters.length) {
+      return;
+    }
+
     playSwitchCardSound();
     setActiveIndex((current) => (current + 1) % characters.length);
   };
 
   const handleCharacterSelect = (index) => {
-    if (index === activeIndex) {
+    if (!characters.length || index === activeIndex) {
       return;
     }
 
@@ -674,7 +702,8 @@ export function Mercenaries() {
                   variant="outline"
                   size="icon-lg"
                   aria-label={t('pages.characters.previous')}
-                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
+                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-45 lg:size-9"
+                  disabled={!characters.length}
                   onClick={goToPrevious}
                 >
                   <ChevronLeft className="size-4" />
@@ -707,7 +736,8 @@ export function Mercenaries() {
                   variant="outline"
                   size="icon-lg"
                   aria-label={t('pages.characters.next')}
-                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 lg:size-9"
+                  className="cursor-pointer border-red-200/15 bg-black/65 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/50 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-45 lg:size-9"
+                  disabled={!characters.length}
                   onClick={goToNext}
                 >
                   <ChevronRight className="size-4" />

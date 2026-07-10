@@ -44,6 +44,7 @@ import {
   gameTypes,
   getGameTypeOption,
 } from '@/services/gameTypesService.js';
+import { cn } from '@/lib/utils.js';
 import {
   startHellHandHomeTheme,
   stopHellHandHomeTheme,
@@ -1739,6 +1740,7 @@ function PowerCardHand({
 function LobbyAuthGate({
   canContinue,
   error,
+  gameType,
   isConfirming,
   onContinue,
   onProfileSaved,
@@ -1747,25 +1749,38 @@ function LobbyAuthGate({
   profileCardRef,
 }) {
   const { t } = useTranslation();
+  const isHellHand = gameType === gameTypes.FODINHA_POWER;
 
   return (
     <Dialog open={open}>
       <DialogContent
-        className="pointer-events-auto z-[70] max-w-md border-white/10 bg-zinc-950/95 p-5 text-white shadow-2xl shadow-black/50"
+        className={cn(
+          'pointer-events-auto z-[70] max-w-md p-5 text-white shadow-2xl shadow-black/50',
+          isHellHand
+            ? 'border-red-200/15 bg-black/92 text-stone-100'
+            : 'border-white/10 bg-zinc-950/95',
+        )}
         showCloseButton={false}
         onEscapeKeyDown={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('game.enterRoom')}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className={cn(isHellHand && 'text-amber-100')}>
+            {t('game.enterRoom')}
+          </DialogTitle>
+          <DialogDescription className={cn(isHellHand && 'text-red-100/70')}>
             {t('game.confirmProfile')}
           </DialogDescription>
         </DialogHeader>
 
         <LoginCard
           ref={profileCardRef}
-          className="border-white/10 bg-black/30 p-5 shadow-none"
+          compact={isHellHand}
+          variant={isHellHand ? 'hellHand' : 'default'}
+          className={cn(
+            'shadow-none',
+            isHellHand ? 'border-red-200/15 bg-black/45' : 'border-white/10 bg-black/30 p-5',
+          )}
           onProfileStateChange={onProfileStateChange}
           onSaved={onProfileSaved}
         />
@@ -1776,11 +1791,19 @@ function LobbyAuthGate({
           </p>
         ) : null}
 
-        <DialogFooter className="-mx-5 -mb-5 border-white/10 bg-black/30 px-5">
+        <DialogFooter
+          className={cn(
+            '-mx-5 -mb-5 px-5',
+            isHellHand ? 'border-red-200/15 bg-red-950/20' : 'border-white/10 bg-black/30',
+          )}
+        >
           <Button
             type="button"
             disabled={!canContinue || isConfirming}
-            className="h-11 w-full gap-2 sm:w-auto"
+            className={cn(
+              'h-11 w-full gap-2 sm:w-auto',
+              isHellHand && 'border border-amber-200/40 bg-amber-300 text-black hover:bg-amber-200',
+            )}
             onClick={onContinue}
           >
             {isConfirming ? (
@@ -3614,6 +3637,7 @@ export function Game() {
           Boolean(lobbyId) && !isProfileConfirming && !profileGateState.isSaving
         }
         error={authGateError}
+        gameType={gameType}
         isConfirming={isProfileConfirming}
         onContinue={continueToLobby}
         onProfileSaved={() => {

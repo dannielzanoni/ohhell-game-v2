@@ -27,8 +27,8 @@ export function updateMercenary(id, fields) {
 
 function createMercenaryForm({
   bannerFile,
-  iconFile,
   description,
+  iconFile,
   name,
   passiveScript,
   style,

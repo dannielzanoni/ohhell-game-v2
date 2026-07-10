@@ -9,7 +9,7 @@ import {
   Play,
   Skull,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button.jsx';
 import TiltedCard from '@/components/ui/TiltedCard.jsx';
 import { cn } from '@/lib/utils.js';
 import { getPowerDecks } from '@/services/cardDefinitionsService.js';
+import { isMissingAuthTokenError } from '@/services/authService.js';
 import { gameTypes } from '@/services/gameTypesService.js';
 import { getGamePreferences } from '@/services/gamePreferencesService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
@@ -34,8 +35,7 @@ import { getMercenaries } from '@/services/mercenariesService.js';
 import {
   getMercenarySubtitle,
   getMercenaryTitle,
-  mercenaries,
-  mergeMercenaries,
+  normalizeRemoteMercenaries,
 } from '../Characters/characterData.js';
 
 const hellHandDefaultLives = 50;
@@ -392,7 +392,7 @@ export function HellHandGame() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeCharacterIndex, setActiveCharacterIndex] = useState(0);
-  const [characters, setCharacters] = useState(mercenaries);
+  const [characters, setCharacters] = useState([]);
   const [hoveredCharacterIndex, setHoveredCharacterIndex] = useState(null);
   const [selectionViewMode, setSelectionViewMode] = useState('icons');
   const [selectedCharacterId, setSelectedCharacterId] = useState('');
@@ -405,76 +405,82 @@ export function HellHandGame() {
   const isCharacterLocked = Boolean(selectedCharacterId);
   const canCreateGame = Boolean(selectedCharacterId && powerDeckId) && !isLoadingPowerDecks;
 
+  const loadMercenaries = useCallback(async () => {
+    try {
+      const response = await getMercenaries();
+      setCharacters(normalizeRemoteMercenaries(Array.isArray(response) ? response : []));
+    } catch (error) {
+      setCharacters([]);
+    }
+  }, []);
+
+  const loadPowerDecks = useCallback(async () => {
+    setIsLoadingPowerDecks(true);
+    setPowerDeckError('');
+
+    try {
+      const decks = await getPowerDecks();
+
+      setPowerDecks(
+        (Array.isArray(decks) ? decks : []).filter(
+          (deck) => (deck.status || 'valid') === 'valid',
+        ),
+      );
+      setPowerDeckId('');
+    } catch (error) {
+      setPowerDecks([]);
+      setPowerDeckId('');
+
+      if (!isMissingAuthTokenError(error)) {
+        setPowerDeckError(
+          error.message || t('pages.createGame.powerDeckLoadError'),
+        );
+      }
+    } finally {
+      setIsLoadingPowerDecks(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     startHellHandHomeTheme();
   }, []);
 
   useEffect(() => {
-    let isActive = true;
-
-    async function loadMercenaries() {
-      try {
-        const response = await getMercenaries();
-
-        if (isActive) {
-          setCharacters(mergeMercenaries(Array.isArray(response) ? response : []));
-        }
-      } catch {
-        if (isActive) {
-          setCharacters(mercenaries);
-        }
-      }
-    }
-
     void loadMercenaries();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
+  }, [loadMercenaries]);
 
   useEffect(() => {
-    let isActive = true;
-
-    async function loadPowerDecks() {
-      setIsLoadingPowerDecks(true);
-      setPowerDeckError('');
-
-      try {
-        const decks = await getPowerDecks();
-
-        if (isActive) {
-          setPowerDecks(
-            (Array.isArray(decks) ? decks : []).filter(
-              (deck) => (deck.status || 'valid') === 'valid',
-            ),
-          );
-          setPowerDeckId('');
-        }
-      } catch (error) {
-        if (isActive) {
-          setPowerDecks([]);
-          setPowerDeckId('');
-          setPowerDeckError(
-            error.message || t('pages.createGame.powerDeckLoadError'),
-          );
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingPowerDecks(false);
-        }
-      }
-    }
-
     void loadPowerDecks();
+  }, [loadPowerDecks]);
+
+  useEffect(() => {
+    const handleAuthCompleted = () => {
+      void loadMercenaries();
+      void loadPowerDecks();
+    };
+
+    window.addEventListener('ohhell:auth-completed', handleAuthCompleted);
 
     return () => {
-      isActive = false;
+      window.removeEventListener('ohhell:auth-completed', handleAuthCompleted);
     };
-  }, [t]);
+  }, [loadMercenaries, loadPowerDecks]);
+
+  useEffect(() => {
+    if (characters.length && activeCharacterIndex >= characters.length) {
+      setActiveCharacterIndex(0);
+    }
+
+    if (
+      selectedCharacterId &&
+      !characters.some((character) => character.id === selectedCharacterId)
+    ) {
+      setSelectedCharacterId('');
+    }
+  }, [activeCharacterIndex, characters, selectedCharacterId]);
 
   const goToPreviousCharacter = () => {
-    if (isCharacterLocked) {
+    if (isCharacterLocked || !characters.length) {
       return;
     }
 
@@ -485,7 +491,7 @@ export function HellHandGame() {
   };
 
   const goToNextCharacter = () => {
-    if (isCharacterLocked) {
+    if (isCharacterLocked || !characters.length) {
       return;
     }
 
@@ -494,7 +500,7 @@ export function HellHandGame() {
   };
 
   const handleCharacterDotSelect = (index) => {
-    if (isCharacterLocked || index === activeCharacterIndex) {
+    if (isCharacterLocked || !characters.length || index === activeCharacterIndex) {
       return;
     }
 
@@ -510,6 +516,10 @@ export function HellHandGame() {
   const handleCharacterLockToggle = () => {
     if (selectedCharacterId) {
       setSelectedCharacterId('');
+      return;
+    }
+
+    if (!characters[activeCharacterIndex]) {
       return;
     }
 
@@ -565,7 +575,9 @@ export function HellHandGame() {
         },
       });
     } catch (error) {
-      setCreateError(error.message || t('pages.createGame.createError'));
+      if (!isMissingAuthTokenError(error)) {
+        setCreateError(error.message || t('pages.createGame.createError'));
+      }
     } finally {
       setIsCreating(false);
     }
@@ -648,7 +660,7 @@ export function HellHandGame() {
                     size="icon-lg"
                     aria-label={t('pages.characters.previous')}
                     className="cursor-pointer border-red-200/15 bg-black/55 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/45 disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={isCharacterLocked}
+                    disabled={isCharacterLocked || !characters.length}
                     onClick={goToPreviousCharacter}
                   >
                     <ChevronLeft className="size-4" />
@@ -682,7 +694,7 @@ export function HellHandGame() {
                     size="icon-lg"
                     aria-label={t('pages.characters.next')}
                     className="cursor-pointer border-red-200/15 bg-black/55 text-stone-100 hover:border-amber-300/50 hover:bg-red-950/45 disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={isCharacterLocked}
+                    disabled={isCharacterLocked || !characters.length}
                     onClick={goToNextCharacter}
                   >
                     <ChevronRight className="size-4" />
@@ -727,7 +739,8 @@ export function HellHandGame() {
 
                 <Button
                   type="button"
-                  className="absolute bottom-4 right-4 z-40 h-11 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 px-5 font-black text-black shadow-xl shadow-black/35 hover:bg-amber-200"
+                  className="absolute bottom-4 right-4 z-40 h-11 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 px-5 font-black text-black shadow-xl shadow-black/35 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={!characters.length && !isCharacterLocked}
                   onClick={handleCharacterLockToggle}
                 >
                   {isCharacterLocked ? (

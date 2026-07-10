@@ -199,6 +199,39 @@ export function mergeMercenaries(remoteMercenaries = []) {
   return Array.from(merged.values());
 }
 
+export function normalizeRemoteMercenaries(remoteMercenaries = []) {
+  return remoteMercenaries
+    .filter((remoteMercenary) => remoteMercenary?.id)
+    .map((remoteMercenary, index) => {
+      const id = remoteMercenary.id;
+
+      return {
+        id,
+        accentClass: fallbackAccentClasses[index % fallbackAccentClasses.length],
+        banner: remoteMercenary.banner_url || remoteMercenary.banner || '',
+        cards: remoteMercenary.cards || remoteMercenary.deck || [],
+        deck: remoteMercenary.deck,
+        description: remoteMercenary.description,
+        gameplayStyle:
+          remoteMercenary.gameplay_style || remoteMercenary.gameplayStyle,
+        icon: remoteMercenary.icon_url || remoteMercenary.icon || '',
+        manaInicial:
+          remoteMercenary.mana_inicial ?? remoteMercenary.manaInicial,
+        manaTotal: remoteMercenary.mana_total ?? remoteMercenary.manaTotal,
+        markerClass: fallbackMarkerClasses[index % fallbackMarkerClasses.length],
+        name: remoteMercenary.name,
+        passiveScript: remoteMercenary.passive_script || remoteMercenary.passiveScript,
+        path: `/mercenaries/${id}`,
+        style: remoteMercenary.style,
+        subtitle: remoteMercenary.subtitle,
+        temper: remoteMercenary.temper,
+        vidaInicial:
+          remoteMercenary.vida_inicial ?? remoteMercenary.vidaInicial,
+        vidaTotal: remoteMercenary.vida_total ?? remoteMercenary.vidaTotal,
+      };
+    });
+}
+
 export function findMercenary(id, source = mercenaries) {
   const normalizedId = String(id || '').toLowerCase();
 
