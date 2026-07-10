@@ -1219,22 +1219,26 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm font-semibold">
-                  <span className="flex items-center justify-between gap-3">
-                    <span>{t('pages.playground.fields.manaCost')}</span>
-                    <FieldVisibilityToggle
-                      checked={draft.visibleFields?.manaCost !== false}
-                      displayLabel={t('pages.playground.displayOnCard')}
-                      fieldLabel={t('pages.playground.fields.manaCost')}
-                      onChange={(isVisible) =>
-                        updateFieldVisibility('manaCost', isVisible)
-                      }
-                    />
-                  </span>
-                  <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
-                    {draft.manaCost === '' ? t('pages.playground.luaDefinedValue') : draft.manaCost}
-                  </div>
-                </label>
+                {!isHellHand ? (
+                  <label className="grid gap-2 text-sm font-semibold">
+                    <span className="flex items-center justify-between gap-3">
+                      <span>{t('pages.playground.fields.manaCost')}</span>
+                      <FieldVisibilityToggle
+                        checked={draft.visibleFields?.manaCost !== false}
+                        displayLabel={t('pages.playground.displayOnCard')}
+                        fieldLabel={t('pages.playground.fields.manaCost')}
+                        onChange={(isVisible) =>
+                          updateFieldVisibility('manaCost', isVisible)
+                        }
+                      />
+                    </span>
+                    <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                      {draft.manaCost === ''
+                        ? t('pages.playground.luaDefinedValue')
+                        : draft.manaCost}
+                    </div>
+                  </label>
+                ) : null}
 
                 <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
                   <span className="flex items-center justify-between gap-3">
@@ -1257,17 +1261,19 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
-                  {t('pages.playground.fields.cardType')}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
-                      {t(getCardTypeLabelKey(draft.cardType))}
+                {!isHellHand ? (
+                  <label className="grid gap-2 text-sm font-semibold sm:col-span-2">
+                    {t('pages.playground.fields.cardType')}
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                        {t(getCardTypeLabelKey(draft.cardType))}
+                      </div>
+                      <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                        {t('pages.playground.fields.quantity')}: {draft.quantity ?? 1}
+                      </div>
                     </div>
-                    <div className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
-                      {t('pages.playground.fields.quantity')}: {draft.quantity ?? 1}
-                    </div>
-                  </div>
-                </label>
+                  </label>
+                ) : null}
 
                 {canCreateOfficial ? (
                   <label className="flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3 text-sm sm:col-span-2">
