@@ -274,6 +274,7 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
     temper: '',
   });
   const [bannerFile, setBannerFile] = useState(null);
+  const [iconFile, setIconFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [luaEditorKey, setLuaEditorKey] = useState(0);
   const [luaSnippetId, setLuaSnippetId] = useState('');
@@ -305,6 +306,11 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
       return;
     }
 
+    if (!iconFile) {
+      setError(t('pages.characters.admin.iconRequired'));
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -325,7 +331,7 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
         return;
       }
 
-      await createMercenary({ ...draft, bannerFile, passiveScript });
+      await createMercenary({ ...draft, bannerFile, iconFile, passiveScript });
       setDraft({
         description: '',
         name: '',
@@ -335,6 +341,7 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
         temper: '',
       });
       setBannerFile(null);
+      setIconFile(null);
       setLuaSnippetId('');
       setLuaEditorKey((current) => current + 1);
       await onCreated();
@@ -391,6 +398,10 @@ function AdminMercenaryForm({ onCreated, onOpenChange, t }) {
             <label className="grid gap-1 text-sm font-semibold text-stone-100">
               {t('pages.characters.admin.banner')}
               <Input type="file" accept="image/*" onChange={(event) => setBannerFile(event.target.files?.[0] || null)} />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-stone-100">
+              {t('pages.characters.admin.icon')}
+              <Input type="file" accept="image/*" onChange={(event) => setIconFile(event.target.files?.[0] || null)} />
             </label>
             <label className="grid gap-1 text-sm font-semibold text-stone-100 md:col-span-2">
               {t('pages.characters.admin.description')}

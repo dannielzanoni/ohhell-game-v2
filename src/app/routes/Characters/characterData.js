@@ -163,7 +163,6 @@ export function mergeMercenaries(remoteMercenaries = []) {
         existing.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
       banner: remoteMercenary.banner_url || existing.banner,
       cards: existing.cards || [],
-      deck: remoteMercenary.deck || existing.deck,
       description: remoteMercenary.description || existing.description,
       gameplayStyle:
         remoteMercenary.gameplay_style ||

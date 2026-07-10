@@ -296,7 +296,6 @@ export const en = {
       statsEyebrow: 'Traits',
       statsTitle: 'Play profile',
       stats: {
-        deck: 'Deck',
         style: 'Style',
         temper: 'Temper',
       },
@@ -307,6 +306,8 @@ export const en = {
         createError: 'Could not save the mercenary.',
         description: 'Description',
         eyebrow: 'Admin tools',
+        icon: 'Icon image',
+        iconRequired: 'Select an icon image.',
         id: 'Mercenary ID',
         luaFetchError: 'Could not load the latest Lua editor source.',
         name: 'Name',
@@ -357,7 +358,6 @@ export const en = {
               title: "Hunter's Grace",
             },
           },
-          deck: 'Lunar defense',
           history:
             'Artemis guards the old routes around the table and plays as if she read the round before it began. Her story is built on vows, protection, and precise choices: she prefers to win through control, holding risk until the perfect window appears.',
           style: 'Control',
@@ -389,7 +389,6 @@ export const en = {
               title: 'Final Chord',
             },
           },
-          deck: 'Contracts and pressure',
           history:
             'Carmen negotiates with cold blood and plays as if she knows the exact price of every promise. She enters the table to collect debts, twist bids, and turn small hesitations into advantage.',
           style: 'Pressure',
@@ -399,7 +398,6 @@ export const en = {
         },
         conjuruz: {
           cards: {},
-          deck: 'Rituals and omens',
           history:
             'Conjuruz is still a mercenary surrounded by mystery. His banner already hints at an arcane presence, but his cards will be revealed when his deck is ready.',
           style: 'Conjuration',
@@ -445,7 +443,6 @@ export const en = {
               title: 'Guabiru',
             },
           },
-          deck: 'Bets and bluffs',
           history:
             'The Gambler learned to hear the sound of cards before placing a bet. He lives between bluff and courage, selling the idea of chaos while calculating every possible loss. When he sits at the table, every round seems to hide a second wager.',
           style: 'Risk',
@@ -455,7 +452,6 @@ export const en = {
         },
         leandro: {
           cards: {},
-          deck: 'Polymath',
           history: 'Shortly after beginning his training in the army, Leandro drew the attention not only of the general, but also of scholars, mages, and even Fate itself.',
           style: 'Mage',
           subtitle: 'A prodigy noticed by generals, scholars, mages, and Fate itself.',

@@ -7,6 +7,7 @@ export function getMercenaries() {
 
 export function createMercenary({
   bannerFile,
+  iconFile,
   description,
   name,
   passiveScript,
@@ -24,6 +25,10 @@ export function createMercenary({
 
   if (bannerFile) {
     form.set('banner', bannerFile, bannerFile.name || 'banner.png');
+  }
+
+  if (iconFile) {
+    form.set('icon', iconFile, iconFile.name || 'icon.png');
   }
 
   form.set(

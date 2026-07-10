@@ -163,7 +163,6 @@ export function CharacterProfile({ characterId }) {
   const subtitle = getMercenarySubtitle(character, t);
   const history = character.description || t(`pages.characters.items.${character.id}.history`);
   const statRows = [
-    [t('pages.characters.stats.deck'), character.deck || t(`pages.characters.items.${character.id}.deck`)],
     [t('pages.characters.stats.style'), character.style || t(`pages.characters.items.${character.id}.style`)],
     [t('pages.characters.stats.temper'), character.temper || t(`pages.characters.items.${character.id}.temper`)],
   ];

@@ -296,7 +296,6 @@ export const pt = {
       statsEyebrow: 'Caracteristicas',
       statsTitle: 'Perfil de jogo',
       stats: {
-        deck: 'Baralho',
         style: 'Estilo',
         temper: 'Temperamento',
       },
@@ -307,6 +306,8 @@ export const pt = {
         createError: 'Nao foi possivel salvar o mercenario.',
         description: 'Descricao',
         eyebrow: 'Ferramentas admin',
+        icon: 'Imagem do icone',
+        iconRequired: 'Selecione uma imagem de icone.',
         id: 'ID do mercenario',
         luaFetchError: 'Nao foi possivel carregar o codigo Lua mais recente do editor.',
         name: 'Nome',
@@ -357,7 +358,6 @@ export const pt = {
               title: 'Graca da Cacadora',
             },
           },
-          deck: 'Defesa lunar',
           history:
             'Artemis guarda as rotas antigas da mesa e joga como quem leu a rodada antes dela comecar. Sua historia e feita de juramentos, protecao e escolhas precisas: ela prefere vencer por controle, segurando riscos ate encontrar a janela perfeita.',
           style: 'Controle',
@@ -389,7 +389,6 @@ export const pt = {
               title: 'Ultimo Acorde',
             },
           },
-          deck: 'Contratos e pressao',
           history:
             'Carmen negocia com sangue frio e joga como quem conhece o preco exato de cada promessa. Ela entra na mesa para cobrar dividas, torcer apostas e transformar pequenas hesitacoes em vantagem.',
           style: 'Pressao',
@@ -399,7 +398,6 @@ export const pt = {
         },
         conjuruz: {
           cards: {},
-          deck: 'Rituais e pressagios',
           history:
             'Conjuruz ainda e um mercenario cercado de misterio. Seu banner ja anuncia uma presenca arcana, mas suas cartas serao reveladas quando o baralho dele estiver pronto.',
           style: 'Conjuracao',
@@ -445,7 +443,6 @@ export const pt = {
               title: 'Guabiru',
             },
           },
-          deck: 'Apostas e blefes',
           history:
             'O Gambler aprendeu a ouvir o barulho das cartas antes de apostar. Ele vive entre blefe e coragem, vendendo a ideia de caos enquanto calcula cada perda possivel. Quando entra na mesa, toda rodada parece ter uma segunda aposta escondida.',
           style: 'Risco',
@@ -455,7 +452,6 @@ export const pt = {
         },
         leandro: {
           cards: {},
-          deck: 'Polímata',
           history: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
           style: 'Mago',
           subtitle: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
