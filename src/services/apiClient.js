@@ -15,6 +15,20 @@ export class ApiError extends Error {
   }
 }
 
+function isMissingAuthTokenMessage(value) {
+  return String(value || '').toLowerCase().includes('missing auth token');
+}
+
+function notifyMissingAuthToken(detail = {}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('ohhell:missing-auth-token', { detail }),
+  );
+}
+
 function canUseStorage() {
   return typeof window !== 'undefined' && window.localStorage;
 }
@@ -110,6 +124,7 @@ export async function apiRequest(
   path,
   {
     auth = false,
+    authContext = {},
     body,
     headers,
     method = 'GET',
@@ -119,6 +134,7 @@ export async function apiRequest(
   } = {},
 ) {
   if (auth && !token) {
+    notifyMissingAuthToken({ ...authContext, path });
     throw new ApiError({
       message: 'Missing auth token',
       status: 401,
@@ -163,6 +179,13 @@ export async function apiRequest(
   const data = await parseResponse(response);
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      isMissingAuthTokenMessage(data?.error || data?.message)
+    ) {
+      notifyMissingAuthToken({ ...authContext, path, status: response.status });
+    }
+
     throw new ApiError({
       message: data?.error || response.statusText || 'Request failed',
       status: response.status,

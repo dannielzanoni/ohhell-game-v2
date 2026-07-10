@@ -16,6 +16,7 @@ import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button
 import { Input } from '@/components/ui/input.jsx';
 import { cn } from '@/lib/utils.js';
 import { getPowerDecks } from '@/services/cardDefinitionsService.js';
+import { isMissingAuthTokenError } from '@/services/authService.js';
 import { gameTypeOptions, gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
@@ -421,7 +422,9 @@ export function CreateGame() {
         },
       });
     } catch (error) {
-      setCreateError(error.message || t('pages.createGame.createError'));
+      if (!isMissingAuthTokenError(error)) {
+        setCreateError(error.message || t('pages.createGame.createError'));
+      }
     } finally {
       setIsCreating(false);
     }

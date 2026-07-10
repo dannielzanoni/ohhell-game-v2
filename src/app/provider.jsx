@@ -9,6 +9,15 @@ import {
 } from 'react';
 import { AlertCircle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { LoginCard } from '@/components/auth/LoginCard.jsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog.jsx';
+import { gameTypes } from '@/services/gameTypesService.js';
 import { authService } from '@/services/authService.js';
 
 const ThemeContext = createContext(null);
@@ -37,6 +46,37 @@ const toastVariantStyles = {
     role: 'status',
   },
 };
+
+function getStoredLobbyGameType(pathname) {
+  const lobbyMatch = pathname.match(/^\/game\/([^/]+)/);
+
+  if (!lobbyMatch) {
+    return '';
+  }
+
+  return localStorage.getItem(`ohhell_lobby_game_type_${lobbyMatch[1]}`) || '';
+}
+
+function getAuthRequestVariant(detail = {}) {
+  const pathname = window.location.pathname;
+  const gameType = detail.gameType || getStoredLobbyGameType(pathname);
+
+  if (
+    gameType === gameTypes.FODINHA_POWER ||
+    pathname.startsWith('/hell-hand') ||
+    pathname === '/mercenaries' ||
+    pathname.startsWith('/mercenaries/') ||
+    pathname === '/characters'
+  ) {
+    return 'hellHand';
+  }
+
+  return 'default';
+}
+
+function shouldUseRouteAuthGate() {
+  return /^\/game\/[^/]+/.test(window.location.pathname);
+}
 
 function ToastViewport({ onDismiss, toasts }) {
   const { t } = useTranslation();
@@ -77,11 +117,49 @@ function ToastViewport({ onDismiss, toasts }) {
   );
 }
 
+function AuthRequiredDialog({ onAuthenticated, open, request }) {
+  const { t } = useTranslation();
+  const variant = request?.variant || 'default';
+  const isHellHand = variant === 'hellHand';
+
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        className={
+          isHellHand
+            ? 'pointer-events-auto z-[80] max-w-sm border-red-200/15 bg-black/92 p-5 text-stone-100 shadow-2xl shadow-black/60'
+            : 'pointer-events-auto z-[80] max-w-sm border-white/10 bg-zinc-950/95 p-5 text-white shadow-2xl shadow-black/50'
+        }
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle className={isHellHand ? 'text-amber-100' : undefined}>
+            {t('auth.requiredTitle')}
+          </DialogTitle>
+          <DialogDescription className={isHellHand ? 'text-red-100/70' : undefined}>
+            {t('auth.requiredDescription')}
+          </DialogDescription>
+        </DialogHeader>
+
+        <LoginCard
+          compact={isHellHand}
+          variant={variant}
+          className={isHellHand ? 'shadow-none' : 'border-white/10 bg-black/30 p-5 shadow-none'}
+          onSaved={onAuthenticated}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function AppProvider({ children }) {
   const timerIdsRef = useRef(new Map());
   const [isAuthReady, setIsAuthReady] = useState(
     () => !authService.canRestoreAuthSession(),
   );
+  const [authRequest, setAuthRequest] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
@@ -139,6 +217,25 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    const handleMissingAuthToken = (event) => {
+      if (shouldUseRouteAuthGate()) {
+        return;
+      }
+
+      setAuthRequest({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        variant: getAuthRequestVariant(event.detail),
+      });
+    };
+
+    window.addEventListener('ohhell:missing-auth-token', handleMissingAuthToken);
+
+    return () => {
+      window.removeEventListener('ohhell:missing-auth-token', handleMissingAuthToken);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isAuthReady) {
       return undefined;
     }
@@ -172,10 +269,20 @@ export function AppProvider({ children }) {
     [dismissToast, showToast],
   );
 
+  const handleAuthCompleted = useCallback(() => {
+    setAuthRequest(null);
+    window.dispatchEvent(new CustomEvent('ohhell:auth-completed'));
+  }, []);
+
   return (
     <ThemeContext.Provider value={themeValue}>
       <ToastContext.Provider value={toastValue}>
         {isAuthReady ? children : null}
+        <AuthRequiredDialog
+          open={Boolean(authRequest)}
+          request={authRequest}
+          onAuthenticated={handleAuthCompleted}
+        />
         <ToastViewport onDismiss={dismissToast} toasts={toasts} />
       </ToastContext.Provider>
     </ThemeContext.Provider>

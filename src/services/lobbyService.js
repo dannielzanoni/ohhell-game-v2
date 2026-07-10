@@ -18,6 +18,7 @@ export function createLobby({ gameType, lifes, lifeMultiplier, powerDeckId } = {
   return withAuthRetry(() =>
     apiRequest('/lobby', {
       auth: true,
+      authContext: { gameType },
       method: 'POST',
       body: Object.keys(body).length ? body : undefined,
     }),
