@@ -49,7 +49,13 @@ import {
   startHellHandHomeTheme,
   stopHellHandHomeTheme,
 } from '@/services/hellHandAudioService.js';
-import { joinLobby } from '@/services/lobbyService.js';
+import { getLobbies, joinLobby } from '@/services/lobbyService.js';
+import { getMercenaries } from '@/services/mercenariesService.js';
+import {
+  getMercenarySubtitle,
+  getMercenaryTitle,
+  normalizeRemoteMercenaries,
+} from '../Characters/characterData.js';
 
 const MAX_TABLE_PLAYERS = 10;
 const MAX_DISPLAYED_LIFES = 5;
@@ -384,7 +390,7 @@ function getLobbyLifes(lobbyId, routeLifes) {
   return 5;
 }
 
-function getLobbyGameType(lobbyId, routeGameType) {
+function getKnownLobbyGameType(lobbyId, routeGameType) {
   if (getGameTypeOption(routeGameType)) {
     return routeGameType;
   }
@@ -397,7 +403,29 @@ function getLobbyGameType(lobbyId, routeGameType) {
     }
   }
 
+  return '';
+}
+
+function getLobbyGameType(lobbyId, routeGameType) {
+  const knownGameType = getKnownLobbyGameType(lobbyId, routeGameType);
+
+  if (knownGameType) {
+    return knownGameType;
+  }
+
   return gameTypes.FODINHA_CLASSIC;
+}
+
+function getLobbySummaryId(lobby) {
+  return lobby?.id || lobby?.lobby_id || '';
+}
+
+function getLobbySummaryGameType(lobbyId, lobbies) {
+  const lobby = (Array.isArray(lobbies) ? lobbies : []).find(
+    (candidate) => getLobbySummaryId(candidate) === lobbyId,
+  );
+
+  return getGameTypeOption(lobby?.game_type) ? lobby.game_type : '';
 }
 
 function getLobbyCharacterId(lobbyId, routeCharacterId) {
@@ -1819,6 +1847,125 @@ function LobbyAuthGate({
   );
 }
 
+function HellHandMercenaryJoinGate({
+  characters,
+  error,
+  isLoading,
+  onRetry,
+  onSelect,
+  open,
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        className="pointer-events-auto z-[70] max-h-[min(44rem,calc(100dvh-2rem))] max-w-3xl overflow-hidden border-red-200/15 bg-black/92 p-0 text-stone-100 shadow-2xl shadow-black/55"
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <div className="border-b border-red-200/12 bg-red-950/20 px-5 py-4">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-amber-100">
+              {t('game.chooseMercenaryTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-red-100/70">
+              {t('game.chooseMercenaryDescription')}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div className="max-h-[min(32rem,calc(100dvh-13rem))] overflow-y-auto px-5 py-4">
+          {isLoading ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-32 animate-pulse rounded-lg border border-red-200/10 bg-red-950/20"
+                />
+              ))}
+            </div>
+          ) : characters.length ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {characters.map((character) => {
+                const title = getMercenaryTitle(character, t);
+                const subtitle = getMercenarySubtitle(character, t);
+                const imageSrc = character.icon || character.banner;
+
+                return (
+                  <button
+                    key={character.id}
+                    type="button"
+                    aria-label={t('pages.characters.chooseCharacter', {
+                      name: title,
+                    })}
+                    className="group grid min-h-32 cursor-pointer grid-cols-[5.5rem_1fr] overflow-hidden rounded-lg border border-red-200/15 bg-black/70 text-left shadow-lg shadow-black/35 outline-none transition hover:border-amber-300/60 hover:bg-red-950/35 focus-visible:ring-2 focus-visible:ring-amber-300"
+                    onClick={() => onSelect(character.id)}
+                  >
+                    <span className="relative block size-full min-h-32 overflow-hidden bg-red-950/35">
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt=""
+                          className="size-full object-cover transition duration-200 group-hover:scale-105"
+                          draggable="false"
+                        />
+                      ) : (
+                        <span className="grid size-full place-items-center text-amber-100">
+                          <UserRound className="size-9" />
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          'absolute inset-x-2 bottom-2 h-1 rounded-full',
+                          character.markerClass,
+                        )}
+                      />
+                    </span>
+
+                    <span className="flex min-w-0 flex-col justify-between p-3">
+                      <span>
+                        <strong className="block truncate text-base font-black text-stone-100">
+                          {title}
+                        </strong>
+                        <small className="mt-1 line-clamp-2 block text-xs font-semibold leading-5 text-stone-400">
+                          {subtitle}
+                        </small>
+                      </span>
+                      <span className="mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/20 bg-amber-950/25 px-3 py-1 text-[0.65rem] font-black uppercase text-amber-100">
+                        <Check className="size-3.5" />
+                        {t('game.enterWithMercenary')}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-red-200/15 bg-red-950/20 px-4 py-5 text-sm font-semibold text-red-100">
+              {error || t('game.noMercenariesAvailable')}
+            </div>
+          )}
+
+          {error ? (
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 cursor-pointer border-red-200/20 bg-black/55 text-stone-100 hover:border-amber-300/45 hover:bg-red-950/55 hover:text-amber-100"
+                onClick={onRetry}
+              >
+                {t('common.refresh')}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function Game() {
   const { lobbyId } = useParams();
   const location = useLocation();
@@ -1870,10 +2017,13 @@ export function Game() {
   const [gameType, setGameType] = useState(() =>
     getLobbyGameType(lobbyId, location.state?.gameType),
   );
-  const selectedMercenaryId = useMemo(
-    () => getLobbyCharacterId(lobbyId, location.state?.characterId),
-    [lobbyId, location.state?.characterId],
+  const [selectedMercenaryId, setSelectedMercenaryId] = useState(() =>
+    getLobbyCharacterId(lobbyId, location.state?.characterId),
   );
+  const [isMercenaryGateOpen, setIsMercenaryGateOpen] = useState(false);
+  const [joinMercenaries, setJoinMercenaries] = useState([]);
+  const [isMercenaryGateLoading, setIsMercenaryGateLoading] = useState(false);
+  const [mercenaryGateError, setMercenaryGateError] = useState('');
   const [playersById, setPlayersById] = useState(() => {
     const playerId = getCurrentPlayerId();
 
@@ -1953,6 +2103,61 @@ export function Game() {
   useEffect(() => {
     translateRef.current = t;
   }, [t]);
+
+  useEffect(() => {
+    setSelectedMercenaryId(getLobbyCharacterId(lobbyId, location.state?.characterId));
+    setIsMercenaryGateOpen(false);
+    setMercenaryGateError('');
+  }, [lobbyId, location.state?.characterId]);
+
+  const loadJoinMercenaries = useCallback(async () => {
+    setIsMercenaryGateLoading(true);
+    setMercenaryGateError('');
+
+    try {
+      const response = await getMercenaries();
+      setJoinMercenaries(
+        normalizeRemoteMercenaries(Array.isArray(response) ? response : []),
+      );
+    } catch (error) {
+      setJoinMercenaries([]);
+
+      if (isMissingAuthTokenError(error)) {
+        setAuthGateOpen(true);
+        return;
+      }
+
+      setMercenaryGateError(error.message || t('pages.characters.loadError'));
+    } finally {
+      setIsMercenaryGateLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (!isMercenaryGateOpen) {
+      return;
+    }
+
+    void loadJoinMercenaries();
+  }, [isMercenaryGateOpen, loadJoinMercenaries]);
+
+  const handleJoinMercenarySelect = useCallback(
+    (mercenaryId) => {
+      if (!mercenaryId) {
+        return;
+      }
+
+      if (lobbyId) {
+        localStorage.setItem(`ohhell_lobby_character_${lobbyId}`, mercenaryId);
+      }
+
+      setSelectedMercenaryId(mercenaryId);
+      setIsMercenaryGateOpen(false);
+      setMercenaryGateError('');
+      setJoinAttempt((attempt) => attempt + 1);
+    },
+    [lobbyId],
+  );
 
   useEffect(() => {
     playerDeckCountRef.current = playerDeck.length;
@@ -2246,7 +2451,11 @@ export function Game() {
 
   useEffect(() => {
     const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
-    const nextGameType = getLobbyGameType(lobbyId, location.state?.gameType);
+    const knownGameType = getKnownLobbyGameType(
+      lobbyId,
+      location.state?.gameType,
+    );
+    let activeGameType = knownGameType || gameTypes.FODINHA_CLASSIC;
     const nextLifeMultiplier = getLobbyLifeMultiplier(
       lobbyId,
       location.state?.lifeMultiplier,
@@ -2255,22 +2464,30 @@ export function Game() {
       lobbyId,
       location.state?.powerDeckId,
     );
-    const nextCharacterId = selectedMercenaryId;
+    let activeCharacterId = selectedMercenaryId;
     const nextCurrentPlayerId = getCurrentPlayerId();
     const token = getAuthToken();
 
     setLifes(nextLifes);
-    setGameType(nextGameType);
+    setGameType(activeGameType);
     setWaitingLifeMultiplier(nextLifeMultiplier);
     setWaitingPowerDeckId(nextPowerDeckId);
     if (lobbyId) {
-      localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, nextGameType);
+      if (knownGameType) {
+        localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, activeGameType);
+      }
       localStorage.setItem(
         `ohhell_lobby_power_life_multiplier_${lobbyId}`,
         String(nextLifeMultiplier),
       );
       if (nextPowerDeckId) {
         localStorage.setItem(`ohhell_lobby_power_deck_${lobbyId}`, nextPowerDeckId);
+      }
+      if (activeCharacterId) {
+        localStorage.setItem(
+          `ohhell_lobby_character_${lobbyId}`,
+          activeCharacterId,
+        );
       }
     }
     setCurrentPlayerId(nextCurrentPlayerId);
@@ -2384,7 +2601,14 @@ export function Game() {
       }
 
       if (waitingSettings.game_type) {
+        activeGameType = waitingSettings.game_type;
         setGameType(waitingSettings.game_type);
+        if (lobbyId) {
+          localStorage.setItem(
+            `ohhell_lobby_game_type_${lobbyId}`,
+            waitingSettings.game_type,
+          );
+        }
       }
 
       if (
@@ -2476,7 +2700,7 @@ export function Game() {
           getActionCardCount(
             Math.max(...(gameInfo.stage.data?.possible_bids || [0])),
           ),
-          nextGameType,
+          activeGameType,
           nextPowerCardCount,
         );
         playTurnPromptSound('bid', gameInfo.current_player);
@@ -2487,7 +2711,7 @@ export function Game() {
         startActionTimer(
           'power',
           0,
-          nextGameType,
+          activeGameType,
           nextPowerCardCount,
         );
         playTurnPromptSound('bid', gameInfo.current_player);
@@ -2498,7 +2722,7 @@ export function Game() {
         startActionTimer(
           'play',
           getActionCardCount(),
-          nextGameType,
+          activeGameType,
           nextPowerCardCount,
         );
         playTurnPromptSound('play', gameInfo.current_player);
@@ -2739,7 +2963,7 @@ export function Game() {
             startActionTimer(
               'bid',
               getActionCardCount(Math.max(...(message.data.possible_bids || [0]))),
-              nextGameType,
+              activeGameType,
               powerCardCountRef.current,
             );
             playTurnPromptSound('bid', message.data.player_id);
@@ -2771,7 +2995,7 @@ export function Game() {
             startActionTimer(
               'power',
               0,
-              nextGameType,
+              activeGameType,
               powerCardCountRef.current,
             );
             playTurnPromptSound('bid', message.data.player_id);
@@ -2800,7 +3024,7 @@ export function Game() {
           startActionTimer(
             'cards',
             (message.data || []).length,
-            nextGameType,
+            activeGameType,
             powerCardCountRef.current,
           );
           break;
@@ -2813,7 +3037,7 @@ export function Game() {
             startActionTimer(
               'cards',
               getActionCardCount(),
-              nextGameType,
+              activeGameType,
               powerCardCountRef.current,
             );
           }
@@ -2863,7 +3087,7 @@ export function Game() {
             startActionTimer(
               'play',
               getActionCardCount(),
-              nextGameType,
+              activeGameType,
               powerCardCountRef.current,
             );
             playTurnPromptSound('play', message.data.player_id);
@@ -3186,9 +3410,9 @@ export function Game() {
             setIsReconnecting(false);
             setJoinError('');
 
-            if (nextGameType === gameTypes.FODINHA_POWER && nextCharacterId) {
+            if (activeGameType === gameTypes.FODINHA_POWER && activeCharacterId) {
               try {
-                selectMercenary(nextSocket, nextCharacterId);
+                selectMercenary(nextSocket, activeCharacterId);
               } catch {}
             }
           },
@@ -3203,8 +3427,67 @@ export function Game() {
       socketRef.current = nextSocket;
     }
 
-    joinLobby(lobbyId)
-      .then((lobbyInfo) => {
+    const resolveJoinGameType = async () => {
+      if (knownGameType) {
+        return knownGameType;
+      }
+
+      try {
+        const lobbies = await getLobbies();
+        const summaryGameType = getLobbySummaryGameType(lobbyId, lobbies);
+
+        if (summaryGameType) {
+          localStorage.setItem(
+            `ohhell_lobby_game_type_${lobbyId}`,
+            summaryGameType,
+          );
+          return summaryGameType;
+        }
+      } catch (error) {
+        if (!isCurrent) {
+          return '';
+        }
+
+        if (isMissingAuthTokenError(error) || !getAuthToken()) {
+          setAuthGateOpen(true);
+          setAuthGateError(translateRef.current('game.missingAuth'));
+          setJoinError('');
+        } else {
+          setJoinError(error.message || translateRef.current('game.enterRoomError'));
+        }
+
+        return '';
+      }
+
+      return activeGameType;
+    };
+
+    const enterLobby = async () => {
+      const resolvedGameType = await resolveJoinGameType();
+
+      if (!isCurrent || !resolvedGameType) {
+        return;
+      }
+
+      activeGameType = resolvedGameType;
+      setGameType(resolvedGameType);
+
+      if (lobbyId) {
+        localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, resolvedGameType);
+      }
+
+      if (resolvedGameType === gameTypes.FODINHA_POWER && !activeCharacterId) {
+        setIsMercenaryGateOpen(true);
+        setHasGameSocket(false);
+        setIsReconnecting(false);
+        return;
+      }
+
+      setIsMercenaryGateOpen(false);
+
+      try {
+        const lobbyInfo = await joinLobby(lobbyId);
+
         if (!isCurrent) {
           return;
         }
@@ -3231,8 +3514,7 @@ export function Game() {
         }
 
         void connectSocket();
-      })
-      .catch((error) => {
+      } catch (error) {
         if (isCurrent) {
           if (isMissingAuthTokenError(error) || !getAuthToken()) {
             setAuthGateOpen(true);
@@ -3244,7 +3526,10 @@ export function Game() {
             );
           }
         }
-      });
+      }
+    };
+
+    void enterLobby();
 
     return () => {
       isCurrent = false;
@@ -3631,6 +3916,17 @@ export function Game() {
           {t('game.reconnecting')}
         </div>
       ) : null}
+
+      <HellHandMercenaryJoinGate
+        characters={joinMercenaries}
+        error={mercenaryGateError}
+        isLoading={isMercenaryGateLoading}
+        onRetry={() => {
+          void loadJoinMercenaries();
+        }}
+        onSelect={handleJoinMercenarySelect}
+        open={isMercenaryGateOpen && !authGateOpen}
+      />
 
       <LobbyAuthGate
         canContinue={

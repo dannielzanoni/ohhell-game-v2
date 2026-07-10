@@ -81,6 +81,11 @@ export const en = {
     readySending: 'Sending...',
     reconnecting: 'Reconnecting to the match...',
     roomLink: 'Room link',
+    chooseMercenaryDescription:
+      'Select a contract before entering this Hell Hand table.',
+    chooseMercenaryTitle: 'Choose your mercenary',
+    enterWithMercenary: 'Enter',
+    noMercenariesAvailable: 'No mercenaries are available to enter the room.',
     selectMercenaryTitle: 'Select a mercenary before readying up',
     socketError: 'Room realtime connection error.',
     tableAria: 'Oh Hell game table',

@@ -81,6 +81,11 @@ export const pt = {
     readySending: 'Enviando...',
     reconnecting: 'Reconectando na partida...',
     roomLink: 'Link da sala',
+    chooseMercenaryDescription:
+      'Selecione um contrato antes de entrar nesta mesa de Hell Hand.',
+    chooseMercenaryTitle: 'Escolha seu mercenario',
+    enterWithMercenary: 'Entrar',
+    noMercenariesAvailable: 'Nenhum mercenario disponivel para entrar na sala.',
     selectMercenaryTitle: 'Selecione um mercenário antes de marcar ready',
     socketError: 'Erro na conexão em tempo real da sala.',
     tableAria: 'Mesa do Oh Hell',
