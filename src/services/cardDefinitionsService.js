@@ -35,6 +35,33 @@ export function createPowerDeck({
   );
 }
 
+export function updatePowerDeck({
+  cardIds,
+  deckId,
+  description,
+  genericCardIds,
+  kind = 'community',
+  mercenaryCardIds,
+  name,
+  status,
+}) {
+  return withAuthRetry(() =>
+    apiRequest(`/power-decks/${encodeURIComponent(deckId)}`, {
+      auth: true,
+      body: {
+        card_ids: cardIds,
+        description,
+        generic_card_ids: genericCardIds,
+        kind,
+        mercenary_card_ids: mercenaryCardIds,
+        name,
+        status,
+      },
+      method: 'PUT',
+    }),
+  );
+}
+
 export function uploadCardDefinitionAsset({
   imageBlob,
   scriptFileName = 'effect.lua',
@@ -162,5 +189,6 @@ export const cardDefinitionsService = {
   getCardDefinitions,
   getPowerDecks,
   updateCardDefinition,
+  updatePowerDeck,
   uploadCardDefinitionAsset,
 };
