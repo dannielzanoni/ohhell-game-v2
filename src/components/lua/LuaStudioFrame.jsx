@@ -162,7 +162,7 @@ export function LuaStudioFrame({
   };
 
   const postSource = () => {
-    if (snippetId || !frameRef.current?.contentWindow || !luaStudioOrigin) {
+    if (!frameRef.current?.contentWindow || !luaStudioOrigin) {
       return;
     }
 
