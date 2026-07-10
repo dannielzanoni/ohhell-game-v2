@@ -100,14 +100,7 @@ function getDeckCardSelections(deck) {
   const sourceGenericCardIds = deck?.generic_card_ids || deck?.genericCardIds || [];
   const sourceMercenaryCardIds =
     deck?.mercenary_card_ids || deck?.mercenaryCardIds || {};
-  const hasPartitionedCards =
-    sourceGenericCardIds.length ||
-    Object.keys(sourceMercenaryCardIds).length;
-  const sourceCardIds = uniqueCardIds(
-    hasPartitionedCards
-      ? sourceGenericCardIds
-      : deck?.card_ids || deck?.cardIds || [],
-  );
+  const sourceCardIds = uniqueCardIds(sourceGenericCardIds);
   const selectedCardIds = new Set();
   const genericCardIds = sourceCardIds.filter((cardId) => {
     if (selectedCardIds.has(cardId)) {
