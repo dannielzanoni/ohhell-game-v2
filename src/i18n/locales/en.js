@@ -284,6 +284,7 @@ export const en = {
       chooseCharacter: 'Select {{name}}',
       description:
         'Choose a mercenary to inspect their cards and abilities.',
+      edit: 'Edit',
       eyebrow: 'Mercenaries',
       emptyCardsDescription:
         'When this mercenary has card images and data, they will appear here.',
@@ -309,6 +310,7 @@ export const en = {
         createNew: 'Create new',
         description: 'Description',
         editExisting: 'Edit existing mercenary',
+        editing: 'Editing {{name}}',
         editTitle: 'Edit mercenary',
         eyebrow: 'Admin tools',
         icon: 'Icon image',

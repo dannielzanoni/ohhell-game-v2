@@ -10,6 +10,7 @@ import {
   House,
   LayoutGrid,
   Images,
+  Pencil,
   Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
@@ -64,7 +65,15 @@ function playSwitchCardSound() {
   audio.play().catch(() => {});
 }
 
-function CharacterCard({ character, isActive, onSelect, offset, t }) {
+function CharacterCard({
+  canEdit,
+  character,
+  isActive,
+  onEdit,
+  onSelect,
+  offset,
+  t,
+}) {
   const title = getMercenaryTitle(character, t);
   const subtitle = getMercenarySubtitle(character, t);
   const xOffset =
@@ -133,21 +142,34 @@ function CharacterCard({ character, isActive, onSelect, offset, t }) {
         />
       </button>
       {isActive ? (
-        <Button
-          asChild
-          className="absolute bottom-4 right-4 z-30 h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
-        >
-          <Link to={character.path}>
-            <Eye className="size-4" />
-            {t('pages.characters.inspect')}
-          </Link>
-        </Button>
+        <div className="absolute bottom-4 right-4 z-30 flex flex-wrap justify-end gap-2">
+          {canEdit ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 cursor-pointer gap-2 border-red-200/20 bg-black/70 text-stone-100 shadow-lg shadow-black/30 hover:border-amber-300/45 hover:bg-red-950/65 hover:text-amber-100 lg:h-9"
+              onClick={onEdit}
+            >
+              <Pencil className="size-4" />
+              {t('pages.characters.edit')}
+            </Button>
+          ) : null}
+          <Button
+            asChild
+            className="h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
+          >
+            <Link to={character.path}>
+              <Eye className="size-4" />
+              {t('pages.characters.inspect')}
+            </Link>
+          </Button>
+        </div>
       ) : null}
     </article>
   );
 }
 
-function CharacterPreviewCard({ character, t }) {
+function CharacterPreviewCard({ canEdit, character, onEdit, t }) {
   const title = getMercenaryTitle(character, t);
   const subtitle = getMercenarySubtitle(character, t);
 
@@ -179,15 +201,28 @@ function CharacterPreviewCard({ character, t }) {
         <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-stone-200/85 sm:leading-6 lg:max-w-[22rem] lg:leading-5">
           {subtitle}
         </p>
-        <Button
-          asChild
-          className="mt-4 h-10 w-fit cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
-        >
-          <Link to={character.path}>
-            <Eye className="size-4" />
-            {t('pages.characters.inspect')}
-          </Link>
-        </Button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {canEdit ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 w-fit cursor-pointer gap-2 border-red-200/20 bg-black/70 text-stone-100 shadow-lg shadow-black/30 hover:border-amber-300/45 hover:bg-red-950/65 hover:text-amber-100 lg:h-9"
+              onClick={onEdit}
+            >
+              <Pencil className="size-4" />
+              {t('pages.characters.edit')}
+            </Button>
+          ) : null}
+          <Button
+            asChild
+            className="h-10 w-fit cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
+          >
+            <Link to={character.path}>
+              <Eye className="size-4" />
+              {t('pages.characters.inspect')}
+            </Link>
+          </Button>
+        </div>
       </div>
     </article>
   );
@@ -195,8 +230,10 @@ function CharacterPreviewCard({ character, t }) {
 
 function CharacterIconSelect({
   activeIndex,
+  canEdit,
   characters,
   hoveredIndex,
+  onEdit,
   onHover,
   onSelect,
   t,
@@ -250,7 +287,14 @@ function CharacterIconSelect({
       </div>
 
       <div className="min-h-[18rem] lg:min-h-0">
-        {previewCharacter ? <CharacterPreviewCard character={previewCharacter} t={t} /> : null}
+        {previewCharacter ? (
+          <CharacterPreviewCard
+            canEdit={canEdit}
+            character={previewCharacter}
+            t={t}
+            onEdit={() => onEdit(previewCharacter.id)}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -277,7 +321,13 @@ function emptyDraft() {
   };
 }
 
-function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
+function AdminMercenaryForm({
+  characters,
+  editRequest,
+  onCreated,
+  onOpenChange,
+  t,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [editingId, setEditingId] = useState('');
@@ -300,7 +350,7 @@ function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
     });
   };
 
-  const startEditing = (id) => {
+  const startEditing = useCallback((id) => {
     const mercenary = characters.find((character) => character.id === id);
 
     setEditingId(id);
@@ -318,7 +368,7 @@ function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
       temper: mercenary?.temper || '',
     });
     setLuaEditorKey((current) => current + 1);
-  };
+  }, [characters]);
 
   const startCreating = () => {
     setEditingId('');
@@ -329,6 +379,16 @@ function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
     setError('');
     setLuaEditorKey((current) => current + 1);
   };
+
+  useEffect(() => {
+    if (!editRequest?.id) {
+      return;
+    }
+
+    startEditing(editRequest.id);
+    setIsOpen(true);
+    onOpenChange?.(true);
+  }, [editRequest, onOpenChange, startEditing]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -420,28 +480,14 @@ function AdminMercenaryForm({ characters, onCreated, onOpenChange, t }) {
 
       {isOpen ? (
         <form className="border-t border-red-200/12 p-4 pt-3" onSubmit={handleSubmit}>
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-            <label className="grid flex-1 gap-1 text-sm font-semibold text-stone-100">
-              {t('pages.characters.admin.editExisting')}
-              <select
-                className="h-10 rounded-md border border-red-200/20 bg-black/70 px-3 text-sm text-stone-100 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-300/30"
-                value={editingId}
-                onChange={(event) =>
-                  event.target.value
-                    ? startEditing(event.target.value)
-                    : startCreating()
-                }
-              >
-                <option value="">{t('pages.characters.admin.newMercenary')}</option>
-                {characters
-                  .filter((character) => character.passiveScript)
-                  .map((character) => (
-                    <option key={character.id} value={character.id}>
-                      {getMercenaryTitle(character, t)}
-                    </option>
-                  ))}
-              </select>
-            </label>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold text-stone-300">
+              {editingId
+                ? t('pages.characters.admin.editing', {
+                    name: draft.name || editingId,
+                  })
+                : t('pages.characters.admin.newMercenary')}
+            </p>
             {editingId ? (
               <Button
                 type="button"
@@ -534,6 +580,7 @@ export function Mercenaries() {
   const [selectionViewMode, setSelectionViewMode] = useState('icons');
   const [loadError, setLoadError] = useState('');
   const [isAdminToolsOpen, setIsAdminToolsOpen] = useState(false);
+  const [editRequest, setEditRequest] = useState(null);
   const canCreateMercenary = isCurrentUserAdmin();
 
   const loadMercenaries = useCallback(async () => {
@@ -608,6 +655,13 @@ export function Mercenaries() {
     setSelectionViewMode((current) => (current === 'cards' ? 'icons' : 'cards'));
   };
 
+  const handleEditCharacter = (characterId) => {
+    setEditRequest({
+      id: characterId,
+      requestedAt: Date.now(),
+    });
+  };
+
   return (
     <main
       className={cn(
@@ -674,6 +728,7 @@ export function Mercenaries() {
         {canCreateMercenary ? (
           <AdminMercenaryForm
             characters={characters}
+            editRequest={editRequest}
             t={t}
             onCreated={loadMercenaries}
             onOpenChange={setIsAdminToolsOpen}
@@ -750,9 +805,11 @@ export function Mercenaries() {
                 <div className="size-full p-3">
                   <CharacterIconSelect
                     activeIndex={activeIndex}
+                    canEdit={canCreateMercenary}
                     characters={characters}
                     hoveredIndex={hoveredCharacterIndex}
                     t={t}
+                    onEdit={handleEditCharacter}
                     onHover={setHoveredCharacterIndex}
                     onSelect={handleCharacterSelect}
                   />
@@ -768,10 +825,12 @@ export function Mercenaries() {
                   return (
                     <CharacterCard
                       key={character.id}
+                      canEdit={canCreateMercenary}
                       character={character}
                       isActive={index === activeIndex}
                       offset={offset}
                       t={t}
+                      onEdit={() => handleEditCharacter(character.id)}
                       onSelect={() => handleCharacterSelect(index)}
                     />
                   );

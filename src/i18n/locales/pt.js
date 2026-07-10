@@ -284,6 +284,7 @@ export const pt = {
       chooseCharacter: 'Selecionar {{name}}',
       description:
         'Escolha um mercenario para inspecionar suas cartas e habilidades.',
+      edit: 'Editar',
       eyebrow: 'Mercenarios',
       emptyCardsDescription:
         'Quando as imagens e dados deste mercenario forem criados, elas aparecerao aqui.',
@@ -309,6 +310,7 @@ export const pt = {
         createNew: 'Criar novo',
         description: 'Descricao',
         editExisting: 'Editar mercenario existente',
+        editing: 'Editando {{name}}',
         editTitle: 'Editar mercenario',
         eyebrow: 'Ferramentas admin',
         icon: 'Imagem do icone',
