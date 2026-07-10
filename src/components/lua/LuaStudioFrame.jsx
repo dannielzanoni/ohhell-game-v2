@@ -141,6 +141,7 @@ export function LuaStudioFrame({
 }) {
   const frameRef = useRef(null);
   const lastStudioSourceRef = useRef(null);
+  const awaitingSourceRef = useRef(null);
   const [snippetId, setSnippetId] = useState('');
   const [isFrameVisible, setIsFrameVisible] = useState(true);
   const [isOpeningTab, setIsOpeningTab] = useState(false);
@@ -165,6 +166,7 @@ export function LuaStudioFrame({
       return;
     }
 
+    awaitingSourceRef.current = source || '';
     frameRef.current.contentWindow.postMessage(
       { type: 'mooncode:set-source', source: source || '' },
       luaStudioOrigin,
@@ -260,6 +262,14 @@ export function LuaStudioFrame({
           event.data?.type === 'mooncode:saved') &&
         typeof event.data.source === 'string'
       ) {
+        if (
+          awaitingSourceRef.current !== null &&
+          event.data.source !== awaitingSourceRef.current
+        ) {
+          return;
+        }
+
+        awaitingSourceRef.current = null;
         lastStudioSourceRef.current = event.data.source;
         updateSnippetId(event.data.snippetId || '');
         onSourceChange(event.data.source);
