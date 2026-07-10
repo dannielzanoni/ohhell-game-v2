@@ -1074,8 +1074,14 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
       assetUploadRef.current = null;
       setImageError('');
 
+      const successKey = editingCardId
+        ? 'pages.playground.updateSuccess'
+        : card.kind === 'official'
+          ? 'pages.playground.publishOfficialSuccess'
+          : 'pages.playground.publishSuccess';
+
       setPublishSuccess(
-        t(editingCardId ? 'pages.playground.updateSuccess' : 'pages.playground.publishSuccess', {
+        t(successKey, {
           name: card.name || draftForSave.title,
         }),
       );
