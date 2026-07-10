@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  BookOpenText,
   Code2,
   GalleryVerticalEnd,
   House,
@@ -35,20 +34,6 @@ const workshopTabs = [
     id: 'powerDecks',
     labelKey: 'pages.hellHandWorkshop.powerDecks',
   },
-  {
-    descriptionKey: 'pages.hellHandWorkshop.apiDocumentationDescription',
-    icon: BookOpenText,
-    id: 'apiDocumentation',
-    labelKey: 'pages.hellHandWorkshop.apiDocumentation',
-  },
-];
-
-const apiTopics = [
-  'GET /card-definitions',
-  'POST /card-definitions',
-  'POST /card-definitions/assets',
-  'GET /power-decks',
-  'POST /power-decks',
 ];
 
 function WorkshopPanel({ activeTab, t }) {
@@ -110,18 +95,6 @@ function WorkshopPanel({ activeTab, t }) {
         </div>
       ) : null}
 
-      {activeTab.id === 'apiDocumentation' ? (
-        <div className="mt-6 grid gap-2">
-          {apiTopics.map((topic) => (
-            <code
-              key={topic}
-              className="rounded-md border border-red-200/12 bg-black/55 px-3 py-2 text-sm font-bold text-amber-100"
-            >
-              {topic}
-            </code>
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -137,7 +110,7 @@ export function HellHandWorkshop() {
   }, []);
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-black px-4 py-5 text-stone-100 md:px-6 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-4">
+    <main className="relative min-h-screen overflow-x-hidden bg-black px-0 py-5 text-stone-100 lg:h-dvh lg:min-h-0 lg:overflow-hidden lg:py-4">
       <img
         src={hellHandBg}
         alt=""
@@ -147,13 +120,10 @@ export function HellHandWorkshop() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(185,28,28,0.28),transparent_34%),linear-gradient(115deg,rgba(0,0,0,0.94),rgba(36,10,10,0.78)_48%,rgba(0,0,0,0.96))]" />
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/70 to-transparent" />
 
-      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 lg:h-full lg:min-h-0">
+      <section className="relative z-10 mx-auto flex w-[95%] max-w-none flex-col gap-2 lg:h-full lg:min-h-0">
         <header className="rounded-lg border border-red-200/12 bg-black/70 p-4 shadow-2xl shadow-black/35 backdrop-blur lg:shrink-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase text-amber-300/80">
-                {t('pages.hellHandWorkshop.eyebrow')}
-              </p>
               <h1 className="mt-1 flex items-center gap-3 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-3xl">
                 <Wrench className="size-8 text-amber-200" />
                 {t('pages.hellHandWorkshop.title')}
@@ -176,7 +146,7 @@ export function HellHandWorkshop() {
           </div>
         </header>
 
-        <nav className="grid gap-2 rounded-lg border border-red-200/12 bg-black/68 p-2 shadow-2xl shadow-black/35 backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
+        <nav className="grid gap-2 rounded-lg border border-red-200/12 bg-black/68 p-2 shadow-2xl shadow-black/35 backdrop-blur sm:grid-cols-2 lg:grid-cols-3">
           {workshopTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = tab.id === activeTab.id;
@@ -186,7 +156,7 @@ export function HellHandWorkshop() {
                 key={tab.id}
                 type="button"
                 className={cn(
-                  'group flex min-h-20 cursor-pointer items-center gap-3 rounded-md border px-3 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-amber-300',
+                  'group flex min-h-16 cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-amber-300',
                   isActive
                     ? 'border-amber-300/55 bg-red-950/65 text-white shadow-lg shadow-black/30'
                     : 'border-red-200/10 bg-black/45 text-stone-300 hover:border-amber-300/35 hover:bg-red-950/35',
