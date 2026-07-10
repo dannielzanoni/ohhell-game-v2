@@ -3,6 +3,8 @@ import {
   AlertCircle,
   CheckSquare,
   Layers3,
+  Pencil,
+  Plus,
   RefreshCw,
   Sparkles,
   Square,
@@ -13,11 +15,12 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
-import { isCurrentUserAdmin } from '@/services/authService.js';
+import { getAuthPlayer, isCurrentUserAdmin } from '@/services/authService.js';
 import {
   createPowerDeck,
   getCardDefinitions,
   getPowerDecks,
+  updatePowerDeck,
 } from '@/services/cardDefinitionsService.js';
 import { getMercenaries } from '@/services/mercenariesService.js';
 import { cn } from '@/lib/utils.js';
@@ -58,6 +61,81 @@ function formatDate(value) {
   );
 }
 
+function getAuthPlayerId(player) {
+  if (player?.type === 'Anonymous') {
+    return player.data?.id || null;
+  }
+
+  if (player?.type === 'Google') {
+    return player.data?.email || null;
+  }
+
+  return player?.id || player?.email || null;
+}
+
+function uniqueCardIds(cardIds = []) {
+  return Array.from(new Set(cardIds.filter(Boolean)));
+}
+
+function normalizeMercenaryCardIds(mercenaryCardIds = {}) {
+  return Object.fromEntries(
+    Object.entries(mercenaryCardIds)
+      .map(([mercenaryId, cardIds]) => [mercenaryId, uniqueCardIds(cardIds)])
+      .filter(([, cardIds]) => cardIds.length > 0),
+  );
+}
+
+function removeCardFromMercenarySelections(mercenaryCardIds, cardId) {
+  return normalizeMercenaryCardIds(
+    Object.fromEntries(
+      Object.entries(mercenaryCardIds || {}).map(([mercenaryId, cardIds]) => [
+        mercenaryId,
+        cardIds.filter((id) => id !== cardId),
+      ]),
+    ),
+  );
+}
+
+function getDeckCardSelections(deck) {
+  const sourceGenericCardIds = deck?.generic_card_ids || deck?.genericCardIds || [];
+  const sourceMercenaryCardIds =
+    deck?.mercenary_card_ids || deck?.mercenaryCardIds || {};
+  const hasPartitionedCards =
+    sourceGenericCardIds.length ||
+    Object.keys(sourceMercenaryCardIds).length;
+  const sourceCardIds = uniqueCardIds(
+    hasPartitionedCards
+      ? sourceGenericCardIds
+      : deck?.card_ids || deck?.cardIds || [],
+  );
+  const selectedCardIds = new Set();
+  const genericCardIds = sourceCardIds.filter((cardId) => {
+    if (selectedCardIds.has(cardId)) {
+      return false;
+    }
+
+    selectedCardIds.add(cardId);
+    return true;
+  });
+  const mercenaryCardIds = Object.fromEntries(
+    Object.entries(sourceMercenaryCardIds)
+      .map(([mercenaryId, cardIds]) => [
+        mercenaryId,
+        uniqueCardIds(cardIds).filter((cardId) => {
+          if (selectedCardIds.has(cardId)) {
+            return false;
+          }
+
+          selectedCardIds.add(cardId);
+          return true;
+        }),
+      ])
+      .filter(([, cardIds]) => cardIds.length > 0),
+  );
+
+  return { genericCardIds, mercenaryCardIds };
+}
+
 const hellHandEmbeddedThemeClassName =
   '[&_.bg-background]:!bg-black/45 [&_.bg-card]:!bg-black/70 [&_.bg-muted]:!bg-red-950/30 [&_.border-border]:!border-red-200/12 [&_.border-input]:!border-red-200/20 [&_.text-muted-foreground]:!text-stone-400 [&_.text-primary]:!text-amber-300 [&_input]:!bg-black/55 [&_select]:!bg-black/55 [&_textarea]:!bg-black/55 [&_[data-slot=button][data-variant=default]]:!bg-amber-300 [&_[data-slot=button][data-variant=default]]:!text-black [&_[data-slot=button][data-variant=default]:hover]:!bg-amber-200 [&_[data-slot=button][data-variant=outline]]:!border-red-200/20 [&_[data-slot=button][data-variant=outline]]:!bg-black/55 [&_[data-slot=button][data-variant=outline]]:!text-stone-100 [&_[data-slot=button][data-variant=outline]:hover]:!border-amber-300/45 [&_[data-slot=button][data-variant=outline]:hover]:!bg-red-950/55';
 
@@ -74,21 +152,21 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   const [deckDescription, setDeckDescription] = useState('');
   const [deckKind, setDeckKind] = useState('community');
   const [deckStatus, setDeckStatus] = useState('valid');
+  const [editingDeckId, setEditingDeckId] = useState('');
   const [error, setError] = useState('');
   const [createError, setCreateError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const canCreateOfficial = isCurrentUserAdmin();
+  const currentUserId = getAuthPlayerId(getAuthPlayer());
   const activeSelectedCardIds =
     activeBucket === 'generic'
       ? selectedGenericCardIds
       : selectedMercenaryCardIds[activeBucket] || [];
-  const totalSelectedCount =
-    selectedGenericCardIds.length +
-    Object.values(selectedMercenaryCardIds).reduce(
-      (total, cardIds) => total + cardIds.length,
-      0,
-    );
+  const totalSelectedCount = new Set([
+    ...selectedGenericCardIds,
+    ...Object.values(selectedMercenaryCardIds).flat(),
+  ]).size;
 
   const loadData = async () => {
     setIsLoading(true);
@@ -117,25 +195,73 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
 
   const toggleCard = (cardId) => {
     if (activeBucket === 'generic') {
-      setSelectedGenericCardIds((current) =>
-        current.includes(cardId)
-          ? current.filter((id) => id !== cardId)
-          : [...current, cardId],
+      if (selectedGenericCardIds.includes(cardId)) {
+        setSelectedGenericCardIds((current) =>
+          current.filter((id) => id !== cardId),
+        );
+      } else {
+        setSelectedMercenaryCardIds((current) =>
+          removeCardFromMercenarySelections(current, cardId),
+        );
+        setSelectedGenericCardIds((current) =>
+          uniqueCardIds([...current.filter((id) => id !== cardId), cardId]),
+        );
+      }
+      return;
+    }
+
+    const bucketCardIds = selectedMercenaryCardIds[activeBucket] || [];
+
+    if (bucketCardIds.includes(cardId)) {
+      setSelectedMercenaryCardIds((current) =>
+        normalizeMercenaryCardIds({
+          ...current,
+          [activeBucket]: (current[activeBucket] || []).filter(
+            (id) => id !== cardId,
+          ),
+        }),
       );
       return;
     }
 
+    setSelectedGenericCardIds((current) => current.filter((id) => id !== cardId));
     setSelectedMercenaryCardIds((current) => {
-      const bucketCardIds = current[activeBucket] || [];
-      const nextBucketCardIds = bucketCardIds.includes(cardId)
-        ? bucketCardIds.filter((id) => id !== cardId)
-        : [...bucketCardIds, cardId];
+      const cleaned = removeCardFromMercenarySelections(current, cardId);
 
-      return {
-        ...current,
-        [activeBucket]: nextBucketCardIds,
-      };
+      return normalizeMercenaryCardIds({
+        ...cleaned,
+        [activeBucket]: uniqueCardIds([
+          ...(cleaned[activeBucket] || []),
+          cardId,
+        ]),
+      });
     });
+  };
+
+  const resetDeckDraft = () => {
+    setDeckName('');
+    setDeckDescription('');
+    setDeckKind('community');
+    setDeckStatus('valid');
+    setEditingDeckId('');
+    setSelectedGenericCardIds([]);
+    setSelectedMercenaryCardIds({});
+    setActiveBucket('generic');
+    setCreateError('');
+  };
+
+  const editDeck = (deck) => {
+    const { genericCardIds, mercenaryCardIds } = getDeckCardSelections(deck);
+
+    setDeckName(deck.name || '');
+    setDeckDescription(deck.description || '');
+    setDeckKind(deck.kind || 'community');
+    setDeckStatus(deck.status || 'valid');
+    setEditingDeckId(deck.id);
+    setSelectedGenericCardIds(genericCardIds);
+    setSelectedMercenaryCardIds(mercenaryCardIds);
+    setActiveBucket('generic');
+    setCreateError('');
   };
 
   const handleCreateDeck = async (event) => {
@@ -150,25 +276,36 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
     setIsCreating(true);
 
     try {
-      await createPowerDeck({
+      const payload = {
         cardIds: [],
         description: deckDescription,
-        genericCardIds: selectedGenericCardIds,
+        genericCardIds: uniqueCardIds(selectedGenericCardIds),
         kind: canCreateOfficial ? deckKind : 'community',
-        mercenaryCardIds: selectedMercenaryCardIds,
+        mercenaryCardIds: normalizeMercenaryCardIds(selectedMercenaryCardIds),
         name: deckName,
         status: deckStatus,
-      });
+      };
 
-      setDeckName('');
-      setDeckDescription('');
-      setDeckKind('community');
-      setDeckStatus('valid');
-      setSelectedGenericCardIds([]);
-      setSelectedMercenaryCardIds({});
+      if (editingDeckId) {
+        await updatePowerDeck({
+          ...payload,
+          deckId: editingDeckId,
+        });
+      } else {
+        await createPowerDeck(payload);
+      }
+
+      resetDeckDraft();
       await loadData();
     } catch (requestError) {
-      setCreateError(requestError.message || t('pages.powerDecks.createError'));
+      setCreateError(
+        requestError.message ||
+          t(
+            editingDeckId
+              ? 'pages.powerDecks.updateError'
+              : 'pages.powerDecks.createError',
+          ),
+      );
     } finally {
       setIsCreating(false);
     }
@@ -230,9 +367,26 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
               <p className="text-xs font-semibold uppercase text-muted-foreground">
                 {t('pages.powerDecks.createEyebrow')}
               </p>
-              <h2 className="mt-1 text-xl font-black">
-                {t('pages.powerDecks.createTitle')}
-              </h2>
+              <div className="mt-1 flex items-start justify-between gap-3">
+                <h2 className="text-xl font-black">
+                  {t(
+                    editingDeckId
+                      ? 'pages.powerDecks.editTitle'
+                      : 'pages.powerDecks.createTitle',
+                  )}
+                </h2>
+                {editingDeckId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 shrink-0 cursor-pointer gap-2"
+                    onClick={resetDeckDraft}
+                  >
+                    <Plus className="size-4" />
+                    {t('pages.powerDecks.newDeck')}
+                  </Button>
+                ) : null}
+              </div>
 
               <div className="mt-5 grid gap-4">
                 <label className="grid gap-2 text-sm font-semibold">
@@ -325,7 +479,15 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
                 ) : (
                   <Layers3 className="size-4" />
                 )}
-                {isCreating ? t('pages.powerDecks.creating') : t('pages.powerDecks.create')}
+                {isCreating
+                  ? t(
+                      editingDeckId
+                        ? 'pages.powerDecks.updating'
+                        : 'pages.powerDecks.creating',
+                    )
+                  : editingDeckId
+                    ? t('pages.powerDecks.update')
+                    : t('pages.powerDecks.create')}
               </Button>
 
               {createError ? (
@@ -342,7 +504,12 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
               </h2>
 
               <div className="mt-4 grid gap-3">
-                {decks.map((deck) => (
+                {decks.map((deck) => {
+                  const canEditDeck =
+                    canCreateOfficial ||
+                    (currentUserId && deck.creator_id === currentUserId);
+
+                  return (
                   <article
                     key={deck.id}
                     className={cn(
@@ -386,8 +553,20 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
                         {formatDate(deck.created_at)}
                       </p>
                     ) : null}
+                    {canEditDeck ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-3 h-9 w-full cursor-pointer gap-2"
+                        onClick={() => editDeck(deck)}
+                      >
+                        <Pencil className="size-4" />
+                        {t('pages.powerDecks.editDeck')}
+                      </Button>
+                    ) : null}
                   </article>
-                ))}
+                  );
+                })}
                 {!decks.length && !isLoading ? (
                   <p className="text-sm text-muted-foreground">
                     {t('pages.powerDecks.noDecks')}
