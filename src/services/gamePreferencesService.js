@@ -10,7 +10,7 @@ export const deckTypes = {
 export const defaultGamePreferences = {
   cardBack: 'back_card',
   deckType: deckTypes.SPANISH,
-  hellHandHomeMusicVolume: 10,
+  hellHandHomeMusicVolume: 8,
   volume: 70,
 };
 
@@ -30,11 +30,11 @@ function normalizeCardBack(cardBack) {
     : defaultGamePreferences.cardBack;
 }
 
-function normalizeVolume(volume) {
+function normalizeVolume(volume, fallback = defaultGamePreferences.volume) {
   const parsedVolume = Number(volume);
 
   if (!Number.isFinite(parsedVolume)) {
-    return defaultGamePreferences.volume;
+    return fallback;
   }
 
   return Math.max(0, Math.min(100, Math.trunc(parsedVolume)));
@@ -44,8 +44,11 @@ export function normalizeGamePreferences(preferences = {}) {
   return {
     cardBack: normalizeCardBack(preferences.cardBack),
     deckType: normalizeDeckType(preferences.deckType),
-    hellHandHomeMusicVolume: normalizeVolume(preferences.hellHandHomeMusicVolume),
-    volume: normalizeVolume(preferences.volume),
+    hellHandHomeMusicVolume: normalizeVolume(
+      preferences.hellHandHomeMusicVolume,
+      defaultGamePreferences.hellHandHomeMusicVolume,
+    ),
+    volume: normalizeVolume(preferences.volume, defaultGamePreferences.volume),
   };
 }
 
