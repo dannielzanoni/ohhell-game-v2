@@ -128,6 +128,14 @@ const fallbackMarkerClasses = [
   'bg-sky-500',
 ];
 
+function getRemoteGameplayStyle(remoteMercenary) {
+  return (
+    remoteMercenary.gameplay_style ||
+    remoteMercenary.gameplayStyle ||
+    remoteMercenary.style
+  );
+}
+
 export function getMercenaryTitle(mercenary, t) {
   if (mercenary?.name) {
     return mercenary.name;
@@ -164,19 +172,22 @@ export function mergeMercenaries(remoteMercenaries = []) {
       banner: remoteMercenary.banner_url || existing.banner,
       cards: existing.cards || [],
       description: remoteMercenary.description || existing.description,
-      gameplayStyle:
-        remoteMercenary.gameplay_style ||
-        remoteMercenary.gameplayStyle ||
-        existing.gameplayStyle,
+      gameplayStyle: getRemoteGameplayStyle(remoteMercenary) || existing.gameplayStyle,
       icon: remoteMercenary.icon_url || remoteMercenary.icon || existing.icon,
       manaInicial:
+        remoteMercenary.initial_mana ??
+        remoteMercenary.initialMana ??
         remoteMercenary.mana_inicial ??
         remoteMercenary.manaInicial ??
-        existing.manaInicial,
+        existing.manaInicial ??
+        1,
       manaTotal:
         remoteMercenary.mana_total ??
+        remoteMercenary.total_mana ??
         remoteMercenary.manaTotal ??
-        existing.manaTotal,
+        remoteMercenary.totalMana ??
+        existing.manaTotal ??
+        10,
       markerClass:
         existing.markerClass || fallbackMarkerClasses[index % fallbackMarkerClasses.length],
       name: remoteMercenary.name || existing.name,
@@ -186,13 +197,19 @@ export function mergeMercenaries(remoteMercenaries = []) {
       subtitle: remoteMercenary.subtitle || existing.subtitle,
       temper: remoteMercenary.temper || existing.temper,
       vidaInicial:
+        remoteMercenary.base_life ??
+        remoteMercenary.baseLife ??
         remoteMercenary.vida_inicial ??
         remoteMercenary.vidaInicial ??
-        existing.vidaInicial,
+        existing.vidaInicial ??
+        40,
       vidaTotal:
         remoteMercenary.vida_total ??
+        remoteMercenary.total_life ??
         remoteMercenary.vidaTotal ??
-        existing.vidaTotal,
+        remoteMercenary.totalLife ??
+        existing.vidaTotal ??
+        100,
     });
   });
 
@@ -212,12 +229,20 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
         cards: remoteMercenary.cards || remoteMercenary.deck || [],
         deck: remoteMercenary.deck,
         description: remoteMercenary.description,
-        gameplayStyle:
-          remoteMercenary.gameplay_style || remoteMercenary.gameplayStyle,
+        gameplayStyle: getRemoteGameplayStyle(remoteMercenary),
         icon: remoteMercenary.icon_url || remoteMercenary.icon || '',
         manaInicial:
-          remoteMercenary.mana_inicial ?? remoteMercenary.manaInicial,
-        manaTotal: remoteMercenary.mana_total ?? remoteMercenary.manaTotal,
+          remoteMercenary.initial_mana ??
+          remoteMercenary.initialMana ??
+          remoteMercenary.mana_inicial ??
+          remoteMercenary.manaInicial ??
+          1,
+        manaTotal:
+          remoteMercenary.mana_total ??
+          remoteMercenary.total_mana ??
+          remoteMercenary.manaTotal ??
+          remoteMercenary.totalMana ??
+          10,
         markerClass: fallbackMarkerClasses[index % fallbackMarkerClasses.length],
         name: remoteMercenary.name,
         passiveScript: remoteMercenary.passive_script || remoteMercenary.passiveScript,
@@ -226,8 +251,17 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
         subtitle: remoteMercenary.subtitle,
         temper: remoteMercenary.temper,
         vidaInicial:
-          remoteMercenary.vida_inicial ?? remoteMercenary.vidaInicial,
-        vidaTotal: remoteMercenary.vida_total ?? remoteMercenary.vidaTotal,
+          remoteMercenary.base_life ??
+          remoteMercenary.baseLife ??
+          remoteMercenary.vida_inicial ??
+          remoteMercenary.vidaInicial ??
+          40,
+        vidaTotal:
+          remoteMercenary.vida_total ??
+          remoteMercenary.total_life ??
+          remoteMercenary.vidaTotal ??
+          remoteMercenary.totalLife ??
+          100,
       };
     });
 }

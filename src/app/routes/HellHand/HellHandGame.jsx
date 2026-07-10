@@ -143,6 +143,7 @@ function MercenaryInfoPanel({ character }) {
   const vidaTotal = character.vidaTotal ?? 100;
   const manaInicial = character.manaInicial ?? 1;
   const manaTotal = character.manaTotal ?? 10;
+  const temper = character.temper;
 
   return (
     <div className="absolute right-3 top-3 z-10 grid w-[9.3rem] gap-1.5 rounded-lg border border-red-200/15 bg-black/62 p-2 text-[0.62rem] font-black uppercase leading-tight text-stone-100 shadow-xl shadow-black/35 backdrop-blur sm:right-4 sm:top-4 sm:w-[10.25rem] sm:p-2.5 sm:text-[0.68rem] lg:right-3 lg:top-3 lg:w-[8.9rem] lg:p-2 lg:text-[0.58rem] xl:w-[9.6rem] xl:text-[0.62rem]">
@@ -173,6 +174,12 @@ function MercenaryInfoPanel({ character }) {
           );
         })}
       </span>
+      {temper ? (
+        <span className="flex flex-wrap items-center justify-end gap-1 text-right text-stone-300">
+          <span>Temper</span>
+          <span className="text-red-200">{temper}</span>
+        </span>
+      ) : null}
     </div>
   );
 }
