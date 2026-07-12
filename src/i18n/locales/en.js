@@ -326,6 +326,7 @@ export const en = {
         name: 'Name',
         nameRequired: 'Enter a mercenary name.',
         passiveRequired: 'Enter a passive Lua script.',
+        luaValidationRequired: 'Wait for Lua validation to finish successfully before saving.',
         passiveScript: 'Passive Lua script',
         save: 'Save mercenary',
         saving: 'Saving...',
@@ -549,6 +550,7 @@ export const en = {
       luaFetchError: 'Could not load the latest Lua editor source.',
       luaDefinedValue: 'Defined by Lua script',
       luaRequired: 'Enter a Lua script before saving.',
+      luaValidationRequired: 'Wait for Lua validation to finish successfully before saving.',
       luaScript: 'Lua effect script',
       layout: {
         case: 'Upper/lowercase',

@@ -752,6 +752,8 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
   const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [luaEditorKey, setLuaEditorKey] = useState(0);
   const [luaSnippetId, setLuaSnippetId] = useState('');
+  const [luaValidation, setLuaValidation] = useState({ state: 'pending', source: '', diagnostics: [] });
+  const [validationRequest, setValidationRequest] = useState(0);
   const [isOfficialCard, setIsOfficialCard] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [publishSuccess, setPublishSuccess] = useState('');
@@ -782,7 +784,8 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
   useEffect(() => {
     const normalizedDraft = normalizeCard(draft);
 
-    if (editingCardId || !normalizedDraft.template || !normalizedDraft.luaScript.trim()) {
+    if (editingCardId || !normalizedDraft.template || !normalizedDraft.luaScript.trim() ||
+      luaValidation.state !== 'valid' || luaValidation.source !== normalizedDraft.luaScript) {
       assetUploadRef.current = null;
       setStagedAsset(null);
       return undefined;
@@ -836,7 +839,7 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
       window.clearTimeout(timeoutId);
       abortController.abort();
     };
-  }, [draftAssetFingerprint, editingCardId]);
+  }, [draftAssetFingerprint, editingCardId, luaValidation]);
 
   const updateDraft = (field, value) => {
     setDraft((current) => ({
@@ -848,6 +851,7 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
   const clearLuaScript = () => {
     updateDraft('luaScript', '');
     setLuaSnippetId('');
+    setLuaValidation({ state: 'pending', source: '', diagnostics: [] });
     setLuaEditorKey((current) => current + 1);
   };
 
@@ -944,6 +948,7 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
     setEditingCardId(null);
     setIsOfficialCard(false);
     setLuaSnippetId('');
+    setLuaValidation({ state: 'pending', source: '', diagnostics: [] });
     setLuaEditorKey((current) => current + 1);
     setImageError('');
     setPublishError('');
@@ -1018,6 +1023,13 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
       if (luaSnippetId) {
         luaScript = await fetchLuaStudioSnippetSource(luaSnippetId);
         updateDraft('luaScript', luaScript);
+      }
+
+      setValidationRequest((current) => current + 1);
+      if (luaValidation.source !== luaScript || luaValidation.state !== 'valid' ||
+        luaValidation.diagnostics.some((diagnostic) => diagnostic.severity === 'Error')) {
+        setPublishError(t('pages.playground.luaValidationRequired'));
+        return;
       }
 
       const draftForSave = normalizeCard({ ...draft, luaScript });
@@ -1401,7 +1413,12 @@ export function Playground({ embedded = false, variant = 'default' } = {}) {
                       source={draft.luaScript}
                       templateUrl={environment.luaPowerCardTemplateUrl}
                       title={t('pages.playground.luaScript')}
-                      onSourceChange={(source) => updateDraft('luaScript', source)}
+                      validationRequest={validationRequest}
+                      onValidationChange={setLuaValidation}
+                      onSourceChange={(source) => {
+                        updateDraft('luaScript', source);
+                        setLuaValidation({ state: 'pending', source, diagnostics: [] });
+                      }}
                     />
                   </div>
                 </div>

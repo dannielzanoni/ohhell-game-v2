@@ -128,18 +128,21 @@ function buildStandaloneEditorUrl(snippetId) {
     return '';
   }
 
-  return new URL(`/editor/${encodeURIComponent(snippetId)}`, environment.luaStudioUrl).toString();
+  return withParentOrigin(new URL(`/editor/${encodeURIComponent(snippetId)}`, environment.luaStudioUrl)).toString();
 }
 
 export function LuaStudioFrame({
   className,
   onSnippetChange,
   onSourceChange,
+  onValidationChange,
+  validationRequest = 0,
   source,
   templateUrl,
   title,
 }) {
   const frameRef = useRef(null);
+  const openedWindowRef = useRef(null);
   const lastStudioSourceRef = useRef(null);
   const awaitingSourceRef = useRef(null);
   const [snippetId, setSnippetId] = useState('');
@@ -209,12 +212,7 @@ export function LuaStudioFrame({
 
       updateSnippetId(nextSnippetId);
 
-      try {
-        tab.opener = null;
-      } catch {
-        // Some browsers disallow clearing opener on the temporary blank tab.
-      }
-
+      openedWindowRef.current = tab;
       tab.location.href = buildStandaloneEditorUrl(nextSnippetId);
       tab.focus();
       setIsFrameVisible(false);
@@ -253,7 +251,12 @@ export function LuaStudioFrame({
     }
 
     const onMessage = (event) => {
-      if (event.origin !== luaStudioOrigin || typeof event.data !== 'object') {
+      if (
+        event.origin !== luaStudioOrigin ||
+        typeof event.data !== 'object' ||
+        (event.source !== frameRef.current?.contentWindow &&
+          event.source !== openedWindowRef.current)
+      ) {
         return;
       }
 
@@ -276,6 +279,14 @@ export function LuaStudioFrame({
       }
 
       if (
+        event.data?.type === 'mooncode:validation' &&
+        typeof event.data.source === 'string' &&
+        typeof event.data.state === 'string'
+      ) {
+        onValidationChange?.(event.data);
+      }
+
+      if (
         event.data?.type === 'mooncode:snippet-replaced' &&
         typeof event.data.newSnippetId === 'string'
       ) {
@@ -286,6 +297,12 @@ export function LuaStudioFrame({
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [luaStudioOrigin, onSnippetChange, onSourceChange]);
+
+  useEffect(() => {
+    if (!validationRequest || !luaStudioOrigin) return;
+    const target = isFrameVisible ? frameRef.current?.contentWindow : openedWindowRef.current;
+    target?.postMessage({ type: 'mooncode:validate' }, luaStudioOrigin);
+  }, [validationRequest, luaStudioOrigin, isFrameVisible]);
 
   useEffect(() => {
     if (source === lastStudioSourceRef.current) {

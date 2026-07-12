@@ -336,6 +336,8 @@ function AdminMercenaryForm({
   const [isSaving, setIsSaving] = useState(false);
   const [luaEditorKey, setLuaEditorKey] = useState(0);
   const [luaSnippetId, setLuaSnippetId] = useState('');
+  const [luaValidation, setLuaValidation] = useState({ state: 'pending', source: '', diagnostics: [] });
+  const [validationRequest, setValidationRequest] = useState(0);
   const [error, setError] = useState('');
 
   const updateDraft = (field, value) => {
@@ -357,6 +359,7 @@ function AdminMercenaryForm({
     setBannerFile(null);
     setIconFile(null);
     setLuaSnippetId('');
+    setLuaValidation({ state: 'pending', source: '', diagnostics: [] });
     setError('');
     setDraft({
       ...emptyDraft(),
@@ -376,6 +379,7 @@ function AdminMercenaryForm({
     setBannerFile(null);
     setIconFile(null);
     setLuaSnippetId('');
+    setLuaValidation({ state: 'pending', source: '', diagnostics: [] });
     setError('');
     setLuaEditorKey((current) => current + 1);
   };
@@ -426,6 +430,13 @@ function AdminMercenaryForm({
 
       if (!passiveScript.trim()) {
         setError(t('pages.characters.admin.passiveRequired'));
+        return;
+      }
+
+      setValidationRequest((current) => current + 1);
+      if (luaValidation.source !== passiveScript || luaValidation.state !== 'valid' ||
+        luaValidation.diagnostics.some((diagnostic) => diagnostic.severity === 'Error')) {
+        setError(t('pages.characters.admin.luaValidationRequired'));
         return;
       }
 
@@ -553,7 +564,12 @@ function AdminMercenaryForm({
                 source={draft.passiveScript}
                 templateUrl={environment.luaMercenaryPassiveTemplateUrl}
                 title={t('pages.characters.admin.passiveScript')}
-                onSourceChange={(source) => updateDraft('passiveScript', source)}
+                validationRequest={validationRequest}
+                onValidationChange={setLuaValidation}
+                onSourceChange={(source) => {
+                  updateDraft('passiveScript', source);
+                  setLuaValidation({ state: 'pending', source, diagnostics: [] });
+                }}
               />
             </label>
           </div>

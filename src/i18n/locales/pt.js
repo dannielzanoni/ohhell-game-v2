@@ -326,6 +326,7 @@ export const pt = {
         name: 'Nome',
         nameRequired: 'Informe o nome do mercenario.',
         passiveRequired: 'Digite um script Lua passivo.',
+        luaValidationRequired: 'Aguarde a validacao do Lua terminar com sucesso antes de salvar.',
         passiveScript: 'Script Lua passivo',
         save: 'Salvar mercenario',
         saving: 'Salvando...',
@@ -549,6 +550,7 @@ export const pt = {
       luaFetchError: 'Nao foi possivel carregar o codigo Lua mais recente do editor.',
       luaDefinedValue: 'Definido pelo script Lua',
       luaRequired: 'Digite um script Lua antes de salvar.',
+      luaValidationRequired: 'Aguarde a validacao do Lua terminar com sucesso antes de salvar.',
       luaScript: 'Script Lua do efeito',
       layout: {
         case: 'Maiuscula/minuscula',
