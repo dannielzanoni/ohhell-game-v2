@@ -143,6 +143,7 @@ export function LuaStudioFrame({
 }) {
   const frameRef = useRef(null);
   const openedWindowRef = useRef(null);
+  const validationSourceRef = useRef(source || '');
   const lastStudioSourceRef = useRef(null);
   const awaitingSourceRef = useRef(null);
   const [snippetId, setSnippetId] = useState('');
@@ -279,9 +280,16 @@ export function LuaStudioFrame({
 
         awaitingSourceRef.current = null;
         lastStudioSourceRef.current = event.data.source;
-        setValidation({ state: 'pending', source: event.data.source, diagnostics: [] });
+        if (
+          event.data.type === 'mooncode:changed' ||
+          validationSourceRef.current !== event.data.source
+        ) {
+          setValidation({ state: 'pending', source: event.data.source, diagnostics: [] });
+        }
         updateSnippetId(event.data.snippetId || '');
-        onSourceChange(event.data.source);
+        if (event.data.type === 'mooncode:changed') {
+          onSourceChange(event.data.source);
+        }
       }
 
       if (
@@ -290,7 +298,14 @@ export function LuaStudioFrame({
         typeof event.data.state === 'string'
       ) {
         setValidation(event.data);
+        validationSourceRef.current = event.data.source;
         onValidationChange?.(event.data);
+      }
+
+      if (event.data?.type === 'mooncode:lsp-state' && event.data.state === 'unavailable') {
+        const unavailable = { state: 'unavailable', source: source || '', diagnostics: [] };
+        setValidation(unavailable);
+        onValidationChange?.(unavailable);
       }
 
       if (
