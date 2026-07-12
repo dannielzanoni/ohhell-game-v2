@@ -27,7 +27,8 @@ const hellHandMercenariesPath = '/hell-hand/mercenaries';
 export const mercenaries = [
   {
     id: 'artemis',
-    accentClass: 'from-emerald-500/25 via-black/25 to-amber-500/20',
+    accentClass: 'from-red-500/25 via-black/25 to-red-950/30',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.42),transparent_48%)]',
     banner: artemisBanner,
     bannerPosition: 'center 35%',
     icon: artemisIcon,
@@ -43,26 +44,28 @@ export const mercenaries = [
       { id: 'signInBlood', image: artemisCard4, manaCost: 3 },
       { id: 'hunterGrace', image: artemisCard5, manaCost: 1 },
     ],
-    markerClass: 'bg-emerald-500',
+    markerClass: 'bg-red-500',
     path: `${hellHandMercenariesPath}/Artemis`,
   },
   {
     id: 'conjuruz',
-    accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
+    accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
     banner: conjuruzBanner,
     cards: [],
     icon: conjuruzIcon,
     gameplayStyle: { icons: ['mana'], label: 'Mana' },
     manaInicial: 1,
     manaTotal: 18,
-    markerClass: 'bg-violet-500',
+    markerClass: 'bg-blue-500',
     path: `${hellHandMercenariesPath}/Conjuruz`,
     vidaInicial: 45,
     vidaTotal: 100,
   },
   {
     id: 'carmen',
-    accentClass: 'from-rose-500/25 via-black/25 to-amber-500/20',
+    accentClass: 'from-green-500/25 via-black/25 to-green-950/30',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.42),transparent_48%)]',
     banner: carmenBanner,
     icon: carmenIcon,
     gameplayStyle: { icons: ['shield', 'mana'], label: 'Shield & Mana' },
@@ -73,14 +76,15 @@ export const mercenaries = [
       { id: 'carmenCard4', image: carmenCard4, manaCost: 4 },
       { id: 'carmenCard5', image: carmenCard5, manaCost: 5 },
     ],
-    markerClass: 'bg-rose-500',
+    markerClass: 'bg-green-500',
     path: `${hellHandMercenariesPath}/Carmen`,
     vidaInicial: 60,
     vidaTotal: 100,
   },
   {
     id: 'gambler',
-    accentClass: 'from-red-500/25 via-black/25 to-yellow-500/20',
+    accentClass: 'from-yellow-400/25 via-black/25 to-yellow-950/30',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.42),transparent_48%)]',
     banner: gamblerBanner,
     icon: gamblerIcon,
     gameplayStyle: { icons: ['bid'], label: 'High Stakes' },
@@ -93,21 +97,22 @@ export const mercenaries = [
       { id: 'crossYourFingers', image: gamblerCard4, manaCost: 3 },
       { id: 'guabiru', image: gamblerCard5, manaCost: 8 },
     ],
-    markerClass: 'bg-red-500',
+    markerClass: 'bg-yellow-400',
     path: `${hellHandMercenariesPath}/Gambler`,
     vidaInicial: 45,
     vidaTotal: 100,
   },
   {
     id: 'leandro',
-    accentClass: 'from-violet-500/25 via-black/25 to-cyan-500/20',
+    accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
     banner: leandroBanner,
     cards: [],
     icon: leandroIcon,
     gameplayStyle: { icons: ['mana', 'magic'], label: 'Mana & Magic' },
     manaInicial: 1,
     manaTotal: 13,
-    markerClass: 'bg-violet-500',
+    markerClass: 'bg-blue-500',
     path: `${hellHandMercenariesPath}/Leandro`,
     vidaInicial: 50,
     vidaTotal: 100,
@@ -134,6 +139,44 @@ function getRemoteGameplayStyle(remoteMercenary) {
     remoteMercenary.gameplayStyle ||
     remoteMercenary.style
   );
+}
+
+function getStyleVisuals(style) {
+  const value = typeof style === 'object'
+    ? `${style?.label || ''} ${(style?.icons || []).join(' ')}`
+    : String(style || '');
+  const normalized = value.toLowerCase();
+
+  if (normalized.includes('shield')) {
+    return {
+      accentClass: 'from-green-500/25 via-black/25 to-green-950/30',
+      markerClass: 'bg-green-500',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.42),transparent_48%)]',
+    };
+  }
+  if (normalized.includes('life') || normalized.includes('live') || normalized.includes('vida')) {
+    return {
+      accentClass: 'from-red-500/25 via-black/25 to-red-950/30',
+      markerClass: 'bg-red-500',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.42),transparent_48%)]',
+    };
+  }
+  if (normalized.includes('bid')) {
+    return {
+      accentClass: 'from-yellow-400/25 via-black/25 to-yellow-950/30',
+      markerClass: 'bg-yellow-400',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.42),transparent_48%)]',
+    };
+  }
+  if (normalized.includes('mana')) {
+    return {
+      accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
+      markerClass: 'bg-blue-500',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
+    };
+  }
+
+  return null;
 }
 
 export function getMercenaryTitle(mercenary, t) {
@@ -163,16 +206,18 @@ export function mergeMercenaries(remoteMercenaries = []) {
     }
 
     const existing = merged.get(id) || {};
+    const gameplayStyle = getRemoteGameplayStyle(remoteMercenary) || existing.gameplayStyle;
+    const styleVisuals = getStyleVisuals(gameplayStyle) || {};
 
     merged.set(id, {
       ...existing,
       id,
-      accentClass:
+      accentClass: styleVisuals.accentClass ||
         existing.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
       banner: remoteMercenary.banner_url || existing.banner,
       cards: existing.cards || [],
       description: remoteMercenary.description || existing.description,
-      gameplayStyle: getRemoteGameplayStyle(remoteMercenary) || existing.gameplayStyle,
+      gameplayStyle,
       icon: remoteMercenary.icon_url || remoteMercenary.icon || existing.icon,
       manaInicial:
         remoteMercenary.initial_mana ??
@@ -188,8 +233,9 @@ export function mergeMercenaries(remoteMercenaries = []) {
         remoteMercenary.totalMana ??
         existing.manaTotal ??
         10,
-      markerClass:
+      markerClass: styleVisuals.markerClass ||
         existing.markerClass || fallbackMarkerClasses[index % fallbackMarkerClasses.length],
+      styleGlowClass: styleVisuals.styleGlowClass || existing.styleGlowClass,
       name: remoteMercenary.name || existing.name,
       passiveScript: remoteMercenary.passive_script || existing.passiveScript,
       path: `/mercenaries/${id}`,
@@ -221,15 +267,17 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
     .filter((remoteMercenary) => remoteMercenary?.id)
     .map((remoteMercenary, index) => {
       const id = remoteMercenary.id;
+      const gameplayStyle = getRemoteGameplayStyle(remoteMercenary);
+      const styleVisuals = getStyleVisuals(gameplayStyle) || {};
 
       return {
         id,
-        accentClass: fallbackAccentClasses[index % fallbackAccentClasses.length],
+        accentClass: styleVisuals.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
         banner: remoteMercenary.banner_url || remoteMercenary.banner || '',
         cards: remoteMercenary.cards || remoteMercenary.deck || [],
         deck: remoteMercenary.deck,
         description: remoteMercenary.description,
-        gameplayStyle: getRemoteGameplayStyle(remoteMercenary),
+        gameplayStyle,
         icon: remoteMercenary.icon_url || remoteMercenary.icon || '',
         manaInicial:
           remoteMercenary.initial_mana ??
@@ -243,7 +291,8 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
           remoteMercenary.manaTotal ??
           remoteMercenary.totalMana ??
           10,
-        markerClass: fallbackMarkerClasses[index % fallbackMarkerClasses.length],
+        markerClass: styleVisuals.markerClass || fallbackMarkerClasses[index % fallbackMarkerClasses.length],
+        styleGlowClass: styleVisuals.styleGlowClass,
         name: remoteMercenary.name,
         passiveScript: remoteMercenary.passive_script || remoteMercenary.passiveScript,
         path: `/mercenaries/${id}`,

@@ -17,6 +17,10 @@ import { cn } from '@/lib/utils.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';
 import { getMercenaries } from '@/services/mercenariesService.js';
 import {
+  getCardDefinitions,
+  getPowerDecks,
+} from '@/services/cardDefinitionsService.js';
+import {
   findMercenary,
   getMercenarySubtitle,
   getMercenaryTitle,
@@ -32,9 +36,9 @@ function CardArtwork({ card, title, markerClass, className }) {
         className,
       )}
     >
-      {card.image ? (
+      {card.image || card.image_url ? (
         <img
-          src={card.image}
+          src={card.image || card.image_url}
           alt={title}
           className="aspect-[768/1344] size-full object-cover"
           draggable="false"
@@ -55,11 +59,13 @@ function CardArtwork({ card, title, markerClass, className }) {
 }
 
 function AbilityCard({ card, characterId, markerClass, t }) {
-  const title = t(`pages.characters.items.${characterId}.cards.${card.id}.title`);
-  const description = t(
+  const title = card.name || card.title || t(`pages.characters.items.${characterId}.cards.${card.id}.title`);
+  const description = card.description || card.effect_description || t(
     `pages.characters.items.${characterId}.cards.${card.id}.description`,
   );
-  const story = t(`pages.characters.items.${characterId}.cards.${card.id}.story`);
+  const story = card.story || card.flavor_text || t(
+    `pages.characters.items.${characterId}.cards.${card.id}.story`,
+  );
 
   return (
     <Dialog>
@@ -98,7 +104,7 @@ function AbilityCard({ card, characterId, markerClass, t }) {
               </p>
               <div className="mt-1 flex items-center gap-2">
                 <span className="text-2xl font-black leading-none text-white">
-                  {card.manaCost}
+                  {card.mana_cost ?? card.manaCost ?? 0}
                 </span>
                 <img
                   src={manaIcon}
@@ -124,6 +130,26 @@ function AbilityCard({ card, characterId, markerClass, t }) {
   );
 }
 
+function getOfficialMercenaryCards(characterId, cardDefinitions, decks) {
+  const normalizedCharacterId = String(characterId).toLowerCase();
+  const cardIds = new Set();
+
+  decks
+    .filter((deck) => deck?.kind === 'official' || deck?.creator_id === 'official')
+    .forEach((deck) => {
+      const assignments = deck.mercenary_card_ids || deck.mercenaryCardIds || {};
+      Object.entries(assignments).forEach(([mercenaryId, assignedCardIds]) => {
+        if (String(mercenaryId).toLowerCase() === normalizedCharacterId) {
+          (assignedCardIds || []).forEach((cardId) => cardIds.add(String(cardId)));
+        }
+      });
+    });
+
+  return cardDefinitions.filter((card) =>
+    cardIds.has(String(card?.id ?? card?.card_id)),
+  );
+}
+
 export function CharacterProfile({ characterId }) {
   const { t } = useTranslation();
   const [characters, setCharacters] = useState(mercenaries);
@@ -134,10 +160,22 @@ export function CharacterProfile({ characterId }) {
 
     async function loadMercenaries() {
       try {
-        const response = await getMercenaries();
+        const [mercenaryResponse, cardResponse, deckResponse] = await Promise.all([
+          getMercenaries(),
+          getCardDefinitions(),
+          getPowerDecks(),
+        ]);
 
         if (isActive) {
-          setCharacters(mergeMercenaries(Array.isArray(response) ? response : []));
+          const remoteMercenaries = Array.isArray(mercenaryResponse) ? mercenaryResponse : [];
+          const cardDefinitions = Array.isArray(cardResponse) ? cardResponse : [];
+          const decks = Array.isArray(deckResponse) ? deckResponse : [];
+          setCharacters(
+            mergeMercenaries(remoteMercenaries).map((mercenary) => ({
+              ...mercenary,
+              cards: getOfficialMercenaryCards(mercenary.id, cardDefinitions, decks),
+            })),
+          );
         }
       } catch {
         if (isActive) {
@@ -192,6 +230,7 @@ export function CharacterProfile({ characterId }) {
                 character.accentClass,
               )}
             />
+            <div className={cn('absolute inset-0', character.styleGlowClass)} />
             <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
             <div className="relative flex min-h-[24rem] flex-col justify-between p-5 text-white md:p-7 lg:h-full lg:min-h-0 lg:p-5">
               <Button

@@ -1,4 +1,4 @@
-import { BookOpen, Crown, GalleryVerticalEnd, Play, Sparkles, UserRound, Users } from 'lucide-react';
+import { BookOpen, Crown, Play, Users } from 'lucide-react';
 
 export const pageLinks = [
   {
@@ -26,36 +26,12 @@ export const pageLinks = [
     path: '/leaderboard',
   },
   {
-    description: 'View mercenary profiles and cards.',
-    descriptionKey: 'pages.links.characters.description',
-    icon: UserRound,
-    label: 'Mercenaries',
-    labelKey: 'pages.links.characters.label',
-    path: '/hell-hand/mercenaries',
-  },
-  {
     description: 'Rules and game guide.',
     descriptionKey: 'pages.links.howToPlay.description',
     icon: BookOpen,
     label: 'How To Play',
     labelKey: 'pages.links.howToPlay.label',
     path: '/how-to-play',
-  },
-  {
-    description: 'Create and save custom magic cards.',
-    descriptionKey: 'pages.links.playground.description',
-    icon: Sparkles,
-    label: 'Playground',
-    labelKey: 'pages.links.playground.label',
-    path: '/playground',
-  },
-  {
-    description: 'Create Fodinha Power decks.',
-    descriptionKey: 'pages.links.powerDecks.description',
-    icon: GalleryVerticalEnd,
-    label: 'Power Decks',
-    labelKey: 'pages.links.powerDecks.label',
-    path: '/power-decks',
   },
   {
     description: 'Project repository for Oh Hell Game v2',

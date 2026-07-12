@@ -121,6 +121,7 @@ function CharacterCard({
                   character.accentClass,
                 )}
               />
+              <div className={cn('absolute inset-0', character.styleGlowClass)} />
               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/88 via-black/42 to-transparent" />
               <div />
               <div className="relative">
@@ -187,6 +188,7 @@ function CharacterPreviewCard({ canEdit, character, onEdit, t }) {
           character.accentClass,
         )}
       />
+      <div className={cn('absolute inset-0', character.styleGlowClass)} />
       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/92 via-black/54 to-transparent" />
       <div className="relative flex size-full flex-col justify-end p-4 sm:p-5 lg:p-4">
         <span
