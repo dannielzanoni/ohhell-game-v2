@@ -150,6 +150,11 @@ export function LuaStudioFrame({
   const [isOpeningTab, setIsOpeningTab] = useState(false);
   const [isReopeningFrame, setIsReopeningFrame] = useState(false);
   const [openTabError, setOpenTabError] = useState('');
+  const [validation, setValidation] = useState({
+    state: 'pending',
+    source: source || '',
+    diagnostics: [],
+  });
   const editorUrl = useMemo(
     () => buildSetupEditorUrl(templateUrl),
     [templateUrl],
@@ -274,6 +279,7 @@ export function LuaStudioFrame({
 
         awaitingSourceRef.current = null;
         lastStudioSourceRef.current = event.data.source;
+        setValidation({ state: 'pending', source: event.data.source, diagnostics: [] });
         updateSnippetId(event.data.snippetId || '');
         onSourceChange(event.data.source);
       }
@@ -283,6 +289,7 @@ export function LuaStudioFrame({
         typeof event.data.source === 'string' &&
         typeof event.data.state === 'string'
       ) {
+        setValidation(event.data);
         onValidationChange?.(event.data);
       }
 
@@ -365,6 +372,36 @@ export function LuaStudioFrame({
       {openTabError ? (
         <p className="text-[0.68rem] leading-4 text-destructive">{openTabError}</p>
       ) : null}
+      <div className="rounded-md border border-input bg-background/60 px-3 py-2 text-xs">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-semibold">Lua validation:</span>
+          <span
+            className={cn(
+              validation.state === 'valid' && 'text-emerald-600',
+              validation.state === 'invalid' && 'text-destructive',
+              (validation.state === 'pending' || validation.state === 'unavailable') &&
+                'text-amber-600',
+            )}
+          >
+            {validation.state === 'valid'
+              ? 'Ready to save'
+              : validation.state === 'invalid'
+                ? 'Failed'
+                : validation.state === 'unavailable'
+                  ? 'Unavailable'
+                  : 'Validating...'}
+          </span>
+          {validation.state === 'invalid' && validation.diagnostics?.length ? (
+            <span className="text-destructive">
+              {validation.diagnostics.find((diagnostic) => diagnostic.severity === 'Error')?.message ||
+                'The Lua script has errors.'}
+            </span>
+          ) : null}
+          {validation.state === 'unavailable' ? (
+            <span className="text-amber-600">Start or reconnect the Lua language server.</span>
+          ) : null}
+        </div>
+      </div>
       {snippetId ? (
         <p className="text-[0.68rem] leading-4 text-muted-foreground">
           Mooncode snippet: {snippetId}. Saving this form fetches the latest Lua source before uploading.
