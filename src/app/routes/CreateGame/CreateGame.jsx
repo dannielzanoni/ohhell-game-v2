@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Check, Crown, Home, Play, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import gameBg from '@/assets/videos/game-bg.mp4';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxTrigger,
-} from '@/components/kibo-ui/combobox/index.jsx';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { cn } from '@/lib/utils.js';
 import { getPowerDecks } from '@/services/cardDefinitionsService.js';
 import { isMissingAuthTokenError } from '@/services/authService.js';
-import { gameTypeOptions, gameTypes } from '@/services/gameTypesService.js';
+import { gameTypes } from '@/services/gameTypesService.js';
 import { createLobby } from '@/services/lobbyService.js';
 
 const lifeSettingsByGameType = {
@@ -53,14 +44,6 @@ function createDefaultLivesByGameType() {
 
 function getDefaultLives(gameType) {
   return String(getLifeSettings(gameType).defaultValue);
-}
-
-function getInitialGameType(search) {
-  const params = new URLSearchParams(search);
-
-  return params.get('mode') === 'hell-hand'
-    ? gameTypes.FODINHA_POWER
-    : gameTypes.FODINHA_CLASSIC;
 }
 
 function getLivesValidationError(value, settings) {
@@ -210,10 +193,9 @@ function PowerDeckGroupSection({
 }
 
 export function CreateGame() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [gameType, setGameType] = useState(() => getInitialGameType(location.search));
+  const gameType = gameTypes.FODINHA_CLASSIC;
   const [livesByGameType, setLivesByGameType] = useState(createDefaultLivesByGameType);
   const [powerLifeMultiplier, setPowerLifeMultiplier] = useState(
     DEFAULT_POWER_LIFE_MULTIPLIER,
@@ -227,9 +209,6 @@ export function CreateGame() {
   const [createError, setCreateError] = useState('');
   const selectedLifeSettings = getLifeSettings(gameType);
   const lives = livesByGameType[gameType] ?? getDefaultLives(gameType);
-  const selectedGameTypeOption = gameTypeOptions.find(
-    (option) => option.value === gameType,
-  );
   const isPowerGame = gameType === gameTypes.FODINHA_POWER;
   const officialPowerDecks = powerDecks.filter((deck) => deck.kind === 'official');
   const communityPowerDecks = powerDecks.filter((deck) => deck.kind !== 'official');
@@ -242,10 +221,6 @@ export function CreateGame() {
   const isPowerDeckUnavailable =
     isPowerGame &&
     (isLoadingPowerDecks || !powerDeckId || needsCommunityDeckConsent);
-  const gameTypeItems = gameTypeOptions.map((option) => ({
-    label: t(option.labelKey),
-    value: option.value,
-  }));
 
   useEffect(() => {
     if (gameType !== gameTypes.FODINHA_POWER) {
@@ -296,14 +271,6 @@ export function CreateGame() {
       isActive = false;
     };
   }, [gameType, t]);
-
-  const handleGameTypeChange = (nextGameType) => {
-    if (!nextGameType) {
-      return;
-    }
-
-    setGameType(nextGameType);
-  };
 
   const handleLivesChange = (event) => {
     const { value } = event.target;
@@ -467,41 +434,6 @@ export function CreateGame() {
           </div>
 
           <div className="mt-6 grid gap-5">
-            <div className="block min-w-0">
-              <span className="text-sm font-semibold text-foreground">
-                {t('gameTypes.eyebrow')}
-              </span>
-              <Combobox
-                data={gameTypeItems}
-                type={t('gameTypes.eyebrow')}
-                value={gameType}
-                onValueChange={handleGameTypeChange}
-              >
-                <ComboboxTrigger className="mt-3 h-11 w-full min-w-0 rounded-full border-input bg-background px-4 text-sm text-foreground hover:bg-background" />
-                <ComboboxContent className="rounded-xl border-border bg-popover">
-                  <ComboboxList>
-                    <ComboboxEmpty>{t('pages.createGame.noOptions')}</ComboboxEmpty>
-                    <ComboboxGroup>
-                      {gameTypeItems.map((option) => (
-                        <ComboboxItem
-                          key={option.value}
-                          value={option.value}
-                          data-checked={gameType === option.value}
-                        >
-                          {option.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxGroup>
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-              {selectedGameTypeOption ? (
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {t(selectedGameTypeOption.descriptionKey)}
-                </p>
-              ) : null}
-            </div>
-
             {!isPowerGame ? (
               <div className="block min-w-0">
               <span className="text-sm font-semibold text-foreground">

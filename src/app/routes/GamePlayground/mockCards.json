@@ -1,0 +1,58 @@
+{
+  "classicCards": [
+    { "id": "four-golds", "rank": "Four", "suit": "Golds", "actions": [] },
+    { "id": "five-cups", "rank": "Five", "suit": "Cups", "actions": [] },
+    { "id": "seven-swords", "rank": "Seven", "suit": "Swords", "actions": [] },
+    { "id": "one-clubs", "rank": "One", "suit": "Clubs", "actions": [] },
+    { "id": "three-golds", "rank": "Three", "suit": "Golds", "actions": [] },
+    { "id": "twelve-cups", "rank": "Twelve", "suit": "Cups", "actions": [] }
+  ],
+  "powerCards": [
+    {
+      "id": "blood-transfusion",
+      "name": "Blood Transfusion",
+      "description": "Trade one life for two mana.",
+      "mana_cost": 2,
+      "type": "self",
+      "actions": [
+        { "type": "CHANGE_LIFE", "target": "self", "amount": -1 },
+        { "type": "CHANGE_MANA", "target": "self", "amount": 2 }
+      ]
+    },
+    {
+      "id": "all-in",
+      "name": "All In",
+      "description": "Raise your bid by one and gain a life.",
+      "mana_cost": 3,
+      "type": "self",
+      "actions": [
+        { "type": "CHANGE_BID", "target": "self", "amount": 1 },
+        { "type": "CHANGE_LIFE", "target": "self", "amount": 1 }
+      ]
+    },
+    {
+      "id": "deep-red",
+      "name": "Deep Red",
+      "description": "Deal two damage to a selected player.",
+      "mana_cost": 8,
+      "type": "targetable",
+      "actions": [{ "type": "CHANGE_LIFE", "target": "target", "amount": -2 }]
+    },
+    {
+      "id": "sign-in-blood",
+      "name": "Sign In Blood",
+      "description": "Draw one card from the power deck.",
+      "mana_cost": 3,
+      "type": "self",
+      "actions": [{ "type": "DRAW_POWER_CARD", "target": "self", "amount": 1 }]
+    },
+    {
+      "id": "cross-your-fingers",
+      "name": "Cross Your Fingers",
+      "description": "Restore two mana to a selected player.",
+      "mana_cost": 3,
+      "type": "targetable",
+      "actions": [{ "type": "CHANGE_MANA", "target": "target", "amount": 2 }]
+    }
+  ]
+}

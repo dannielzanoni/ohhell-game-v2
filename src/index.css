@@ -193,6 +193,78 @@ select {
   pointer-events: none;
 }
 
+@keyframes ohhell-health-wave {
+  0% {
+    transform: translate3d(-2%, 0, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate3d(2%, -1.5%, 0) rotate(180deg);
+  }
+
+  100% {
+    transform: translate3d(-2%, 0, 0) rotate(360deg);
+  }
+}
+
+.ohhell-health-progress {
+  --health-color: #ef2929;
+  --health-color-soft: #ff7878;
+}
+
+.ohhell-health-progress__inner {
+  position: absolute;
+  inset: 0.5rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #27272a;
+}
+
+.ohhell-health-progress__wave {
+  position: absolute;
+  top: calc(100% - var(--health-progress) * 1%);
+  left: -100%;
+  width: 300%;
+  aspect-ratio: 1;
+  border-radius: 41% 46% 43% 48%;
+  background: var(--health-color);
+  opacity: 0.82;
+  transform-origin: center;
+  will-change: transform;
+  animation: ohhell-health-wave 6s linear infinite;
+}
+
+.ohhell-health-progress__wave--secondary {
+  top: calc(100% - var(--health-progress) * 1% - 0.18rem);
+  left: -96%;
+  border-radius: 48% 42% 47% 43%;
+  background: var(--health-color-soft);
+  opacity: 0.5;
+  animation-duration: 9s;
+  animation-delay: -3s;
+  animation-direction: reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ohhell-health-progress__wave {
+    animation: none;
+  }
+}
+
+.ohhell-health-progress__label {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: white;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 90%);
+}
+
+.ohhell-health-progress__label strong {
+  font-size: 1.55rem;
+}
+
 @keyframes ohhell-game-ended-fade-in {
   from {
     opacity: 0;

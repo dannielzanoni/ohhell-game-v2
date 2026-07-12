@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Crown, Link as LinkIcon, LogIn, Sparkles, UserRound } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Check, Copy, Crown, GalleryHorizontalEnd, Link as LinkIcon, LogIn, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import heartIcon from '@/assets/icons/heart.png';
 import bidTurnSound from '@/assets/sounds/bid.mp3';
 import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
 import playerTurnSound from '@/assets/sounds/default.mp3';
 import tableBackground from '@/assets/back.png';
+import bidIcon from '@/assets/icons/hell-hand/bid.svg';
+import healthIcon from '@/assets/icons/hell-hand/heart_2.svg';
+import manaIcon from '@/assets/icons/hell-hand/mana.png';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -45,15 +48,17 @@ import {
   getGameTypeOption,
 } from '@/services/gameTypesService.js';
 import { cn } from '@/lib/utils.js';
+import { OFFICIAL_GAME_VISUAL_CONFIG } from '@/services/gameVisualConfigService.js';
 import {
-  startHellHandHomeTheme,
   stopHellHandHomeTheme,
 } from '@/services/hellHandAudioService.js';
 import { getLobbies, joinLobby } from '@/services/lobbyService.js';
 import { getMercenaries } from '@/services/mercenariesService.js';
 import {
+  findMercenary,
   getMercenarySubtitle,
   getMercenaryTitle,
+  mercenaries as localMercenaries,
   normalizeRemoteMercenaries,
 } from '../Characters/characterData.js';
 
@@ -214,6 +219,10 @@ function getCardImageSrc(
   deckType = deckTypes.SPANISH,
   fallbackSrc = defaultCardBack,
 ) {
+  if (card?.image || card?.image_url) {
+    return card.image || card.image_url;
+  }
+
   const key = getCardKey(card);
 
   if (deckType === deckTypes.FRENCH) {
@@ -234,6 +243,10 @@ function getCardImageSrc(
 function getCardLabel(card) {
   if (!card) {
     return '';
+  }
+
+  if (card.name) {
+    return card.name;
   }
 
   const rank = rankLabels[card.rank] || card.rank;
@@ -632,6 +645,14 @@ function normalizeStatusMap(statusMap, lifes, previousPlayers = {}) {
 }
 
 function getLobbyStatusMap(lobbyInfo) {
+  if (lobbyInfo?.type === 'Waiting') {
+    return lobbyInfo.data?.players || lobbyInfo.data;
+  }
+
+  if (lobbyInfo?.Waiting) {
+    return lobbyInfo.Waiting?.players || lobbyInfo.Waiting;
+  }
+
   if (lobbyInfo?.type === 'NotStarted') {
     return lobbyInfo.data?.players || lobbyInfo.data;
   }
@@ -682,6 +703,14 @@ function getSnapshotStatusMap(snapshot) {
 
   if (snapshot?.type === 'Playing') {
     return snapshot.data?.players;
+  }
+
+  if (snapshot?.Waiting) {
+    return snapshot.Waiting?.players || snapshot.Waiting;
+  }
+
+  if (snapshot?.Playing) {
+    return snapshot.Playing?.players;
   }
 
   return null;
@@ -859,24 +888,33 @@ function getSeatCardCount({
   return Math.max(0, roundCardCount - (playedCountsByPlayer[playerId] || 0));
 }
 
-function getSeatPosition(index, totalPlayers, isCurrentPlayer = false) {
+function getSeatPosition(
+  index,
+  totalPlayers,
+  isCurrentPlayer = false,
+  orbitX = 36,
+  orbitY = 28,
+  seatLift = CURRENT_PLAYER_SEAT_LIFT,
+) {
   if (totalPlayers <= 1) {
     return {
       left: '50%',
-      top: `${60 - (isCurrentPlayer ? CURRENT_PLAYER_SEAT_LIFT : 0)}%`,
+      top: `${60 - (isCurrentPlayer ? seatLift : 0)}%`,
     };
   }
 
   const angle = Math.PI / 2 + (index * 2 * Math.PI) / totalPlayers;
-  const left = 50 + Math.cos(angle) * 36;
+  const left = 50 + Math.cos(angle) * orbitX;
   const top =
-    48 + Math.sin(angle) * 28 - (isCurrentPlayer ? CURRENT_PLAYER_SEAT_LIFT : 0);
+    48 + Math.sin(angle) * orbitY - (isCurrentPlayer ? seatLift : 0);
 
   return {
     left: `${left.toFixed(2)}%`,
     top: `${top.toFixed(2)}%`,
   };
 }
+
+export { getSeatPosition };
 
 function ReadyControls({
   canToggleReady,
@@ -1052,34 +1090,6 @@ function BidProgress({ bid, points }) {
   );
 }
 
-function LifeHearts({ lifes }) {
-  const { t } = useTranslation();
-  const totalLives = Number.isFinite(Number(lifes))
-    ? Math.max(0, Math.trunc(Number(lifes)))
-    : 0;
-  const visibleLives = Math.min(MAX_DISPLAYED_LIFES, totalLives);
-  const label = t('game.lives', { count: totalLives });
-
-  return (
-    <div className="mt-1 flex items-center gap-0.5" aria-label={label}>
-      {Array.from({ length: visibleLives }).map((_, index) => (
-        <img
-          key={index}
-          src={heartIcon}
-          alt=""
-          className="size-4 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] sm:size-5"
-          draggable="false"
-        />
-      ))}
-      {totalLives > MAX_DISPLAYED_LIFES ? (
-        <span className="ml-1 text-xs font-black leading-none text-red-100 sm:text-sm">
-          x{totalLives}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
 function ManaPool({ mana }) {
   const { t } = useTranslation();
   const current = Math.max(0, Math.trunc(Number(mana?.current) || 0));
@@ -1094,7 +1104,8 @@ function ManaPool({ mana }) {
       className="mt-1 flex items-center gap-1"
       aria-label={t('game.manaValue', { current, max })}
     >
-      <span className="h-2 w-16 overflow-hidden rounded-full bg-sky-950/80 ring-1 ring-sky-200/20">
+      <img src={manaIcon} alt="" className="size-4 shrink-0 object-contain" draggable="false" />
+      <span className="h-2 w-[6.75rem] overflow-hidden rounded-full bg-sky-950/80 ring-1 ring-sky-200/20">
         <span
           className="block h-full rounded-full bg-gradient-to-r from-sky-300 to-cyan-200"
           style={{ width: `${max ? Math.min(100, (current / max) * 100) : 0}%` }}
@@ -1161,7 +1172,9 @@ function PlayerSeat({
   isReady = false,
   isTurnToPlay = false,
   lifes,
+  maxLifes = MAX_DISPLAYED_LIFES,
   mana,
+  mercenaryIconSrc = '',
   nickname,
   onPowerCardDrop = null,
   position,
@@ -1169,12 +1182,16 @@ function PlayerSeat({
   readyControls = null,
   showReadyState = false,
   turnTimer = null,
+  visualScale = 1,
 }) {
-  const scaleClass = isCurrent ? 'scale-90' : 'scale-75';
   const isPowerDropActive = canDropPowerCard && draggingPowerCard?.type === 'targetable';
   const timerNow = useTimerNow(turnTimer);
   const timerProgress = getTimerSnapshot(turnTimer, timerNow).progress;
   const showTurnTimer = Boolean(isTurnToPlay && turnTimer);
+  const numericLifes = Math.max(0, Number(lifes) || 0);
+  const numericMaxLifes = Math.max(1, Number(maxLifes) || MAX_DISPLAYED_LIFES);
+  const healthPercent = Math.min(100, Math.round((numericLifes / numericMaxLifes) * 100));
+  const playerIconSrc = mercenaryIconSrc || avatarSrc;
   const avatarBorderClass = isPowerDropActive
     ? 'border-violet-200 ring-4 ring-violet-300/55'
     : isTurnToPlay
@@ -1199,8 +1216,11 @@ function PlayerSeat({
 
   return (
     <div
-      className={`absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 ${scaleClass} sm:w-[21.6rem]`}
-      style={position}
+      className="absolute z-10 w-[min(19.8rem,calc(100vw-1.5rem))] sm:w-[21.6rem]"
+      style={{
+        ...position,
+        transform: `translate(-50%, -50%) scale(${(isCurrent ? 0.9 : 0.75) * visualScale})`,
+      }}
     >
       <SeatCardBacks cardBackSrc={cardBackSrc} count={cardCount} />
 
@@ -1224,19 +1244,35 @@ function PlayerSeat({
           ) : null}
 
           <div
-            className={`relative grid size-full place-items-center overflow-hidden rounded-full border-[3px] ${avatarBorderClass} bg-black shadow-2xl shadow-black/60`}
+            className={`ohhell-health-progress relative grid size-full place-items-center overflow-hidden rounded-full border-[3px] ${avatarBorderClass} bg-zinc-950 shadow-2xl shadow-black/60`}
+            data-value={healthPercent}
+            role="progressbar"
+            aria-label={`${nickname}: ${numericLifes} de ${numericMaxLifes} de vida`}
+            aria-valuemin={0}
+            aria-valuemax={numericMaxLifes}
+            aria-valuenow={numericLifes}
+            style={{ '--health-progress': healthPercent }}
           >
-            {avatarSrc ? (
-              <img
-                src={avatarSrc}
-                alt=""
-                className="size-full scale-110 object-cover"
-                draggable="false"
-              />
+            <div className="ohhell-health-progress__inner" aria-hidden="true">
+              <span className="ohhell-health-progress__wave" />
+              <span className="ohhell-health-progress__wave ohhell-health-progress__wave--secondary" />
+            </div>
+          </div>
+
+          <div className="absolute -bottom-1 -left-2 z-30 grid size-[3.3rem] place-items-center overflow-hidden rounded-full border-2 border-amber-300/80 bg-black shadow-lg shadow-black/70 sm:size-[3.6rem]">
+            {playerIconSrc ? (
+              <img src={playerIconSrc} alt="" className="size-full object-cover" draggable="false" />
             ) : (
-              <UserRound className="size-11 text-zinc-300 sm:size-12" />
+              <UserRound className="size-6 text-zinc-300" />
             )}
           </div>
+          <span
+            className="absolute -bottom-1 left-9 z-30 inline-flex items-center gap-1.5 rounded-full border border-red-200/25 bg-zinc-950/95 px-2.5 py-1.5 text-[0.85rem] font-black leading-none text-red-50 shadow-lg shadow-black/60 sm:left-10 sm:text-[0.975rem]"
+            aria-label={`${numericLifes} de ${numericMaxLifes} de vida`}
+          >
+            <img src={healthIcon} alt="" className="size-3.5 object-contain" draggable="false" />
+            {numericLifes}/{numericMaxLifes}
+          </span>
         </div>
 
         <div
@@ -1246,16 +1282,16 @@ function PlayerSeat({
             <p className="truncate text-sm font-semibold leading-5 sm:text-base">
               {nickname}
             </p>
-            <LifeHearts lifes={lifes} />
             <ManaPool mana={mana} />
             <BidProgress bid={bid} points={points} />
           </div>
 
           <div
             aria-label="Bid escolhido"
-            className="grid h-11 min-w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-black/45 px-3 text-base font-bold text-white shadow-inner shadow-black/40 sm:h-12 sm:min-w-12"
+            className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-2xl border border-white/10 bg-black/45 px-3 text-[1.2rem] font-bold text-white shadow-inner shadow-black/40 sm:h-12 sm:min-w-12"
           >
             {bid ?? '-'}
+            <img src={bidIcon} alt="" className="size-4 object-contain" draggable="false" />
           </div>
         </div>
       </div>
@@ -1278,6 +1314,9 @@ function TableCenter({
   pile,
   playersById,
   upcard,
+  visualOffsetX = 0,
+  visualOffsetY = 0,
+  visualScale = 1,
 }) {
   const { t } = useTranslation();
 
@@ -1310,7 +1349,12 @@ function TableCenter({
     });
 
   return (
-    <div className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-5 p-4 text-white sm:gap-8">
+    <div
+      className="absolute left-1/2 top-1/2 z-0 flex w-[min(35rem,calc(100vw-2rem))] items-center justify-center gap-5 p-4 text-white sm:gap-8"
+      style={{
+        transform: `translate(calc(-50% + ${visualOffsetX}%), calc(-50% + ${visualOffsetY}%)) scale(${visualScale})`,
+      }}
+    >
       {upcard ? (
         <div className="grid justify-items-center gap-1">
           <div
@@ -1347,13 +1391,13 @@ function TableCenter({
       <div className="grid min-w-28 justify-items-center gap-2">
         <div className="relative h-[7.7rem] w-[8.8rem] translate-y-[20%] sm:h-[9.9rem] sm:w-[12.1rem]">
           {visualPile.length ? (
-            visualPile.map(({ isElevated, turn }, index) => {
+            visualPile.map(({ index: turnIndex, isElevated, turn }, index) => {
               const playerName =
                 playersById[turn.player_id]?.nickname || turn.player_id;
 
               return (
                 <img
-                  key={getTurnKey(turn)}
+                  key={`${getTurnKey(turn)}:${turnIndex}`}
                   src={getCardImageSrc(turn.card, deckType, cardBackSrc)}
                   alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
@@ -1373,18 +1417,30 @@ function TableCenter({
   );
 }
 
-function BidControls({ onBid, possibleBids }) {
+function BidControls({
+  onBid,
+  possibleBids,
+  visualOffsetX = 0,
+  visualOffsetY = 0,
+  visualScale = 1,
+}) {
   if (!possibleBids.length) {
     return null;
   }
 
   return (
-    <div className="absolute bottom-40 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-2xl border border-white/10 bg-black/80 p-3 shadow-2xl shadow-black/50 backdrop-blur sm:bottom-73">
+    <div
+      className="absolute bottom-40 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] flex-wrap justify-center gap-2 rounded-2xl border border-red-300/20 bg-black/95 p-3 shadow-2xl shadow-black/50 backdrop-blur sm:bottom-73"
+      style={{
+        transform: `translate(calc(-50% + ${visualOffsetX}%), ${visualOffsetY}%) scale(${visualScale})`,
+        transformOrigin: 'center bottom',
+      }}
+    >
       {possibleBids.map((bid) => (
         <button
           key={bid}
           type="button"
-          className="size-12 cursor-pointer rounded-xl border border-amber-300/50 bg-amber-400 text-base font-black text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-amber-300"
+          className="size-12 cursor-pointer rounded-xl border border-red-300/50 bg-red-600 text-base font-black text-white shadow-lg shadow-black/30 transition duration-150 ease-out hover:z-10 hover:scale-115 hover:bg-red-500"
           onClick={() => onBid(bid)}
         >
           {bid}
@@ -1491,7 +1547,13 @@ function RoomLinkCopy({ lobbyId }) {
   );
 }
 
-function PlayedCardAnimation({ card, cardBackSrc, deckType, onAnimationEnd }) {
+function PlayedCardAnimation({
+  animationDuration,
+  card,
+  cardBackSrc,
+  deckType,
+  onAnimationEnd,
+}) {
   if (!card) {
     return null;
   }
@@ -1502,6 +1564,7 @@ function PlayedCardAnimation({ card, cardBackSrc, deckType, onAnimationEnd }) {
       alt=""
       className="ohhell-card-play-animation absolute bottom-8 left-1/2 z-50 h-[8.47rem] w-[5.72rem] rounded-lg border-2 border-black object-cover shadow-2xl shadow-black/70 sm:h-[10.89rem] sm:w-[7.26rem]"
       draggable="false"
+      style={animationDuration ? { animationDuration: `${animationDuration}ms` } : undefined}
       onAnimationEnd={onAnimationEnd}
     />
   );
@@ -1622,7 +1685,27 @@ function LifeLossPopup({ highlight }) {
   );
 }
 
-function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) {
+function PlayerHand({
+  canPlayCards,
+  cardBackSrc,
+  cards,
+  centered = false,
+  deckType,
+  onPlayCard,
+  upcard = null,
+  visualOffsetY = 0,
+  visualScale = 1,
+}) {
+  const [isCompact, setIsCompact] = useState(false);
+  const [manualCards, setManualCards] = useState(() => cards);
+  const draggedCardIndexRef = useRef(null);
+  const droppedInsideRef = useRef(false);
+  const cardsSignature = cards.map(getCardKey).sort().join('|');
+
+  useEffect(() => {
+    setManualCards(cards);
+  }, [cardsSignature]);
+
   if (!cards.length) {
     return null;
   }
@@ -1642,21 +1725,95 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
   const cardSizeClass = isFrenchDeck
     ? 'h-[9.22rem] w-[6.35rem] sm:h-[9.8rem] sm:w-[6.75rem]'
     : 'h-[10.25rem] w-[6.82rem] sm:h-[10.89rem] sm:w-[7.26rem]';
+  const compactOverlapClass = isFrenchDeck
+    ? 'ml-[-3.18rem] sm:ml-[-3.38rem]'
+    : 'ml-[-3.41rem] sm:ml-[-3.63rem]';
+  const orderedCards = manualCards;
+
+  const reorderCard = (targetIndex) => {
+    const sourceIndex = draggedCardIndexRef.current;
+    if (sourceIndex === null) return;
+    droppedInsideRef.current = true;
+    if (sourceIndex === targetIndex) return;
+    setManualCards((currentCards) => {
+      const nextCards = [...currentCards];
+      const [movedCard] = nextCards.splice(sourceIndex, 1);
+      nextCards.splice(targetIndex, 0, movedCard);
+      return nextCards;
+    });
+  };
 
   return (
-    <div className="absolute bottom-1 left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 translate-y-[10%] items-end justify-start overflow-x-auto px-2 pb-3 sm:bottom-3 sm:max-w-[min(92vw,82rem)] sm:justify-center sm:overflow-visible sm:px-0">
-      <div className="flex w-max shrink-0 items-end justify-center gap-0">
-        {cards.map((card, index) => (
+    <div
+      className={`absolute bottom-0 z-40 flex h-[13.5rem] items-end overflow-x-auto overflow-y-hidden rounded-lg border border-white/10 bg-black/60 px-3 pb-3 pt-12 shadow-2xl shadow-black/45 backdrop-blur-sm sm:h-[14.85rem] ${centered ? 'left-1/2 w-[min(92vw,82rem)] -translate-x-1/2' : 'left-3 w-[calc(50%-0.75rem)]'}`}
+      onDragOver={(event) => {
+        if (draggedCardIndexRef.current === null) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        reorderCard(orderedCards.length - 1);
+      }}
+    >
+      <div className="pointer-events-auto absolute right-3 top-3 z-[100] flex items-center gap-2">
+        <Button
+          type="button"
+          size="icon-sm"
+          className="size-11 [&_svg]:size-5"
+          variant={isCompact ? 'default' : 'outline'}
+          title={isCompact ? 'Desativar sobreposição' : 'Sobrepor cartas em 50%'}
+          aria-pressed={isCompact}
+          aria-label="Alternar sobreposição das cartas"
+          onClick={() => setIsCompact((current) => !current)}
+        >
+          <GalleryHorizontalEnd />
+        </Button>
+      </div>
+      <div
+        className={`flex min-w-full w-max items-end gap-0 pr-4 ${centered ? 'justify-center' : 'justify-start'}`}
+        dir="rtl"
+        style={{
+          scale: visualScale,
+          transform: `translateY(${visualOffsetY}%)`,
+          transformOrigin: 'right bottom',
+        }}
+      >
+        {orderedCards.map((card, index) => (
           <button
             key={`${getCardKey(card)}-${index}`}
+            dir="ltr"
             type="button"
             disabled={!canPlayCards}
+            draggable={canPlayCards}
             title={getCardLabel(card)}
-            className={`shrink-0 sm:scale-110 ${index === 0 ? '' : overlapClass} ${
+            className={`relative shrink-0 hover:!z-[150] ${index === 0 ? '' : isCompact ? compactOverlapClass : overlapClass} ${
               canPlayCards
                 ? 'cursor-pointer active:-translate-y-3 sm:hover:-translate-y-6 sm:hover:scale-125'
                 : 'cursor-not-allowed opacity-98'
             } transition duration-200`}
+            style={{ zIndex: orderedCards.length - index }}
+            onDragStart={(event) => {
+              draggedCardIndexRef.current = index;
+              droppedInsideRef.current = false;
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('text/plain', getCardKey(card));
+            }}
+            onDragOver={(event) => {
+              if (draggedCardIndexRef.current === null) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              reorderCard(index);
+            }}
+            onDragEnd={() => {
+              if (!droppedInsideRef.current) onPlayCard(card);
+              draggedCardIndexRef.current = null;
+              droppedInsideRef.current = false;
+            }}
             onClick={() => onPlayCard(card)}
           >
             <img
@@ -1673,6 +1830,7 @@ function PlayerHand({ canPlayCards, cardBackSrc, cards, deckType, onPlayCard }) 
 }
 
 function PowerCardHand({
+  canDiscardPowerCards = false,
   canSkipPowerPhase,
   canUsePowerCards,
   cards,
@@ -1680,24 +1838,40 @@ function PowerCardHand({
   onPowerCardDragStart,
   onSkipPowerPhase,
   onUsePowerCard,
+  visualOffsetX = 0,
+  visualOffsetY = 0,
+  visualScale = 1,
 }) {
   const { t } = useTranslation();
+  const [hoveredPowerCard, setHoveredPowerCard] = useState(null);
 
   if (!cards.length && !canSkipPowerPhase) {
     return null;
   }
 
   return (
-    <div className="absolute bottom-[11.25rem] left-1/2 z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-2 overflow-x-auto px-2 pb-2 sm:bottom-[13.75rem] sm:max-w-[min(92vw,56rem)] sm:justify-center sm:overflow-visible sm:px-0">
+    <div
+      className={`absolute bottom-0 right-3 z-40 flex h-[13.5rem] w-[calc(50%-0.75rem)] items-end justify-start gap-2 rounded-lg border border-white/10 bg-black/60 px-4 pb-3 shadow-2xl shadow-black/45 backdrop-blur-sm sm:h-[14.85rem] ${cards.length > 5 ? 'overflow-x-auto overflow-y-hidden' : 'overflow-visible'}`}
+      style={{
+        transform: `translate(${visualOffsetX}%, ${visualOffsetY}%)`,
+        transformOrigin: 'left bottom',
+      }}
+    >
+      <div
+        className="flex min-w-full w-max items-end justify-start gap-2"
+        style={{ scale: visualScale, transformOrigin: 'left bottom' }}
+      >
       {cards.map((card, index) => {
         const isTargetable = card.type === 'targetable';
         const cardReady = card?.state?.ready !== false;
         const canUseCard = canUsePowerCards && cardReady;
-        const canDrag = canUseCard && isTargetable;
+        const canDrag = canUseCard && (isTargetable || canDiscardPowerCards);
+        const imageSrc = card.image || card.image_url || '';
 
         return (
           <button
             key={`${card.id}-${index}`}
+            dir="ltr"
             type="button"
             disabled={!canUseCard}
             draggable={canDrag}
@@ -1708,13 +1882,23 @@ function PowerCardHand({
                 ? t('game.powerCardDragToTarget')
                 : card.description || card.name
             }
-            className={`min-w-36 shrink-0 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white shadow-2xl shadow-black/50 backdrop-blur transition sm:min-w-44 ${
+            className={`${
+              imageSrc
+                ? 'aspect-[0.58] w-20 overflow-hidden rounded-lg border-2 border-black bg-black p-0 sm:w-24'
+                : 'min-w-36 rounded-2xl border border-violet-200/40 bg-violet-950/90 px-4 py-3 text-left text-white backdrop-blur sm:min-w-44'
+            } origin-bottom shrink-0 shadow-2xl shadow-black/50 transition ${
               canUseCard
                 ? isTargetable
-                  ? 'cursor-grab hover:-translate-y-1 hover:border-violet-200 active:cursor-grabbing active:translate-y-0'
-                  : 'cursor-pointer hover:-translate-y-1 hover:border-violet-200 active:translate-y-0'
+                  ? 'cursor-grab hover:z-50 hover:-translate-y-1 hover:scale-145 hover:border-violet-200 active:cursor-grabbing active:translate-y-0'
+                  : 'cursor-pointer hover:z-50 hover:-translate-y-1 hover:scale-145 hover:border-violet-200 active:translate-y-0'
                 : 'cursor-not-allowed opacity-70'
             }`}
+            onMouseEnter={(event) => {
+              if (cards.length <= 5 || !imageSrc) return;
+              const rect = event.currentTarget.getBoundingClientRect();
+              setHoveredPowerCard({ card, left: rect.left + rect.width / 2, top: rect.bottom });
+            }}
+            onMouseLeave={() => setHoveredPowerCard(null)}
             onClick={() => {
               if (canUseCard && !isTargetable) {
                 onUsePowerCard(card);
@@ -1732,23 +1916,34 @@ function PowerCardHand({
               onPowerCardDragStart(card);
             }}
           >
-            <span className="block text-[0.62rem] font-black uppercase tracking-[0.22em] text-violet-200">
-              {t('game.powerCard')}
-            </span>
-            <strong className="mt-1 block truncate text-sm font-black sm:text-base">
-              {card.name}
-            </strong>
-            <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
-              {card.description}
-            </small>
-            <span className="mt-2 inline-flex rounded-full border border-sky-200/30 bg-sky-300/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.18em] text-sky-100">
-              {t('game.mana')}: {card.mana_cost ?? card.manaCost ?? 0}
-            </span>
-            {isTargetable ? (
-              <span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
-                {t('game.dragToTarget')}
-              </span>
-            ) : null}
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={card.name || t('game.powerCard')}
+                className="size-full object-cover"
+                draggable="false"
+              />
+            ) : (
+              <>
+                <span className="block text-[0.62rem] font-black uppercase tracking-[0.22em] text-violet-200">
+                  {t('game.powerCard')}
+                </span>
+                <strong className="mt-1 block truncate text-sm font-black sm:text-base">
+                  {card.name}
+                </strong>
+                <small className="mt-1 block max-h-8 overflow-hidden text-xs font-semibold text-violet-100/80">
+                  {card.description}
+                </small>
+                <span className="mt-2 inline-flex rounded-full border border-sky-200/30 bg-sky-300/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.18em] text-sky-100">
+                  {t('game.mana')}: {card.mana_cost ?? card.manaCost ?? 0}
+                </span>
+                {isTargetable ? (
+                  <span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.18em] text-violet-200/80">
+                    {t('game.dragToTarget')}
+                  </span>
+                ) : null}
+              </>
+            )}
           </button>
         );
       })}
@@ -1761,9 +1956,35 @@ function PowerCardHand({
           {t('game.skipPowerPhase')}
         </Button>
       ) : null}
+      </div>
+      {hoveredPowerCard
+        ? createPortal(
+            <img
+              src={hoveredPowerCard.card.image || hoveredPowerCard.card.image_url}
+              alt={hoveredPowerCard.card.name || t('game.powerCard')}
+              className="pointer-events-none fixed z-[200] aspect-[0.58] w-24 origin-bottom rounded-lg border-2 border-violet-200 object-cover shadow-2xl shadow-black sm:w-28"
+              draggable="false"
+              style={{
+                left: hoveredPowerCard.left,
+                top: hoveredPowerCard.top,
+                transform: 'translate(-50%, -100%) scale(1.45)',
+              }}
+            />,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
+
+export {
+  BidControls,
+  PlayedCardAnimation,
+  PlayerHand,
+  PlayerSeat,
+  PowerCardHand,
+  TableCenter,
+};
 
 function LobbyAuthGate({
   canContinue,
@@ -1856,11 +2077,10 @@ function HellHandMercenaryJoinGate({
   open,
 }) {
   const { t } = useTranslation();
-
   return (
     <Dialog open={open}>
       <DialogContent
-        className="pointer-events-auto z-[70] max-h-[min(44rem,calc(100dvh-2rem))] max-w-3xl overflow-hidden border-red-200/15 bg-black/92 p-0 text-stone-100 shadow-2xl shadow-black/55"
+        className="pointer-events-auto z-[70] max-h-[90dvh] w-[min(96vw,72rem)] max-w-none overflow-hidden border-red-200/15 bg-black/92 p-0 text-stone-100 shadow-2xl shadow-black/55 sm:max-w-none"
         showCloseButton={false}
         onEscapeKeyDown={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
@@ -1876,18 +2096,18 @@ function HellHandMercenaryJoinGate({
           </DialogHeader>
         </div>
 
-        <div className="max-h-[min(32rem,calc(100dvh-13rem))] overflow-y-auto px-5 py-4">
+        <div className="max-h-[calc(90dvh-7.5rem)] overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {isLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, index) => (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-32 animate-pulse rounded-lg border border-red-200/10 bg-red-950/20"
+                  className="h-40 animate-pulse rounded-lg border border-red-200/10 bg-red-950/20"
                 />
               ))}
             </div>
           ) : characters.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {characters.map((character) => {
                 const title = getMercenaryTitle(character, t);
                 const subtitle = getMercenarySubtitle(character, t);
@@ -1900,10 +2120,10 @@ function HellHandMercenaryJoinGate({
                     aria-label={t('pages.characters.chooseCharacter', {
                       name: title,
                     })}
-                    className="group grid min-h-32 cursor-pointer grid-cols-[5.5rem_1fr] overflow-hidden rounded-lg border border-red-200/15 bg-black/70 text-left shadow-lg shadow-black/35 outline-none transition hover:border-amber-300/60 hover:bg-red-950/35 focus-visible:ring-2 focus-visible:ring-amber-300"
+                    className="group grid min-h-40 cursor-pointer grid-cols-[7rem_1fr] overflow-hidden rounded-lg border border-red-200/15 bg-black/70 text-left shadow-lg shadow-black/35 outline-none transition hover:border-amber-300/60 hover:bg-red-950/35 focus-visible:ring-2 focus-visible:ring-amber-300"
                     onClick={() => onSelect(character.id)}
                   >
-                    <span className="relative block size-full min-h-32 overflow-hidden bg-red-950/35">
+                    <span className="relative block size-full min-h-40 overflow-hidden bg-red-950/35">
                       {imageSrc ? (
                         <img
                           src={imageSrc}
@@ -1992,6 +2212,7 @@ export function Game() {
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
   const [actionTimer, setActionTimer] = useState(null);
+  const officialVisualConfig = OFFICIAL_GAME_VISUAL_CONFIG;
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
   );
@@ -2168,14 +2389,15 @@ export function Game() {
   }, [roundCardCount]);
 
   useEffect(() => {
-    if (gameType !== gameTypes.FODINHA_POWER) {
-      stopHellHandHomeTheme();
-      return undefined;
-    }
+    stopHellHandHomeTheme();
+  }, [lobbyId]);
 
-    startHellHandHomeTheme();
-    return () => stopHellHandHomeTheme();
-  }, [gameType]);
+  useEffect(() => {
+    if (!lobbyId || !gameType) return;
+    window.dispatchEvent(new CustomEvent('ohhell:lobby-game-type', {
+      detail: { gameType, lobbyId },
+    }));
+  }, [gameType, lobbyId]);
 
   useEffect(() => {
     if (
@@ -3784,8 +4006,9 @@ export function Game() {
   return (
     <main
       aria-label={t('game.tableAria')}
-      className="relative min-h-screen overflow-hidden bg-black"
+      className="relative flex h-screen flex-col overflow-hidden bg-black"
     >
+      <section className="relative min-h-0 flex-1 overflow-hidden">
       <div
         className="absolute left-1/2 top-1/2 h-screen w-[130vh] -translate-x-1/2 -translate-y-1/2 rotate-90 scale-80 bg-cover bg-center bg-no-repeat sm:h-full sm:w-full sm:rotate-0 sm:scale-100"
         style={{ backgroundImage: `url(${tableBackground})` }}
@@ -3798,6 +4021,9 @@ export function Game() {
         pile={pile}
         playersById={playersById}
         upcard={upcard}
+        visualOffsetX={officialVisualConfig.centerOffsetX || 0}
+        visualOffsetY={officialVisualConfig.centerOffsetY || 0}
+        visualScale={officialVisualConfig.centerScale || 1}
       />
 
       <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
@@ -3821,6 +4047,10 @@ export function Game() {
 
       {tablePlayers.map((player, index) => {
         const isCurrentPlayer = player.id === resolvedCurrentPlayerId;
+        const mercenary = findMercenary(player.mercenaryId, [
+          ...joinMercenaries,
+          ...localMercenaries,
+        ]);
         const cardCount = getSeatCardCount({
           isCurrent: isCurrentPlayer,
           playerDeckLength: playerDeck.length,
@@ -3846,13 +4076,18 @@ export function Game() {
             isReady={player.ready}
             isTurnToPlay={player.turnToPlay || player.id === turnPlayerId}
             lifes={player.lifes ?? lifes}
+            maxLifes={mercenary?.vidaTotal || mercenary?.totalLife || lifes}
             mana={player.mana}
+            mercenaryIconSrc={mercenary?.icon || ''}
             nickname={player.nickname}
             onPowerCardDrop={() => handlePowerCardDrop(player.id)}
             position={getSeatPosition(
               index,
               tablePlayers.length,
               isCurrentPlayer,
+              officialVisualConfig.seatOrbitX || 36,
+              officialVisualConfig.seatOrbitY || 28,
+              officialVisualConfig.seatLift ?? 2,
             )}
             points={player.points}
             readyControls={
@@ -3871,11 +4106,20 @@ export function Game() {
             }
             showReadyState={isWaitingForReady}
             turnTimer={player.id === turnPlayerId ? actionTimer : null}
+            visualScale={officialVisualConfig.seatScale || 1}
           />
         );
       })}
 
-      <BidControls onBid={sendBid} possibleBids={hasGameSocket ? possibleBids : []} />
+      <BidControls
+        onBid={sendBid}
+        possibleBids={hasGameSocket ? possibleBids : []}
+        visualOffsetX={officialVisualConfig.bidControlOffsetX || 0}
+        visualOffsetY={officialVisualConfig.bidControlOffsetY || 0}
+        visualScale={officialVisualConfig.bidControlScale || 1}
+      />
+      </section>
+      <section className="relative h-[14.85rem] shrink-0 bg-zinc-950">
       <PowerCardHand
         canSkipPowerPhase={canSkipPowerPhase}
         canUsePowerCards={canUsePowerCards}
@@ -3884,14 +4128,22 @@ export function Game() {
         onPowerCardDragStart={setDraggingPowerCard}
         onSkipPowerPhase={handleSkipPowerPhase}
         onUsePowerCard={handleUsePowerCard}
+        visualOffsetX={officialVisualConfig.powerHandOffsetX || 0}
+        visualOffsetY={officialVisualConfig.powerHandOffsetY || 0}
+        visualScale={Math.max(1, Number(officialVisualConfig.powerHandScale) || 1) * 1.3}
       />
       <PlayerHand
         canPlayCards={canPlayCards}
         cardBackSrc={selectedCardBackSrc}
         cards={playerDeck}
+        centered={gameType === gameTypes.FODINHA_CLASSIC}
         deckType={gamePreferences.deckType}
         onPlayCard={handlePlayCard}
+        upcard={upcard}
+        visualOffsetY={officialVisualConfig.classicHandOffsetY ?? 0}
+        visualScale={officialVisualConfig.classicHandScale || 1}
       />
+      </section>
       <PlayedCardAnimation
         key={playedCardAnimation?.id}
         card={playedCardAnimation?.card}
