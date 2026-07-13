@@ -49,8 +49,8 @@ export function AvatarEditModal({
   const modal = (
     <div
       className={cn(
-        'fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 pb-[20dvh] backdrop-blur-sm sm:p-4 sm:pb-[20vh]',
-        isHellHand && 'z-[100] bg-black/85 p-3 pb-3 sm:p-5 sm:pb-5',
+        'pointer-events-auto fixed inset-0 z-[80] flex min-h-[100dvh] items-center justify-center bg-black/70 p-2 backdrop-blur-sm sm:p-4',
+        isHellHand && 'z-[100] bg-black/85 p-3 sm:p-5',
       )}
       role="presentation"
       onMouseDown={onClose}
@@ -60,9 +60,9 @@ export function AvatarEditModal({
         aria-modal="true"
         aria-labelledby="avatar-edit-title"
         className={cn(
-          'flex h-[min(42rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[88vh] sm:max-w-2xl',
+          'flex h-[min(50.4rem,calc(100dvh-1rem))] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl shadow-black/40 sm:max-h-[96vh] sm:max-w-2xl',
           isHellHand &&
-            'h-[min(42rem,calc(100dvh-1.5rem))] w-[min(48rem,calc(100vw-1.5rem))] max-w-none rounded-lg border-red-200/15 bg-black/90 text-stone-100 shadow-black/70 sm:h-[min(46rem,calc(100dvh-2.5rem))] sm:w-[min(64rem,calc(100vw-2.5rem))]',
+            'h-[min(50.4rem,calc(100dvh-1.5rem))] w-[min(48rem,calc(100vw-1.5rem))] max-w-none rounded-lg border-red-200/15 bg-black/90 text-stone-100 shadow-black/70 sm:h-[min(55.2rem,calc(100dvh-2.5rem))] sm:w-[min(64rem,calc(100vw-2.5rem))]',
         )}
         onMouseDown={(event) => event.stopPropagation()}
       >

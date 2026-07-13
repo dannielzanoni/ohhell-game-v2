@@ -9,8 +9,9 @@ export const deckTypes = {
 
 export const defaultGamePreferences = {
   cardBack: 'back_card',
-  deckType: deckTypes.SPANISH,
+  deckType: deckTypes.SPANISH_8BIT,
   hellHandHomeMusicVolume: 8,
+  turnSound: 'Default',
   volume: 70,
 };
 
@@ -48,6 +49,10 @@ export function normalizeGamePreferences(preferences = {}) {
       preferences.hellHandHomeMusicVolume,
       defaultGamePreferences.hellHandHomeMusicVolume,
     ),
+    turnSound:
+      typeof preferences.turnSound === 'string' && preferences.turnSound.trim()
+        ? preferences.turnSound.trim()
+        : defaultGamePreferences.turnSound,
     volume: normalizeVolume(preferences.volume, defaultGamePreferences.volume),
   };
 }

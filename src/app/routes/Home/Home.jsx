@@ -15,7 +15,7 @@ import { authService } from '@/services/authService.js';
 import { getMyStats } from '@/services/statsService.js';
 
 const homeActions = [
-  { icon: Play, labelKey: 'pages.links.createGame.label', path: '/create-game' },
+  { icon: Play, labelKey: 'common.play', path: '/create-game' },
   { icon: Users, labelKey: 'pages.links.rooms.label', path: '/rooms' },
   { icon: Crown, labelKey: 'pages.links.leaderboard.label', path: '/leaderboard' },
   { icon: BookOpen, labelKey: 'pages.links.howToPlay.label', path: '/how-to-play' },

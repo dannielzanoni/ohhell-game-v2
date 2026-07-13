@@ -57,6 +57,22 @@ const cardBackImages = import.meta.glob(
   },
 );
 
+const turnSoundFiles = import.meta.glob(
+  '/src/assets/sounds/turn sounds/*.mp3',
+  {
+    eager: true,
+    import: 'default',
+  },
+);
+
+const turnSoundOptions = Object.keys(turnSoundFiles)
+  .map((path) => decodeURIComponent(path.split('/').pop().replace(/\.mp3$/i, '')))
+  .sort((first, second) => {
+    if (first === defaultGamePreferences.turnSound) return -1;
+    if (second === defaultGamePreferences.turnSound) return 1;
+    return first.localeCompare(second);
+  });
+
 function getCardBackNumber(value) {
   if (value === 'back_card') {
     return 1;
@@ -259,6 +275,30 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
                     updateVolumePreference('volume', event.target.value)
                   }
                 />
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold">
+                    {t('settings.turnSound')}
+                  </span>
+                  <select
+                    value={preferences.turnSound}
+                    aria-label={t('settings.turnSound')}
+                    className={cn(
+                      'h-11 w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-semibold text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/40',
+                      isHellHand &&
+                        'border-red-300/20 bg-red-950/35 text-stone-100 focus:border-amber-300 focus:ring-amber-300/25',
+                    )}
+                    onChange={(event) =>
+                      updatePreferences({ turnSound: event.target.value })
+                    }
+                  >
+                    {turnSoundOptions.map((soundName) => (
+                      <option key={soundName} value={soundName}>
+                        {soundName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
                 {showHomeMusicVolume ? (
                   <>

@@ -702,6 +702,7 @@ export const pt = {
     sounds: 'Sons',
     spanish: 'Espanhol',
     spanish8Bit: 'Espanhol 8-bit',
+    turnSound: 'Áudio de ação do turno',
     title: 'Configurações',
   },
 };

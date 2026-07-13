@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import bidTurnSound from '@/assets/sounds/bid.mp3';
 import cardAnimationSound from '@/assets/sounds/card_animation.mp3';
-import playerTurnSound from '@/assets/sounds/default.mp3';
 import tableBackground from '@/assets/back.png';
 import bidIcon from '@/assets/icons/hell-hand/bid.svg';
 import healthIcon from '@/assets/icons/hell-hand/heart_2.svg';
@@ -70,7 +69,8 @@ const ROUND_END_DELAY_MS = 1000;
 const PILE_WEAK_CARD_DELAY_MS = 1000;
 const LIFE_LOSS_HIGHLIGHT_DURATION_MS = 3600;
 const LIFE_LOSS_HIGHLIGHT_THRESHOLD = 3;
-const CLASSIC_TURN_DELAY_BASE_SECONDS = 20;
+const CLASSIC_TURN_DELAY_BASE_SECONDS = 11;
+const CLASSIC_TURN_DELAY_MULTIPLIER = 2;
 const POWER_TURN_DELAY_BASE_SECONDS = 30;
 const TURN_DELAY_CARD_SECONDS = 2;
 const TURN_DELAY_POWER_CARD_SECONDS = 5;
@@ -94,6 +94,13 @@ const cardBackImages = import.meta.glob('/src/assets/cards/back_cards/back_card*
   eager: true,
   import: 'default',
 });
+const playerTurnSounds = import.meta.glob(
+  '/src/assets/sounds/turn sounds/*.mp3',
+  {
+    eager: true,
+    import: 'default',
+  },
+);
 const defaultCardBack = cardBackImages['/src/assets/cards/back_cards/back_card.png'];
 const rankToAsset = {
   Eight: '8',
@@ -693,6 +700,14 @@ function getWaitingLobbySettings(container) {
     return container.NotStarted.settings;
   }
 
+  if (container?.type === 'Playing') {
+    return container.data?.settings || null;
+  }
+
+  if (container?.Playing?.settings) {
+    return container.Playing.settings;
+  }
+
   return null;
 }
 
@@ -741,7 +756,35 @@ function getGameInfoFromSnapshot(snapshot) {
     return snapshot.data?.game;
   }
 
+  if (snapshot?.Playing) {
+    return snapshot.Playing?.game;
+  }
+
   return null;
+}
+
+function getGamePile(gameInfo) {
+  const candidates = [
+    gameInfo?.pile,
+    gameInfo?.current_pile,
+    gameInfo?.stage?.data?.pile,
+    gameInfo?.stage?.pile,
+  ];
+
+  return candidates.find(Array.isArray);
+}
+
+function getPlayerTurnSound(soundName) {
+  const normalizedName = String(soundName || 'Default').toLowerCase();
+  const matchingEntry = Object.entries(playerTurnSounds).find(([path]) => {
+    const fileName = decodeURIComponent(path.split('/').pop().replace(/\.mp3$/i, ''));
+    return fileName.toLowerCase() === normalizedName;
+  });
+
+  return (
+    matchingEntry?.[1] ||
+    playerTurnSounds['/src/assets/sounds/turn sounds/Default.mp3']
+  );
 }
 
 function getLocalPlayerIdCandidates({
@@ -816,18 +859,33 @@ function applyGameInfo(playersById, gameInfo, defaultLifes) {
   return nextPlayers;
 }
 
-function sortPlayers(players, currentPlayerId) {
-  return [...players].sort((first, second) => {
-    if (first.id === currentPlayerId) {
-      return -1;
-    }
+function orderPlayersClockwise(players, playerOrder, currentPlayerId) {
+  const playersById = new Map(players.map((player) => [player.id, player]));
+  const orderedPlayers = [];
 
-    if (second.id === currentPlayerId) {
-      return 1;
-    }
+  playerOrder.forEach((playerId) => {
+    const player = playersById.get(playerId);
 
-    return first.id.localeCompare(second.id);
+    if (player) {
+      orderedPlayers.push(player);
+      playersById.delete(playerId);
+    }
   });
+
+  orderedPlayers.push(...playersById.values());
+
+  const currentIndex = orderedPlayers.findIndex(
+    (player) => player.id === currentPlayerId,
+  );
+
+  if (currentIndex <= 0) {
+    return orderedPlayers;
+  }
+
+  return [
+    ...orderedPlayers.slice(currentIndex),
+    ...orderedPlayers.slice(0, currentIndex),
+  ];
 }
 
 function hasPositiveLifes(player, defaultLifes) {
@@ -1267,10 +1325,10 @@ function PlayerSeat({
             )}
           </div>
           <span
-            className="absolute -bottom-1 left-9 z-30 inline-flex items-center gap-1.5 rounded-full border border-red-200/25 bg-zinc-950/95 px-2.5 py-1.5 text-[0.85rem] font-black leading-none text-red-50 shadow-lg shadow-black/60 sm:left-10 sm:text-[0.975rem]"
+            className="absolute -bottom-1 left-9 z-30 inline-flex items-center gap-1.5 rounded-full border border-red-200/25 bg-zinc-950/95 px-3 py-2 text-[0.94rem] font-black leading-none text-red-50 shadow-lg shadow-black/60 sm:left-10 sm:text-[1.07rem]"
             aria-label={`${numericLifes} de ${numericMaxLifes} de vida`}
           >
-            <img src={healthIcon} alt="" className="size-3.5 object-contain" draggable="false" />
+            <img src={healthIcon} alt="" className="size-4 object-contain" draggable="false" />
             {numericLifes}/{numericMaxLifes}
           </span>
         </div>
@@ -1392,22 +1450,41 @@ function TableCenter({
         <div className="relative h-[7.7rem] w-[8.8rem] translate-y-[20%] sm:h-[9.9rem] sm:w-[12.1rem]">
           {visualPile.length ? (
             visualPile.map(({ index: turnIndex, isElevated, turn }, index) => {
-              const playerName =
-                playersById[turn.player_id]?.nickname || turn.player_id;
+              const turnPlayer = playersById[turn.player_id];
+              const playerName = turnPlayer?.nickname || turn.player_id;
 
               return (
-                <img
+                <div
                   key={`${getTurnKey(turn)}:${turnIndex}`}
-                  src={getCardImageSrc(turn.card, deckType, cardBackSrc)}
-                  alt={`${playerName}: ${getCardLabel(turn.card)}`}
                   title={`${playerName}: ${getCardLabel(turn.card)}`}
-                  className={`absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-black bg-white object-contain shadow-xl shadow-black/60 transition-transform duration-500 ease-out`}
-                  draggable="false"
+                  className={`absolute left-1/2 top-1/2 ${pileCardSizeClass} -translate-x-1/2 -translate-y-1/2 transition-transform duration-500 ease-out`}
                   style={{
                     transform: `translate(-50%, -50%) translateX(${index * 22}px) rotate(${index * 5 - 8}deg)`,
                     zIndex: isElevated ? visualPile.length + 10 : index + 1,
                   }}
-                />
+                >
+                  <img
+                    src={getCardImageSrc(turn.card, deckType, cardBackSrc)}
+                    alt={`${playerName}: ${getCardLabel(turn.card)}`}
+                    className="size-full rounded-lg border-2 border-black bg-white object-contain shadow-xl shadow-black/60"
+                    draggable="false"
+                  />
+                  <span
+                    aria-label={playerName}
+                    className="absolute -bottom-1 -left-1 z-10 grid size-7 place-items-center overflow-hidden rounded-full border-2 border-amber-300 bg-black shadow-lg shadow-black/70 sm:size-8"
+                  >
+                    {turnPlayer?.avatarSrc ? (
+                      <img
+                        src={turnPlayer.avatarSrc}
+                        alt=""
+                        className="size-full object-cover"
+                        draggable="false"
+                      />
+                    ) : (
+                      <UserRound className="size-4 text-white" />
+                    )}
+                  </span>
+                </div>
               );
             })
           ) : null}
@@ -2259,6 +2336,7 @@ export function Game() {
       ),
     };
   });
+  const [playerOrder, setPlayerOrder] = useState(() => Object.keys(playersById));
   const playersByIdRef = useRef(playersById);
   const [joinError, setJoinError] = useState('');
   const [gameEndSummary, setGameEndSummary] = useState(null);
@@ -2296,11 +2374,15 @@ export function Game() {
         ? players
         : players.filter((player) => hasPositiveLifes(player, lifes));
 
-    return sortPlayers(visiblePlayers, resolvedCurrentPlayerId).slice(
+    return orderPlayersClockwise(
+      visiblePlayers,
+      playerOrder,
+      resolvedCurrentPlayerId,
+    ).slice(
       0,
       MAX_TABLE_PLAYERS,
     );
-  }, [lifes, matchPhase, playersById, resolvedCurrentPlayerId]);
+  }, [lifes, matchPhase, playerOrder, playersById, resolvedCurrentPlayerId]);
 
   const readyCount = tablePlayers.filter((player) => player.ready).length;
   const totalPlayers = tablePlayers.length;
@@ -2502,7 +2584,11 @@ export function Game() {
     }
 
     turnPromptSoundRef.current = soundKey;
-    playConfiguredSound(type === 'bid' ? bidTurnSound : playerTurnSound);
+    playConfiguredSound(
+      type === 'bid'
+        ? bidTurnSound
+        : getPlayerTurnSound(gamePreferencesRef.current.turnSound),
+    );
   };
 
   const clearActionTimer = useCallback(() => {
@@ -2565,10 +2651,14 @@ export function Game() {
           ? POWER_TURN_DELAY_BASE_SECONDS
           : CLASSIC_TURN_DELAY_BASE_SECONDS;
       const durationMs =
-        (baseSeconds +
-          normalizedCardCount * TURN_DELAY_CARD_SECONDS +
-          normalizedPowerCardCount * TURN_DELAY_POWER_CARD_SECONDS) *
-        1000;
+        actionGameType === gameTypes.FODINHA_CLASSIC
+          ? (baseSeconds + normalizedCardCount) *
+            CLASSIC_TURN_DELAY_MULTIPLIER *
+            1000
+          : (baseSeconds +
+              normalizedCardCount * TURN_DELAY_CARD_SECONDS +
+              normalizedPowerCardCount * TURN_DELAY_POWER_CARD_SECONDS) *
+            1000;
 
       const nextTimer = {
         cardCount: normalizedCardCount,
@@ -2651,6 +2741,14 @@ export function Game() {
 
       const nextCurrentPlayerId = getCurrentPlayerId();
 
+      if (lobbyId && gameType) {
+        window.dispatchEvent(
+          new CustomEvent('ohhell:lobby-game-type', {
+            detail: { gameType, lobbyId },
+          }),
+        );
+      }
+
       setAuthGateOpen(false);
       setCurrentPlayerId(nextCurrentPlayerId);
       setPlayersById((previousPlayers) => {
@@ -2672,7 +2770,7 @@ export function Game() {
   };
 
   useEffect(() => {
-    const nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
+    let nextLifes = getLobbyLifes(lobbyId, location.state?.lifes);
     const knownGameType = getKnownLobbyGameType(
       lobbyId,
       location.state?.gameType,
@@ -2806,6 +2904,14 @@ export function Game() {
     };
 
     const applyStatusMap = (statusMap, gameInfo) => {
+      const statusOrder = Object.entries(statusMap || {}).map(([id, status]) => {
+        return getClaimsPlayerId(status?.player) || id;
+      });
+
+      if (statusOrder.length) {
+        setPlayerOrder(statusOrder);
+      }
+
       setPlayersById((previousPlayers) => {
         const normalizedPlayers = normalizeStatusMap(
           statusMap,
@@ -2829,6 +2935,25 @@ export function Game() {
           localStorage.setItem(
             `ohhell_lobby_game_type_${lobbyId}`,
             waitingSettings.game_type,
+          );
+        }
+      }
+
+      const configuredLifes = Number(
+        waitingSettings.lifes ?? waitingSettings.lives,
+      );
+
+      if (
+        activeGameType === gameTypes.FODINHA_CLASSIC &&
+        Number.isFinite(configuredLifes) &&
+        configuredLifes > 0
+      ) {
+        nextLifes = configuredLifes;
+        setLifes(configuredLifes);
+        if (lobbyId) {
+          localStorage.setItem(
+            `ohhell_lobby_lifes_${lobbyId}`,
+            String(configuredLifes),
           );
         }
       }
@@ -2881,11 +3006,34 @@ export function Game() {
 
       const localPlayerIds = getLocalPlayerIds(gameInfo, statusMap);
       const localPlayerId = localPlayerIds[0] || null;
+      const snapshotInitialLifes = Number(gameInfo.initial_lifes);
+
+      if (
+        activeGameType === gameTypes.FODINHA_CLASSIC &&
+        Number.isFinite(snapshotInitialLifes) &&
+        snapshotInitialLifes > 0
+      ) {
+        nextLifes = snapshotInitialLifes;
+        setLifes(snapshotInitialLifes);
+        if (lobbyId) {
+          localStorage.setItem(
+            `ohhell_lobby_lifes_${lobbyId}`,
+            String(snapshotInitialLifes),
+          );
+        }
+      }
 
       setIsReadySending(false);
       setMatchPhase('playing');
       updateUpcard(gameInfo.upcard || null);
+      const snapshotPile = getGamePile(gameInfo);
+      if (snapshotPile) {
+        updatePile(snapshotPile);
+      }
       setTurnPlayerId(gameInfo.current_player || null);
+      if (Array.isArray(gameInfo.info) && gameInfo.info.length) {
+        setPlayerOrder(gameInfo.info.map((info) => info.id));
+      }
       setGameStage(
         gameInfo.stage?.type === 'Bidding'
           ? 'bidding'
@@ -2912,42 +3060,42 @@ export function Game() {
         setPowerCards(gameInfo.power_cards);
       }
 
-      if (
-        gameInfo.stage?.type === 'Bidding' &&
-        localPlayerIds.includes(gameInfo.current_player)
-      ) {
-        setPossibleBids(gameInfo.stage.data?.possible_bids || []);
+      if (gameInfo.stage?.type === 'Bidding') {
+        const snapshotPossibleBids = gameInfo.stage.data?.possible_bids || [];
+        setPossibleBids(
+          localPlayerIds.includes(gameInfo.current_player)
+            ? snapshotPossibleBids
+            : [],
+        );
         startActionTimer(
           'bid',
-          getActionCardCount(
-            Math.max(...(gameInfo.stage.data?.possible_bids || [0])),
-          ),
+          snapshotPossibleBids.length || getActionCardCount(),
           activeGameType,
           nextPowerCardCount,
         );
-        playTurnPromptSound('bid', gameInfo.current_player);
-      } else if (
-        gameInfo.stage?.type === 'Power' &&
-        localPlayerIds.includes(gameInfo.current_player)
-      ) {
+        if (localPlayerIds.includes(gameInfo.current_player)) {
+          playTurnPromptSound('bid', gameInfo.current_player);
+        }
+      } else if (gameInfo.stage?.type === 'Power') {
         startActionTimer(
           'power',
           0,
           activeGameType,
           nextPowerCardCount,
         );
-        playTurnPromptSound('bid', gameInfo.current_player);
-      } else if (
-        gameInfo.stage?.type === 'Dealing' &&
-        localPlayerIds.includes(gameInfo.current_player)
-      ) {
+        if (localPlayerIds.includes(gameInfo.current_player)) {
+          playTurnPromptSound('bid', gameInfo.current_player);
+        }
+      } else if (gameInfo.stage?.type === 'Dealing') {
         startActionTimer(
           'play',
           getActionCardCount(),
           activeGameType,
           nextPowerCardCount,
         );
-        playTurnPromptSound('play', gameInfo.current_player);
+        if (localPlayerIds.includes(gameInfo.current_player)) {
+          playTurnPromptSound('play', gameInfo.current_player);
+        }
       } else {
         clearActionTimer();
         setPossibleBids([]);
@@ -3050,9 +3198,18 @@ export function Game() {
               },
             };
           });
+          setPlayerOrder((currentOrder) => {
+            const playerId = getClaimsPlayerId(message.data);
+            return !playerId || currentOrder.includes(playerId)
+              ? currentOrder
+              : [...currentOrder, playerId];
+          });
           break;
         }
         case 'PlayerLeft':
+          setPlayerOrder((currentOrder) =>
+            currentOrder.filter((playerId) => playerId !== message.data.player_id),
+          );
           setPlayersById((previousPlayers) => {
             const nextPlayers = { ...previousPlayers };
             delete nextPlayers[message.data.player_id];
@@ -3180,17 +3337,16 @@ export function Game() {
           setGameStage('bidding');
           setMatchPhase('playing');
           setTurnPlayerId(message.data.player_id);
+          startActionTimer(
+            'bid',
+            (message.data.possible_bids || []).length || getActionCardCount(),
+            activeGameType,
+            powerCardCountRef.current,
+          );
           if (isLocalPlayerId(message.data.player_id)) {
             setPossibleBids(message.data.possible_bids || []);
-            startActionTimer(
-              'bid',
-              getActionCardCount(Math.max(...(message.data.possible_bids || [0]))),
-              activeGameType,
-              powerCardCountRef.current,
-            );
             playTurnPromptSound('bid', message.data.player_id);
           } else {
-            clearActionTimer();
             setPossibleBids([]);
           }
           setPlayersById((previousPlayers) => {
@@ -3213,16 +3369,14 @@ export function Game() {
           setMatchPhase('playing');
           setPossibleBids([]);
           setTurnPlayerId(message.data.player_id);
+          startActionTimer(
+            'power',
+            0,
+            activeGameType,
+            powerCardCountRef.current,
+          );
           if (isLocalPlayerId(message.data.player_id)) {
-            startActionTimer(
-              'power',
-              0,
-              activeGameType,
-              powerCardCountRef.current,
-            );
             playTurnPromptSound('bid', message.data.player_id);
-          } else {
-            clearActionTimer();
           }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
@@ -3305,16 +3459,14 @@ export function Game() {
           setMatchPhase('playing');
           setPossibleBids([]);
           setTurnPlayerId(message.data.player_id);
+          startActionTimer(
+            'play',
+            getActionCardCount(),
+            activeGameType,
+            powerCardCountRef.current,
+          );
           if (isLocalPlayerId(message.data.player_id)) {
-            startActionTimer(
-              'play',
-              getActionCardCount(),
-              activeGameType,
-              powerCardCountRef.current,
-            );
             playTurnPromptSound('play', message.data.player_id);
-          } else {
-            clearActionTimer();
           }
           setPlayersById((previousPlayers) => {
             return Object.entries(previousPlayers).reduce(
@@ -3696,6 +3848,11 @@ export function Game() {
 
       if (lobbyId) {
         localStorage.setItem(`ohhell_lobby_game_type_${lobbyId}`, resolvedGameType);
+        window.dispatchEvent(
+          new CustomEvent('ohhell:lobby-game-type', {
+            detail: { gameType: resolvedGameType, lobbyId },
+          }),
+        );
       }
 
       if (resolvedGameType === gameTypes.FODINHA_POWER && !activeCharacterId) {
@@ -3722,9 +3879,10 @@ export function Game() {
           setCurrentPlayerId(latestCurrentPlayerId);
         }
 
+        applyWaitingSettings(getWaitingLobbySettings(lobbyInfo));
+
         if (statusMap) {
           setMatchPhase('waiting');
-          applyWaitingSettings(getWaitingLobbySettings(lobbyInfo));
           applyStatusMap(statusMap);
         }
 
@@ -4076,9 +4234,15 @@ export function Game() {
             isReady={player.ready}
             isTurnToPlay={player.turnToPlay || player.id === turnPlayerId}
             lifes={player.lifes ?? lifes}
-            maxLifes={mercenary?.vidaTotal || mercenary?.totalLife || lifes}
+            maxLifes={
+              gameType === gameTypes.FODINHA_POWER
+                ? mercenary?.vidaTotal || mercenary?.totalLife || lifes
+                : lifes
+            }
             mana={player.mana}
-            mercenaryIconSrc={mercenary?.icon || ''}
+            mercenaryIconSrc={
+              gameType === gameTypes.FODINHA_POWER ? mercenary?.icon || '' : ''
+            }
             nickname={player.nickname}
             onPowerCardDrop={() => handlePowerCardDrop(player.id)}
             position={getSeatPosition(
