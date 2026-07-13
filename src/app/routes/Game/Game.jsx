@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, Crown, GalleryHorizontalEnd, Link as LinkIcon, LogIn, Sparkles, UserRound } from 'lucide-react';
+import { Check, Copy, Crown, GalleryHorizontalEnd, Info, Link as LinkIcon, LogIn, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import bidTurnSound from '@/assets/sounds/bid.mp3';
@@ -102,6 +102,12 @@ const playerTurnSounds = import.meta.glob(
   },
 );
 const defaultCardBack = cardBackImages['/src/assets/cards/back_cards/back_card.png'];
+const classicSuitCards = [
+  ['golds', spanish8BitCardImages['/src/assets/cards/spanish_8bit/1ouro.png']],
+  ['swords', spanish8BitCardImages['/src/assets/cards/spanish_8bit/1espada.png']],
+  ['cups', spanish8BitCardImages['/src/assets/cards/spanish_8bit/1copas.png']],
+  ['clubs', spanish8BitCardImages['/src/assets/cards/spanish_8bit/1paus.png']],
+];
 const rankToAsset = {
   Eight: '8',
   Eleven: '11',
@@ -1317,7 +1323,7 @@ function PlayerSeat({
             </div>
           </div>
 
-          <div className="absolute -bottom-1 -left-2 z-30 grid size-[3.3rem] place-items-center overflow-hidden rounded-full border-2 border-amber-300/80 bg-black shadow-lg shadow-black/70 sm:size-[3.6rem]">
+          <div className="absolute -bottom-1 left-[-0.9rem] z-30 grid size-[3.96rem] place-items-center overflow-hidden rounded-full border-2 border-amber-300/80 bg-black shadow-lg shadow-black/70 sm:left-[-0.93rem] sm:size-[4.32rem]">
             {playerIconSrc ? (
               <img src={playerIconSrc} alt="" className="size-full object-cover" draggable="false" />
             ) : (
@@ -1325,7 +1331,7 @@ function PlayerSeat({
             )}
           </div>
           <span
-            className="absolute -bottom-1 left-9 z-30 inline-flex items-center gap-1.5 rounded-full border border-red-200/25 bg-zinc-950/95 px-3 py-2 text-[0.94rem] font-black leading-none text-red-50 shadow-lg shadow-black/60 sm:left-10 sm:text-[1.07rem]"
+            className="absolute -bottom-1 left-12 z-30 inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200/25 bg-zinc-950/95 px-[1.375rem] py-2 text-[0.94rem] font-black leading-none text-red-50 shadow-lg shadow-black/60 sm:left-[3.35rem] sm:text-[1.07rem]"
             aria-label={`${numericLifes} de ${numericMaxLifes} de vida`}
           >
             <img src={healthIcon} alt="" className="size-4 object-contain" draggable="false" />
@@ -1362,6 +1368,71 @@ function PlayerSeat({
 
       {showReadyState && !isCurrent ? <ReadyStatusBadge isReady={isReady} /> : null}
     </div>
+  );
+}
+
+function ClassicTableInfo({ open, onToggle }) {
+  const { t } = useTranslation();
+
+  return (
+    <aside className="absolute left-3 top-3 z-40 flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 sm:left-5 sm:top-5">
+      <Button
+        type="button"
+        variant="outline"
+        aria-expanded={open}
+        aria-controls="classic-table-info"
+        className="h-10 cursor-pointer gap-2 border-white/20 bg-black/90 px-3 font-bold text-white shadow-lg shadow-black/50 backdrop-blur hover:border-amber-300/60 hover:bg-zinc-900 hover:text-amber-100"
+        onClick={onToggle}
+      >
+        <Info className="size-4" />
+        {t('game.classicInfo.button')}
+      </Button>
+
+      {open ? (
+        <div
+          id="classic-table-info"
+          className="w-[min(25rem,calc(100vw-1.5rem))] rounded-md border border-white/15 bg-black/95 p-4 text-white shadow-2xl shadow-black/70 backdrop-blur-md"
+        >
+          <h2 className="text-sm font-black uppercase text-amber-300">
+            {t('game.classicInfo.title')}
+          </h2>
+
+          <div className="mt-4">
+            <p className="text-xs font-bold uppercase text-zinc-400">
+              {t('game.classicInfo.ranks')}
+            </p>
+            <p className="mt-2 text-base font-black tracking-normal text-white">
+              4, 5, 6, 7, 10, 11, 12, 1, 2, 3
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs font-bold uppercase text-zinc-400">
+              {t('game.classicInfo.suits')}
+            </p>
+            <div className="mt-2 overflow-x-auto pb-1">
+              <div className="flex min-w-max gap-2">
+                {classicSuitCards.map(([suit, imageSrc]) => (
+                  <figure key={suit} className="w-16 shrink-0 text-center">
+                    <img
+                      src={imageSrc}
+                      alt={t('pages.howToPlay.rules.cardAlt', {
+                        label: t(`pages.howToPlay.rules.suits.${suit}`),
+                      })}
+                      className="aspect-[2/3] w-full rounded border border-white/15 object-cover shadow-md shadow-black/60"
+                      draggable="false"
+                    />
+                    <figcaption className="mt-1 text-[0.65rem] font-bold uppercase text-zinc-300">
+                      {t(`pages.howToPlay.rules.suits.${suit}`)}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </aside>
   );
 }
 
@@ -2289,6 +2360,7 @@ export function Game() {
   const [authGateError, setAuthGateError] = useState('');
   const [authGateOpen, setAuthGateOpen] = useState(() => !getAuthToken());
   const [actionTimer, setActionTimer] = useState(null);
+  const [classicInfoOpen, setClassicInfoOpen] = useState(false);
   const officialVisualConfig = OFFICIAL_GAME_VISUAL_CONFIG;
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
@@ -4171,6 +4243,13 @@ export function Game() {
         className="absolute left-1/2 top-1/2 h-screen w-[130vh] -translate-x-1/2 -translate-y-1/2 rotate-90 scale-80 bg-cover bg-center bg-no-repeat sm:h-full sm:w-full sm:rotate-0 sm:scale-100"
         style={{ backgroundImage: `url(${tableBackground})` }}
       />
+
+      {gameType === gameTypes.FODINHA_CLASSIC ? (
+        <ClassicTableInfo
+          open={classicInfoOpen}
+          onToggle={() => setClassicInfoOpen((current) => !current)}
+        />
+      ) : null}
 
       <TableCenter
         cardBackSrc={selectedCardBackSrc}

@@ -37,6 +37,12 @@ export const en = {
   },
   game: {
     authSaveGuest: 'Save your guest before entering the room.',
+    classicInfo: {
+      button: 'Info',
+      ranks: 'Card ranks',
+      suits: 'Suits (Trump: Card turned over on the table +1)',
+      title: 'From weakest to strongest',
+    },
     bidDone: 'Bid {{number}} done',
     bidError: 'Could not send the bid.',
     bidPending: 'Bid {{number}} pending',

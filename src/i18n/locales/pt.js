@@ -37,6 +37,12 @@ export const pt = {
   },
   game: {
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
+    classicInfo: {
+      button: 'Info',
+      ranks: 'Numeração das cartas',
+      suits: 'Naipes (Coringa: Carta virada na mesa + 1)',
+      title: 'Da mais fraca à mais forte',
+    },
     bidDone: 'Bid {{number}} feito',
     bidError: 'Não foi possível enviar o bid.',
     bidPending: 'Bid {{number}} pendente',
