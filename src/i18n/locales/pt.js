@@ -276,6 +276,23 @@ export const pt = {
     howToPlay: {
       description: 'Página reservada para explicar regras, rodadas e pontuação.',
       title: 'Como jogar',
+      rules: {
+        cardAlt: '{{label}} - carta 8-bit',
+        cardsText: 'O baralho possui 40 cartas e é embaralhado no início de cada rodada. Na primeira rodada, cada jogador recebe 1 carta; a quantidade aumenta nas rodadas seguintes. Uma carta é virada no centro da mesa para definir o coringa.',
+        cardsTitle: 'Cartas',
+        intro1: 'Fodinha é um jogo que pode ser jogado com 2 a 10 jogadores. O último jogador que permanecer no jogo com vida é o vencedor.',
+        intro2: 'Cada participante começa o jogo com 1 a 5 vidas e perde uma ou mais conforme erra seu palpite nas rodadas.',
+        intro3: 'Em cada rodada, a quantidade de cartas recebidas aumenta. O objetivo é adivinhar quantas jogadas o jogador fará naquela rodada.',
+        intro4: 'Caso erre o palpite, perde a diferença entre o número anunciado e o número de jogadas que realmente fez. Por exemplo: se disse que faria 1 jogada, mas fez 2, perde 1 vida.',
+        jokerText: 'O valor do coringa é sempre uma posição acima da carta virada. Exemplo: carta virada 4, coringa 5.',
+        jokerTitle: 'Coringa',
+        rankOrder: 'Valores, da mais fraca à mais forte',
+        strengthTitle: 'Ordem de força das cartas e naipes',
+        suitOrder: 'Naipes, do mais fraco ao mais forte',
+        suits: { cups: 'Copas', golds: 'Ouro', clubs: 'Paus', swords: 'Espada' },
+        bidsText: 'Depois que todos recebem suas cartas, acontece a etapa de palpites. A soma dos palpites não pode ser igual ao total de cartas distribuídas para cada jogador. Assim, em toda rodada pelo menos um participante perderá vida.',
+        bidsTitle: 'Palpites',
+      },
     },
     characters: {
       backToMercenaries: 'Voltar para mercenarios',

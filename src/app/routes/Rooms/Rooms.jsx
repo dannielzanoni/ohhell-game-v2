@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, DoorOpen, Plus, RefreshCw, Users } from 'lucide-react';
+import { AlertCircle, DoorOpen, House, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
+import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
 import { getGameTypeOption } from '@/services/gameTypesService.js';
 import { getLobbies } from '@/services/lobbyService.js';
 
@@ -36,9 +37,11 @@ export function Rooms() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <main className="relative min-h-screen overflow-hidden px-4 py-6 text-foreground md:px-6">
+      <img src={gameTableBg} alt="" className="absolute inset-0 size-full object-cover opacity-65" draggable="false" />
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-5">
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card/90 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
               {t('pages.rooms.eyebrow')}
@@ -48,7 +51,13 @@ export function Rooms() {
             </h1>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex">
+          <div className="grid grid-cols-3 gap-2 sm:flex">
+            <Button asChild variant="outline" className="h-10 cursor-pointer gap-2">
+              <Link to="/home">
+                <House className="size-4" />
+                Home
+              </Link>
+            </Button>
             <Button
               type="button"
               variant="outline"

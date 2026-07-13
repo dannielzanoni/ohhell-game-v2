@@ -1,37 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
+import { BookOpen, Crown, Play, Settings, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import card1Ouro from '@/assets/cards/spanish/1ouro.jpg';
-import card2Espada from '@/assets/cards/spanish/2espada.jpg';
-import card3Paus from '@/assets/cards/spanish/3paus.jpg';
-import frenchCard1Ouro from '@/assets/cards/french/1ouro.png';
-import frenchCard2Espada from '@/assets/cards/french/2espada.png';
-import frenchCard3Paus from '@/assets/cards/french/3paus.png';
+import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import card1Espada8Bit from '@/assets/cards/spanish_8bit/1espada.png';
+import card3Paus8Bit from '@/assets/cards/spanish_8bit/3paus.png';
+import card12Copas8Bit from '@/assets/cards/spanish_8bit/12copas.png';
 import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
+import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
-import { cn } from '@/lib/utils.js';
 import { authService } from '@/services/authService.js';
 import { getMyStats } from '@/services/statsService.js';
-import { pageLinks } from '../pageLinks.js';
 
-const cardGroups = [
-  {
-    title: 'Spanish',
-    cards: [
-      { src: card1Ouro, label: '1 de ouro espanhol' },
-      { src: card2Espada, label: '2 de espada espanhol' },
-      { src: card3Paus, label: '3 de paus espanhol' },
-    ],
-  },
-  {
-    title: 'French',
-    cards: [
-      { src: frenchCard1Ouro, label: '1 de ouro frances' },
-      { src: frenchCard2Espada, label: '2 de espada frances' },
-      { src: frenchCard3Paus, label: '3 de paus frances' },
-    ],
-  },
+const homeActions = [
+  { icon: Play, labelKey: 'pages.links.createGame.label', path: '/create-game' },
+  { icon: Users, labelKey: 'pages.links.rooms.label', path: '/rooms' },
+  { icon: Crown, labelKey: 'pages.links.leaderboard.label', path: '/leaderboard' },
+  { icon: BookOpen, labelKey: 'pages.links.howToPlay.label', path: '/how-to-play' },
 ];
 
 const playerStatItems = [
@@ -73,18 +59,18 @@ function formatPercent(value) {
 
 function PlayerStatsPanel({ error, isLoading, stats, t }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-6 shadow-sm lg:p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+    <section className="rounded-lg border border-white/15 bg-black/68 p-4 text-white shadow-2xl shadow-black/35 backdrop-blur">
+      <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">
         {t('pages.home.stats.eyebrow')}
       </p>
-      <h2 className="mt-2 text-lg font-black tracking-tight text-foreground">
+      <h2 className="mt-1 text-lg font-black tracking-tight text-white">
         {t('pages.home.stats.title')}
       </h2>
 
       {isLoading ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-16 animate-pulse rounded-md bg-muted" />
+            <div key={index} className="h-14 animate-pulse rounded-md bg-white/10" />
           ))}
         </div>
       ) : error ? (
@@ -94,18 +80,18 @@ function PlayerStatsPanel({ error, isLoading, stats, t }) {
       ) : stats ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
           {playerStatItems.map((item) => (
-            <div key={item.labelKey} className="rounded-md bg-muted px-3 py-2">
-              <span className="block text-xs font-semibold text-muted-foreground">
+            <div key={item.labelKey} className="rounded-md border border-white/8 bg-white/7 px-3 py-2">
+              <span className="block text-xs font-semibold text-stone-400">
                 {t(item.labelKey)}
               </span>
-              <strong className="mt-1 block text-xl font-black text-foreground">
+              <strong className="mt-1 block text-xl font-black text-white">
                 {item.getValue(stats)}
               </strong>
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+        <p className="mt-4 text-sm leading-6 text-stone-400">
           {t('pages.home.stats.empty')}
         </p>
       )}
@@ -121,8 +107,8 @@ export function Home() {
   const [playerStats, setPlayerStats] = useState(null);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
-  const mobileTitleSecondLine = t('common.appNameShort2');
-  const hasMobileTitleSecondLine = mobileTitleSecondLine.trim().length > 0;
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const mobileTitleSecondLine = t('common.appNameShort2').trim();
 
   const loadPlayerStats = useCallback(async () => {
     const token = authService.getAuthToken();
@@ -156,151 +142,77 @@ export function Home() {
   }, [loadPlayerStats]);
 
   return (
-    <main className="min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:h-screen lg:px-6 lg:py-5">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:h-full lg:max-w-7xl lg:gap-5">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-sm md:p-8 lg:p-5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.2),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.18),transparent_30%)]" />
-          <div className="relative">
-            <div className="relative mt-3 hidden h-36 w-full overflow-hidden md:block lg:h-32 xl:h-42">
-              <VideoText
-                src={gameBg}
-                fontSize={13}
-                fontWeight="900"
-                className="drop-shadow-2xl"
-              >
-                {t('common.appName')}
-              </VideoText>
-            </div>
-            <div className="relative mt-8 grid gap-1 md:hidden">
-              <div className="h-24 overflow-hidden">
-                <VideoText
-                  src={gameBg}
-                  fontSize={24}
-                  fontWeight="900"
-                  className="drop-shadow-2xl"
-                >
-                  {t('common.appNameShort')}
-                </VideoText>
-              </div>
-              {hasMobileTitleSecondLine ? (
-                <div className="h-24 overflow-hidden">
-                  <VideoText
-                    src={gameBg}
-                    fontSize={32}
-                    fontWeight="900"
-                    className="drop-shadow-2xl"
-                  >
-                    {mobileTitleSecondLine}
-                  </VideoText>
-                </div>
-              ) : null}
-            </div>
-            <p className="mt-4 w-full max-w-none text-base leading-7 text-muted-foreground md:text-lg md:leading-8 lg:mt-3 lg:text-base lg:leading-6">
-              {t('pages.home.tagline')}
-            </p>
+    <main className="relative min-h-screen overflow-hidden bg-black text-stone-100">
+      <img src={gameTableBg} alt="" className="absolute inset-0 size-full object-cover" draggable="false" />
+      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(0,0,0,0.9),rgba(0,0,0,0.38)_58%,rgba(0,0,0,0.75))]" />
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
 
-            <section className="mt-4 rounded-lg border border-border bg-background/55 p-4 shadow-lg shadow-black/10 backdrop-blur lg:mt-4 lg:p-3">
-              <div className="grid gap-4 md:grid-cols-2 lg:gap-3">
-                {cardGroups.map((group) => (
-                  <div
-                    key={group.title}
-                    className="overflow-hidden px-4 pt-1"
-                  >
-                    <div className="flex h-[8.5rem] items-start justify-center px-2 pt-2 md:h-34 lg:h-28 xl:h-32">
-                      {group.cards.map((card, index) => (
-                        <img
-                          key={card.label}
-                          src={card.src}
-                          alt={card.label}
-                          className="relative mt-1 h-[12.65rem] w-[8.05rem] shrink-0 rounded-[8%] border border-black bg-card object-cover shadow-xl transition duration-200 hover:z-20 hover:-translate-y-5 hover:rotate-0 hover:scale-105 hover:shadow-2xl lg:h-[10.35rem] lg:w-[6.9rem] xl:h-[11.5rem] xl:w-[7.5rem]"
-                          style={{
-                            marginLeft: index === 0 ? 0 : '-2.75rem',
-                            rotate: `${(index - 1) * 4.4}deg`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+      <div className="relative z-20 mx-4 mt-16 sm:mx-6 md:mt-4 lg:absolute lg:right-6 lg:top-5 lg:m-0 lg:w-[17rem]">
+        <LoginCard compact defaultMinimized minimizable className="w-full" onSaved={handleProfileSaved} />
+      </div>
+
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-[92rem] flex-col justify-center px-4 py-24 sm:px-6 lg:px-8 lg:py-8">
+        <div className="relative w-full max-w-[46rem] rounded-lg border border-white/15 bg-black/62 px-5 py-5 shadow-2xl shadow-black/40 backdrop-blur md:px-7">
+          <h1 className="hidden h-40 w-full overflow-hidden md:block">
+            <VideoText
+              src={gameBg}
+              fontSize={23}
+              fontWeight="900"
+              className="block size-full drop-shadow-2xl"
+              as="span"
+            >
+              {t('common.appName')}
+            </VideoText>
+          </h1>
+          <h1 className="grid w-full md:hidden">
+            <span className="block h-20 w-full overflow-hidden">
+              <VideoText src={gameBg} fontSize={24} fontWeight="900" className="block size-full drop-shadow-2xl" as="span">
+                {t('common.appNameShort')}
+              </VideoText>
+            </span>
+            {mobileTitleSecondLine ? (
+              <span className="block h-20 w-full overflow-hidden">
+                <VideoText src={gameBg} fontSize={28} fontWeight="900" className="block size-full drop-shadow-2xl" as="span">
+                  {mobileTitleSecondLine}
+                </VideoText>
+              </span>
+            ) : null}
+          </h1>
+          <div className="pointer-events-none absolute left-[calc(100%+1.5rem)] top-1/2 hidden h-48 w-60 -translate-y-1/2 lg:block" aria-hidden="true">
+            <img src={card1Espada8Bit} alt="" className="absolute left-3 top-6 z-10 h-36 w-auto -rotate-[14deg] rounded shadow-2xl shadow-black/60" draggable="false" />
+            <img src={card12Copas8Bit} alt="" className="absolute right-3 top-6 z-10 h-36 w-auto rotate-[14deg] rounded shadow-2xl shadow-black/60" draggable="false" />
+            <img src={card3Paus8Bit} alt="" className="absolute left-1/2 top-2 z-20 h-40 w-auto -translate-x-1/2 rounded shadow-2xl shadow-black/70" draggable="false" />
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-5">
-          <LoginCard className="lg:p-5" onSaved={handleProfileSaved} />
-
-          <nav className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
-            {pageLinks.map((page) => {
-              const Icon = page.icon;
-              const label = page.labelKey ? t(page.labelKey) : page.label;
-              const description = page.descriptionKey
-                ? t(page.descriptionKey)
-                : page.description;
-              const content = (
-                <>
-                  <span className="flex items-center gap-3">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground transition group-hover:bg-primary group-hover:text-primary-foreground lg:size-9">
-                      {Icon ? (
-                        <Icon className="size-5 lg:size-4" />
-                      ) : page.primeIcon ? (
-                        <i className={cn(page.primeIcon, 'text-lg lg:text-base')} />
-                      ) : (
-                        <img
-                          src={page.iconSrc}
-                          alt=""
-                          className="size-5 object-contain lg:size-4"
-                        />
-                      )}
-                    </span>
-                    <span className="text-xl font-bold text-foreground lg:text-base">
-                      {label}
-                    </span>
-                  </span>
-                  <span className="mt-4 block text-sm leading-6 text-muted-foreground lg:mt-3 lg:text-xs lg:leading-5">
-                    {description}
-                  </span>
-                </>
-              );
-
-              if (page.externalUrl) {
-                return (
-                  <a
-                    key={page.path}
-                    href={page.externalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
-                  >
-                    {content}
-                  </a>
-                );
-              }
-
-              return (
-                <Link
-                  key={page.path}
-                  to={page.path}
-                  className="group rounded-lg border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background lg:p-4"
-                >
-                  {content}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {hasAuthToken ? (
-            <div className="lg:col-span-2">
-              <PlayerStatsPanel
-                error={statsError}
-                isLoading={isStatsLoading}
-                stats={playerStats}
-                t={t}
-              />
-            </div>
-          ) : null}
+        <div className="mt-4 w-full max-w-[46rem] rounded-lg border border-white/15 bg-black/62 px-5 py-4 shadow-xl shadow-black/35 backdrop-blur md:px-7">
+          <p className="text-base font-semibold leading-7 text-stone-300 md:text-lg md:leading-8">{t('pages.home.tagline')}</p>
         </div>
+
+        <nav className="mt-7 grid w-full gap-3 sm:grid-cols-2 lg:max-w-[68.1rem] lg:grid-cols-5">
+          {homeActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.path} to={action.path} className="group flex min-h-24 items-center justify-between rounded-lg border border-white/15 bg-black/62 px-4 py-4 shadow-xl shadow-black/35 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-300/55 hover:bg-emerald-950/70 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                <span className="text-lg font-black text-white">{t(action.labelKey)}</span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-md border border-amber-200/20 bg-emerald-950/65 text-amber-200 transition group-hover:bg-amber-300 group-hover:text-black"><Icon className="size-5" /></span>
+              </Link>
+            );
+          })}
+          <button type="button" className="group flex min-h-24 cursor-pointer items-center justify-between rounded-lg border border-white/15 bg-black/62 px-4 py-4 text-left shadow-xl shadow-black/35 backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:border-amber-300/55 hover:bg-emerald-950/70 focus:outline-none focus:ring-2 focus:ring-amber-300" onClick={() => setIsSettingsOpen(true)}>
+            <span className="text-lg font-black text-white">{t('settings.title')}</span>
+            <span className="grid size-10 shrink-0 place-items-center rounded-md border border-amber-200/20 bg-emerald-950/65 text-amber-200 transition group-hover:bg-amber-300 group-hover:text-black"><Settings className="size-5" /></span>
+          </button>
+        </nav>
       </section>
+
+      {hasAuthToken ? (
+        <div className="relative z-20 mx-4 mb-4 sm:mx-6 lg:absolute lg:bottom-5 lg:right-6 lg:m-0 lg:w-[22rem]">
+          <PlayerStatsPanel error={statsError} isLoading={isStatsLoading} stats={playerStats} t={t} />
+        </div>
+      ) : null}
+
+      <GameSettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </main>
   );
 }

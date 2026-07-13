@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, Home, Play, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import gameBg from '@/assets/videos/game-bg.mp4';
+import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { cn } from '@/lib/utils.js';
@@ -398,22 +398,18 @@ export function CreateGame() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="absolute inset-0 -z-20 overflow-hidden bg-black">
-        <video
-          className="h-full w-full object-cover opacity-45"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        >
-          <source src={gameBg} type="video/mp4" />
-        </video>
+    <main className="relative isolate min-h-screen overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+        <img
+          src={gameTableBg}
+          alt=""
+          className="size-full object-cover opacity-65"
+          draggable="false"
+        />
       </div>
-      <div className="absolute inset-0 -z-10 bg-background/80 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 z-0 bg-background/80 backdrop-blur-[2px]" />
 
-      <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-6 px-6 py-8">
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-6 px-6 py-8">
         <div className="rounded-lg border border-border bg-card/85 p-8 shadow-2xl shadow-black/20 backdrop-blur md:p-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
             {t('pages.createGame.liveTable')}

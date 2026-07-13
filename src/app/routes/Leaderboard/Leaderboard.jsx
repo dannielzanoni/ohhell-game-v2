@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, RefreshCw, Trophy, UserRound } from 'lucide-react';
+import { AlertCircle, House, RefreshCw, Trophy, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { getLeaderboard } from '@/services/statsService.js';
@@ -128,9 +130,11 @@ export function Leaderboard() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground md:px-6">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <main className="relative min-h-screen overflow-hidden px-4 py-6 text-foreground md:px-6">
+      <img src={gameTableBg} alt="" className="absolute inset-0 size-full object-cover opacity-65" draggable="false" />
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+      <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-5">
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card/90 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
               {t('leaderboard.eyebrow')}
@@ -140,16 +144,15 @@ export function Leaderboard() {
             </h1>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 w-full cursor-pointer gap-2 sm:w-auto"
-            disabled={isLoading}
-            onClick={() => void loadLeaderboard()}
-          >
-            <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {t('common.refresh')}
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="h-10 flex-1 cursor-pointer gap-2 sm:flex-none">
+              <Link to="/home"><House className="size-4" />Home</Link>
+            </Button>
+            <Button type="button" variant="outline" className="h-10 flex-1 cursor-pointer gap-2 sm:flex-none" disabled={isLoading} onClick={() => void loadLeaderboard()}>
+              <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {t('common.refresh')}
+            </Button>
+          </div>
         </div>
 
         {error ? (
