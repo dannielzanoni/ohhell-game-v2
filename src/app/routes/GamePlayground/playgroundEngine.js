@@ -103,7 +103,7 @@ export function createInitialPlaygroundState() {
 }
 
 export const defaultVisualConfig = {
-  ...OFFICIAL_GAME_VISUAL_CONFIG,
+  ...OFFICIAL_GAME_VISUAL_CONFIG.desktop,
   showGuides: false,
 };
 

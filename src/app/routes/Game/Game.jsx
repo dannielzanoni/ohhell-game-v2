@@ -47,7 +47,7 @@ import {
   getGameTypeOption,
 } from '@/services/gameTypesService.js';
 import { cn } from '@/lib/utils.js';
-import { OFFICIAL_GAME_VISUAL_CONFIG } from '@/services/gameVisualConfigService.js';
+import { getGameVisualConfig } from '@/services/gameVisualConfigService.js';
 import {
   stopHellHandHomeTheme,
 } from '@/services/hellHandAudioService.js';
@@ -1428,7 +1428,14 @@ function PlayerSeat({
   );
 }
 
-function ClassicTableInfo({ logs, open, onToggle }) {
+function ClassicTableInfo({
+  logs,
+  open,
+  onToggle,
+  visualOffsetX = 0,
+  visualOffsetY = 0,
+  visualScale = 1,
+}) {
   const { t } = useTranslation();
   const logEndRef = useRef(null);
   const [logOpen, setLogOpen] = useState(true);
@@ -1440,7 +1447,13 @@ function ClassicTableInfo({ logs, open, onToggle }) {
   }, [logOpen, logs]);
 
   return (
-    <aside className="absolute left-3 top-3 z-40 flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 sm:left-5 sm:top-5">
+    <aside
+      className="absolute left-3 top-3 z-40 flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-2 sm:left-5 sm:top-5"
+      style={{
+        transform: `translate(${visualOffsetX}%, ${visualOffsetY}%) scale(${visualScale})`,
+        transformOrigin: 'left top',
+      }}
+    >
       <Button
         type="button"
         variant="outline"
@@ -1715,7 +1728,13 @@ function BidControls({
   );
 }
 
-function ActionTimer({ onExpire, timer }) {
+function ActionTimer({
+  onExpire,
+  timer,
+  visualOffsetX = 0,
+  visualOffsetY = 0,
+  visualScale = 1,
+}) {
   const { t } = useTranslation();
   const now = useTimerNow(timer);
   const expiredTimerIdRef = useRef('');
@@ -1755,7 +1774,11 @@ function ActionTimer({ onExpire, timer }) {
 
   return (
     <div
-      className="pointer-events-none absolute left-1/2 top-4 z-50 w-[min(24rem,calc(100vw-5rem))] -translate-x-1/2 rounded-full border border-white/15 bg-black/80 px-3 py-2 text-white shadow-2xl shadow-black/50 backdrop-blur"
+      className="pointer-events-none absolute left-1/2 top-4 z-50 w-[min(24rem,calc(100vw-5rem))] rounded-full border border-white/15 bg-black/80 px-3 py-2 text-white shadow-2xl shadow-black/50 backdrop-blur"
+      style={{
+        transform: `translate(calc(-50% + ${visualOffsetX}%), ${visualOffsetY}%) scale(${visualScale})`,
+        transformOrigin: 'center top',
+      }}
       aria-live="polite"
     >
       <div className="mb-1 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-wide">
@@ -1958,8 +1981,13 @@ function PlayerHand({
   deckType,
   onPlayCard,
   upcard = null,
+  visualOffsetX = 0,
   visualOffsetY = 0,
   visualScale = 1,
+  visualContainerHeightVh = 0,
+  visualContainerWidthVw = 0,
+  visualContainerOffsetX = 0,
+  visualContainerOffsetY = 0,
 }) {
   const [isCompact, setIsCompact] = useState(false);
   const [manualCards, setManualCards] = useState(() => cards);
@@ -2011,6 +2039,13 @@ function PlayerHand({
   return (
     <div
       className={`absolute bottom-0 z-40 flex h-[13.5rem] items-end overflow-x-auto overflow-y-hidden rounded-lg border border-white/10 bg-black/60 px-3 pb-3 pt-12 shadow-2xl shadow-black/45 backdrop-blur-sm sm:h-[14.85rem] ${centered ? 'left-1/2 w-[min(92vw,82rem)] -translate-x-1/2' : 'left-3 w-[calc(50%-0.75rem)]'}`}
+      style={{
+        height: visualContainerHeightVh ? `${visualContainerHeightVh}vh` : undefined,
+        width: centered && visualContainerWidthVw ? `${visualContainerWidthVw}vw` : undefined,
+        transform: centered && (visualContainerOffsetX || visualContainerOffsetY)
+          ? `translate(calc(-50% + ${visualContainerOffsetX}%), ${visualContainerOffsetY}%)`
+          : undefined,
+      }}
       onDragOver={(event) => {
         if (draggedCardIndexRef.current === null) return;
         event.preventDefault();
@@ -2040,7 +2075,7 @@ function PlayerHand({
         dir="rtl"
         style={{
           scale: visualScale,
-          transform: `translateY(${visualOffsetY}%)`,
+          transform: `translate(${visualOffsetX}%, ${visualOffsetY}%)`,
           transformOrigin: 'right bottom',
         }}
       >
@@ -2244,11 +2279,13 @@ function PowerCardHand({
 
 export {
   BidControls,
+  ClassicTableInfo,
   PlayedCardAnimation,
   PlayerHand,
   PlayerSeat,
   PowerCardHand,
   TableCenter,
+  ActionTimer,
 };
 
 function LobbyAuthGate({
@@ -2482,7 +2519,22 @@ export function Game() {
   const [actionTimer, setActionTimer] = useState(null);
   const [classicActionLogs, setClassicActionLogs] = useState([]);
   const [classicInfoOpen, setClassicInfoOpen] = useState(false);
-  const officialVisualConfig = OFFICIAL_GAME_VISUAL_CONFIG;
+  const [visualViewport, setVisualViewport] = useState(() => ({
+    isLandscape: window.innerWidth > window.innerHeight,
+    isMobile: Math.min(window.innerWidth, window.innerHeight) < 640,
+  }));
+  const officialVisualConfig = getGameVisualConfig(visualViewport);
+  useEffect(() => {
+    const updateVisualViewport = () => {
+      setVisualViewport({
+        isLandscape: window.innerWidth > window.innerHeight,
+        isMobile: Math.min(window.innerWidth, window.innerHeight) < 640,
+      });
+    };
+
+    window.addEventListener('resize', updateVisualViewport);
+    return () => window.removeEventListener('resize', updateVisualViewport);
+  }, []);
   const [gamePreferences, setGamePreferencesState] = useState(
     () => gamePreferencesRef.current,
   );
@@ -4455,7 +4507,12 @@ export function Game() {
     >
       <section className="relative min-h-0 flex-1 overflow-hidden">
       <div
-        className="absolute left-1/2 top-1/2 h-screen w-[130vh] -translate-x-1/2 -translate-y-1/2 rotate-90 scale-80 bg-cover bg-center bg-no-repeat sm:h-full sm:w-full sm:rotate-0 sm:scale-100"
+        className={cn(
+          'absolute left-1/2 top-1/2 bg-cover bg-center bg-no-repeat',
+          visualViewport.isMobile && !visualViewport.isLandscape
+            ? 'h-screen w-[130vh] -translate-x-1/2 -translate-y-1/2 rotate-90 scale-80'
+            : 'h-full w-full -translate-x-1/2 -translate-y-1/2',
+        )}
         style={{ backgroundImage: `url(${tableBackground})` }}
       />
 
@@ -4464,6 +4521,9 @@ export function Game() {
           logs={classicActionLogs}
           open={classicInfoOpen}
           onToggle={() => setClassicInfoOpen((current) => !current)}
+          visualOffsetX={officialVisualConfig.tableInfoOffsetX || 0}
+          visualOffsetY={officialVisualConfig.tableInfoOffsetY || 0}
+          visualScale={(officialVisualConfig.tableInfoScale || 1) * (officialVisualConfig.tableScale || 1)}
         />
       ) : null}
 
@@ -4476,10 +4536,16 @@ export function Game() {
         upcard={upcard}
         visualOffsetX={officialVisualConfig.centerOffsetX || 0}
         visualOffsetY={officialVisualConfig.centerOffsetY || 0}
-        visualScale={officialVisualConfig.centerScale || 1}
+        visualScale={(officialVisualConfig.centerScale || 1) * (officialVisualConfig.tableScale || 1)}
       />
 
-      <ActionTimer onExpire={handleActionTimerExpire} timer={actionTimer} />
+      <ActionTimer
+        onExpire={handleActionTimerExpire}
+        timer={actionTimer}
+        visualOffsetX={officialVisualConfig.timerOffsetX || 0}
+        visualOffsetY={officialVisualConfig.timerOffsetY || 0}
+        visualScale={(officialVisualConfig.timerScale || 1) * (officialVisualConfig.tableScale || 1)}
+      />
 
       {isWaitingForReady && gameType === gameTypes.FODINHA_POWER ? (
         <WaitingPowerLobbyInfo
@@ -4565,7 +4631,7 @@ export function Game() {
             }
             showReadyState={isWaitingForReady}
             turnTimer={player.id === turnPlayerId ? actionTimer : null}
-            visualScale={officialVisualConfig.seatScale || 1}
+            visualScale={(officialVisualConfig.seatScale || 1) * (officialVisualConfig.tableScale || 1)}
           />
         );
       })}
@@ -4575,10 +4641,17 @@ export function Game() {
         possibleBids={hasGameSocket ? possibleBids : []}
         visualOffsetX={officialVisualConfig.bidControlOffsetX || 0}
         visualOffsetY={officialVisualConfig.bidControlOffsetY || 0}
-        visualScale={officialVisualConfig.bidControlScale || 1}
+        visualScale={(officialVisualConfig.bidControlScale || 1) * (officialVisualConfig.tableScale || 1)}
       />
       </section>
-      <section className="relative h-[14.85rem] shrink-0 bg-zinc-950">
+      <section
+        className="relative h-[14.85rem] shrink-0 bg-zinc-950"
+        style={
+          gameType === gameTypes.FODINHA_CLASSIC && officialVisualConfig.classicHandAreaHeightVh
+            ? { height: `${officialVisualConfig.classicHandAreaHeightVh}vh` }
+            : undefined
+        }
+      >
       <PowerCardHand
         canSkipPowerPhase={canSkipPowerPhase}
         canUsePowerCards={canUsePowerCards}
@@ -4599,8 +4672,13 @@ export function Game() {
         deckType={gamePreferences.deckType}
         onPlayCard={handlePlayCard}
         upcard={upcard}
+        visualContainerHeightVh={officialVisualConfig.classicHandAreaHeightVh || 0}
+        visualContainerWidthVw={officialVisualConfig.classicHandBoxWidthVw || 0}
+        visualContainerOffsetX={officialVisualConfig.classicHandBoxOffsetX || 0}
+        visualContainerOffsetY={officialVisualConfig.classicHandBoxOffsetY || 0}
+        visualOffsetX={officialVisualConfig.classicHandOffsetX || 0}
         visualOffsetY={officialVisualConfig.classicHandOffsetY ?? 0}
-        visualScale={officialVisualConfig.classicHandScale || 1}
+        visualScale={(officialVisualConfig.classicHandScale || 1) * (officialVisualConfig.tableScale || 1)}
       />
       </section>
       <PlayedCardAnimation

@@ -4,6 +4,7 @@ import { Mercenaries } from './routes/Characters/Characters.jsx';
 import { CreateGame } from './routes/CreateGame/CreateGame.jsx';
 import { Game } from './routes/Game/Game.jsx';
 import { GamePlayground } from './routes/GamePlayground/GamePlayground.jsx';
+import { GamePlaygroundClassic } from './routes/GamePlaygroundClassic/GamePlaygroundClassic.jsx';
 import { GameModeSelect } from './routes/GameModeSelect.jsx';
 import { HellHandGame } from './routes/HellHand/HellHandGame.jsx';
 import { Github } from './routes/Github/Github.jsx';
@@ -37,6 +38,7 @@ export function AppRouter() {
         <Route path="/hell-hand/rooms" element={<HellHandRooms />} />
         <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />
         <Route path="/hell-hand/game-playground" element={<GamePlayground />} />
+        <Route path="/game-playground-classic" element={<GamePlaygroundClassic />} />
         <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
         <Route path="/hell-hand/mercenaries/:mercenaryId" element={<CharacterProfileRoute />} />
         <Route element={<AppLayout />}>
