@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Check, Image as ImageIcon, Layers, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Image as ImageIcon, Layers, Play, Volume2, VolumeX } from 'lucide-react';
 import { Translate01 as TranslateIcon } from '@untitledui/icons/Translate01';
 import { useTranslation } from 'react-i18next';
 import spanishCard3Paus from '@/assets/cards/spanish/3paus.jpg';
@@ -73,6 +73,16 @@ const turnSoundOptions = Object.keys(turnSoundFiles)
     return first.localeCompare(second);
   });
 
+function getTurnSoundSrc(soundName) {
+  const normalizedName = String(soundName || defaultGamePreferences.turnSound).toLowerCase();
+  const match = Object.entries(turnSoundFiles).find(([path]) => {
+    const fileName = decodeURIComponent(path.split('/').pop().replace(/\.mp3$/i, ''));
+    return fileName.toLowerCase() === normalizedName;
+  });
+
+  return match?.[1] || turnSoundFiles['/src/assets/sounds/turn sounds/Default.mp3'];
+}
+
 function getCardBackNumber(value) {
   if (value === 'back_card') {
     return 1;
@@ -102,11 +112,13 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
   const [activeTab, setActiveTab] = useState('sounds');
   const [activeDeckSettingsTab, setActiveDeckSettingsTab] = useState('deckType');
   const [preferences, setPreferences] = useState(getGamePreferences);
+  const previewAudioRef = useRef(null);
   const [previousVolumes, setPreviousVolumes] = useState(() => ({
     hellHandHomeMusicVolume: defaultGamePreferences.hellHandHomeMusicVolume,
     volume: defaultGamePreferences.volume,
   }));
   const isHellHand = variant === 'hellHand';
+  const isClassic = variant === 'classic';
   const showHomeMusicVolume = isHellHand;
 
   useEffect(() => {
@@ -124,6 +136,11 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
       }));
     }
   }, [open]);
+
+  useEffect(() => () => {
+    previewAudioRef.current?.pause();
+    previewAudioRef.current = null;
+  }, []);
 
   const updatePreferences = (nextPreferences) => {
     setPreferences(setGamePreferences(nextPreferences));
@@ -158,6 +175,14 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
       [preferenceKey]:
         previousVolumes[preferenceKey] || defaultGamePreferences[preferenceKey],
     });
+  };
+
+  const previewTurnSound = () => {
+    previewAudioRef.current?.pause();
+    const audio = new Audio(getTurnSoundSrc(preferences.turnSound));
+    audio.volume = Math.max(0, Math.min(1, Number(preferences.volume) / 100));
+    previewAudioRef.current = audio;
+    audio.play().catch(() => {});
   };
 
   return (
@@ -299,6 +324,17 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
                     ))}
                   </select>
                 </label>
+
+                {isClassic ? (
+                  <button
+                    type="button"
+                    className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
+                    onClick={previewTurnSound}
+                  >
+                    <Play className="size-4" />
+                    {t('settings.playTurnActionAudio')}
+                  </button>
+                ) : null}
 
                 {showHomeMusicVolume ? (
                   <>

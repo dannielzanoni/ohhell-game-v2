@@ -8,6 +8,7 @@ import {
   BidControls,
   ClassicTableInfo,
   PlayedCardAnimation,
+  PLAYER_ACCENT_COLORS,
   PlayerHand,
   PlayerSeat,
   TableCenter,
@@ -49,6 +50,14 @@ export function ClassicTableView({
   const playerMap = useMemo(() => Object.fromEntries(players.map((player) => [player.id, player])), [players]);
   const currentIndex = Math.max(0, players.findIndex((player) => player.id === currentPlayer?.id));
   const orderedPlayers = [...players.slice(currentIndex), ...players.slice(0, currentIndex)];
+  const playerColorsById = useMemo(
+    () => Object.fromEntries(players.map((player, index) => [
+      player.id,
+      PLAYER_ACCENT_COLORS[index % PLAYER_ACCENT_COLORS.length],
+    ])),
+    [players],
+  );
+  const bidSum = players.reduce((total, player) => total + (Number(player.bid) || 0), 0);
   const tableScale = visualConfig.tableScale || 1;
   const infoLogs = [{ id: 'preview', type: 'bid', playerName: 'Você', bid: 2 }];
   const previewTimer = { id: 'classic-preview', type: 'cards', startedAt: Date.now(), durationMs: 60_000 };
@@ -70,12 +79,13 @@ export function ClassicTableView({
         />
         <div className="absolute left-4 top-4 z-40"><DeckMarker count={pile.length} /></div>
         {showGuides ? <div className="pointer-events-none absolute inset-[10%] z-20 rounded-full border border-dashed border-amber-200/25" /> : null}
-        <ClassicTableInfo logs={infoLogs} open={false} onToggle={() => {}} visualOffsetX={visualConfig.tableInfoOffsetX || 0} visualOffsetY={visualConfig.tableInfoOffsetY || 0} visualScale={(visualConfig.tableInfoScale || 1) * tableScale} />
+        <ClassicTableInfo bidSum={bidSum} logs={infoLogs} open={false} onToggle={() => {}} tableBid={currentPlayer?.classicHand?.length || 0} visualOffsetX={visualConfig.tableInfoOffsetX || 0} visualOffsetY={visualConfig.tableInfoOffsetY || 0} visualScale={(visualConfig.tableInfoScale || 1) * tableScale} />
         <ActionTimer timer={previewTimer} onExpire={() => {}} visualOffsetX={visualConfig.timerOffsetX || 0} visualOffsetY={visualConfig.timerOffsetY || 0} visualScale={(visualConfig.timerScale || 1) * tableScale} />
-        <TableCenter cardBackSrc={cardBack} deckType={deckTypes.SPANISH_8BIT} elevatedPileCardKey="" pile={pile} playersById={playerMap} upcard={upcard} visualOffsetX={visualConfig.centerOffsetX || 0} visualOffsetY={visualConfig.centerOffsetY || 0} visualScale={(visualConfig.centerScale || 1) * tableScale} />
+        <TableCenter cardBackSrc={cardBack} deckType={deckTypes.SPANISH_8BIT} elevatedPileCardKey="" pile={pile} playerColorsById={playerColorsById} playersById={playerMap} upcard={upcard} visualOffsetX={visualConfig.centerOffsetX || 0} visualOffsetY={visualConfig.centerOffsetY || 0} visualScale={(visualConfig.centerScale || 1) * tableScale} />
         {orderedPlayers.map((player, index) => (
           <PlayerSeat
             key={player.id}
+            accentColor={playerColorsById[player.id]}
             avatarSrc={player.avatarSrc}
             cardBackSrc={cardBack}
             bid={player.bid}

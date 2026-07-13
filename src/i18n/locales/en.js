@@ -49,10 +49,12 @@ export const en = {
     },
     authSaveGuest: 'Save your guest before entering the room.',
     classicInfo: {
+      bidSum: 'Players bid sum',
       button: 'Info',
       ranks: 'Card ranks',
       suits: 'Suits (Trump: Card turned over on the table +1)',
       title: 'From weakest to strongest',
+      tableBid: 'Table bid',
     },
     bidDone: 'Bid {{number}} done',
     bidError: 'Could not send the bid.',
@@ -720,6 +722,7 @@ export const en = {
     spanish: 'Spanish',
     spanish8Bit: 'Spanish 8-bit',
     turnSound: 'Turn action audio',
+    playTurnActionAudio: 'Play Turn Action Audio',
     title: 'Settings',
   },
 };

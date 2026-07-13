@@ -75,6 +75,18 @@ const POWER_TURN_DELAY_BASE_SECONDS = 30;
 const TURN_DELAY_CARD_SECONDS = 2;
 const TURN_DELAY_POWER_CARD_SECONDS = 5;
 const MAX_CLASSIC_ACTION_LOGS = 60;
+export const PLAYER_ACCENT_COLORS = [
+  '#ef4444',
+  '#7dd3fc',
+  '#facc15',
+  '#22c55e',
+  '#f97316',
+  '#f472b6',
+  '#2563eb',
+  '#a855f7',
+  '#a3e635',
+  '#92400e',
+];
 const WS_RECONNECT_DELAYS_MS = [100, 250, 500, 1000, 1500, 2500];
 const spanishCardImages = import.meta.glob('/src/assets/cards/spanish/*.jpg', {
   eager: true,
@@ -776,6 +788,16 @@ function getGameInfoFromSnapshot(snapshot) {
   return null;
 }
 
+function getPlayableCards(cards, pile) {
+  if (!cards?.length || !pile?.length) return cards || [];
+
+  const leadSuit = pile[0]?.card?.suit;
+  if (!leadSuit) return cards;
+
+  const matchingSuitCards = cards.filter((card) => card?.suit === leadSuit);
+  return matchingSuitCards.length ? matchingSuitCards : cards;
+}
+
 function getPlayerLogName(playerId, playersById) {
   const player = playersById?.[playerId];
   return player?.nickname || player?.id || playerId || 'Guest';
@@ -835,6 +857,21 @@ function getGamePile(gameInfo) {
   ];
 
   return candidates.find(Array.isArray);
+}
+
+function getInitialSetCardCount(gameInfo, localPlayerIds = []) {
+  if (!Array.isArray(gameInfo?.deck)) return 0;
+
+  const completedRounds = (gameInfo.info || []).reduce(
+    (total, player) => total + (Number(player?.rounds) || 0),
+    0,
+  );
+  const currentPile = getGamePile(gameInfo) || [];
+  const localPlayerAlreadyPlayed = currentPile.some((turn) =>
+    localPlayerIds.includes(turn?.player_id),
+  );
+
+  return gameInfo.deck.length + completedRounds + Number(localPlayerAlreadyPlayed);
 }
 
 function getPlayerTurnSound(soundName) {
@@ -1283,6 +1320,7 @@ function getTimerSnapshot(timer, now) {
 }
 
 function PlayerSeat({
+  accentColor = '',
   avatarSrc,
   cardBackSrc,
   bid = null,
@@ -1372,7 +1410,10 @@ function PlayerSeat({
             aria-valuemin={0}
             aria-valuemax={numericMaxLifes}
             aria-valuenow={numericLifes}
-            style={{ '--health-progress': healthPercent }}
+            style={{
+              '--health-progress': healthPercent,
+              borderColor: accentColor || undefined,
+            }}
           >
             <div className="ohhell-health-progress__inner" aria-hidden="true">
               <span className="ohhell-health-progress__wave" />
@@ -1380,7 +1421,10 @@ function PlayerSeat({
             </div>
           </div>
 
-          <div className="absolute -bottom-1 left-[-0.9rem] z-30 grid size-[3.96rem] place-items-center overflow-hidden rounded-full border-2 border-amber-300/80 bg-black shadow-lg shadow-black/70 sm:left-[-0.93rem] sm:size-[4.32rem]">
+          <div
+            className="absolute -bottom-1 left-[-0.9rem] z-30 grid size-[3.96rem] place-items-center overflow-hidden rounded-full border-2 border-amber-300/80 bg-black shadow-lg shadow-black/70 sm:left-[-0.93rem] sm:size-[4.32rem]"
+            style={{ borderColor: accentColor || undefined }}
+          >
             {playerIconSrc ? (
               <img src={playerIconSrc} alt="" className="size-full object-cover" draggable="false" />
             ) : (
@@ -1429,9 +1473,11 @@ function PlayerSeat({
 }
 
 function ClassicTableInfo({
+  bidSum = 0,
   logs,
   open,
   onToggle,
+  tableBid = 0,
   visualOffsetX = 0,
   visualOffsetY = 0,
   visualScale = 1,
@@ -1562,6 +1608,30 @@ function ClassicTableInfo({
           </div>
         ) : null}
       </section>
+
+      <div
+        className={cn(
+          'grid gap-1.5 rounded-md border border-white/15 bg-black/90 p-3 text-xs font-bold text-zinc-200 shadow-xl shadow-black/50 backdrop-blur transition-[width] duration-200 ease-out',
+          logOpen
+            ? 'w-[min(25rem,calc(100vw-1.5rem))]'
+            : 'w-[min(11rem,calc(100vw-1.5rem))]',
+        )}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <span>{t('game.classicInfo.bidSum')}</span>
+          <strong className="inline-flex items-center gap-1 text-sm text-amber-100">
+            {bidSum}
+            <img src={bidIcon} alt="" className="size-4 object-contain" draggable="false" />
+          </strong>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span>{t('game.classicInfo.tableBid')}</span>
+          <strong className="inline-flex items-center gap-1 text-sm text-amber-100">
+            {tableBid}
+            <img src={bidIcon} alt="" className="size-4 object-contain" draggable="false" />
+          </strong>
+        </div>
+      </div>
     </aside>
   );
 }
@@ -1571,6 +1641,7 @@ function TableCenter({
   deckType,
   elevatedPileCardKey,
   pile,
+  playerColorsById = {},
   playersById,
   upcard,
   visualOffsetX = 0,
@@ -1672,7 +1743,8 @@ function TableCenter({
                   />
                   <span
                     aria-label={playerName}
-                    className="absolute -bottom-1 -left-1 z-10 grid size-7 place-items-center overflow-hidden rounded-full border-2 border-amber-300 bg-black shadow-lg shadow-black/70 sm:size-8"
+                    className="absolute -bottom-1 -left-1 z-10 grid size-7 place-items-center overflow-hidden rounded-full border-2 bg-black shadow-lg shadow-black/70 sm:size-8"
+                    style={{ borderColor: playerColorsById[turn.player_id] || PLAYER_ACCENT_COLORS[2] }}
                   >
                     {turnPlayer?.avatarSrc ? (
                       <img
@@ -2497,6 +2569,7 @@ export function Game() {
   const gamePreferencesRef = useRef(getGamePreferences());
   const translateRef = useRef(t);
   const actionTimerRef = useRef(null);
+  const actionTimerExpireHandlerRef = useRef(null);
   const actionLogSequenceRef = useRef(0);
   const localPlayerIdsRef = useRef([]);
   const playerDeckCountRef = useRef(0);
@@ -2507,6 +2580,7 @@ export function Game() {
   const lastCompletedPileRef = useRef([]);
   const queuedRoundEndMessagesRef = useRef([]);
   const roundCardCountRef = useRef(0);
+  const tableBidRef = useRef(0);
   const roundPointsRef = useRef({});
   const profileCardRef = useRef(null);
   const roundEndDelayTimeoutRef = useRef(null);
@@ -2599,9 +2673,16 @@ export function Game() {
   const [playedCardAnimation, setPlayedCardAnimation] = useState(null);
   const [possibleBids, setPossibleBids] = useState([]);
   const [roundCardCount, setRoundCardCount] = useState(0);
+  const [tableBid, setTableBid] = useState(0);
   const [turnPlayerId, setTurnPlayerId] = useState(null);
   const [upcard, setUpcard] = useState(null);
   const returnToRoomsPath = location.state?.returnToRooms || '/rooms';
+
+  const updateTableBid = useCallback((nextCount) => {
+    const normalizedCount = Math.max(0, Number(nextCount) || 0);
+    tableBidRef.current = normalizedCount;
+    setTableBid(normalizedCount);
+  }, []);
 
   const appendClassicActionLog = useCallback((entry) => {
     actionLogSequenceRef.current += 1;
@@ -2640,6 +2721,26 @@ export function Game() {
       MAX_TABLE_PLAYERS,
     );
   }, [lifes, matchPhase, playerOrder, playersById, resolvedCurrentPlayerId]);
+
+  const playerColorsById = useMemo(() => {
+    const orderedPlayerIds = Array.from(
+      new Set([...playerOrder, ...Object.keys(playersById)]),
+    );
+    return Object.fromEntries(
+      orderedPlayerIds.map((playerId, index) => [
+        playerId,
+        PLAYER_ACCENT_COLORS[index % PLAYER_ACCENT_COLORS.length],
+      ]),
+    );
+  }, [playerOrder, playersById]);
+
+  const bidSum = useMemo(
+    () => tablePlayers.reduce((total, player) => {
+      const bid = Number(player.bid);
+      return total + (Number.isFinite(bid) ? bid : 0);
+    }, 0),
+    [tablePlayers],
+  );
 
   const readyCount = tablePlayers.filter((player) => player.ready).length;
   const totalPlayers = tablePlayers.length;
@@ -3096,6 +3197,7 @@ export function Game() {
     setPlayedCardAnimation(null);
     setPossibleBids([]);
     setRoundCardCount(0);
+    updateTableBid(0);
     setTurnPlayerId(null);
     upcardRef.current = null;
     setUpcard(null);
@@ -3316,6 +3418,7 @@ export function Game() {
       if (Array.isArray(gameInfo.deck)) {
         updatePlayerDeck(gameInfo.deck);
         updateRoundCardCount(gameInfo.deck.length);
+        updateTableBid(getInitialSetCardCount(gameInfo, localPlayerIds));
       }
 
       const nextPowerCardCount = Array.isArray(gameInfo.power_cards)
@@ -3681,6 +3784,9 @@ export function Game() {
           setMatchPhase('playing');
           updatePlayerDeck(message.data || []);
           updateRoundCardCount((message.data || []).length);
+          if (!tableBidRef.current && (message.data || []).length) {
+            updateTableBid((message.data || []).length);
+          }
           startActionTimer(
             'cards',
             (message.data || []).length,
@@ -3850,6 +3956,7 @@ export function Game() {
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
+          updateTableBid(0);
           setTurnPlayerId(null);
           updateUpcard(message.data.upcard);
           roundPointsRef.current = {};
@@ -3882,6 +3989,7 @@ export function Game() {
           updatePile([]);
           setPossibleBids([]);
           updateRoundCardCount(0);
+          updateTableBid(0);
           if (activeGameType === gameTypes.FODINHA_CLASSIC) {
             const finalRoundWinner = getStrongestTurn(
               lastCompletedPileRef.current,
@@ -3951,6 +4059,7 @@ export function Game() {
           setPlayedCardAnimation(null);
           setPossibleBids([]);
           updateRoundCardCount(0);
+          updateTableBid(0);
           setTurnPlayerId(null);
           updateUpcard(null);
           clearLifeLossHighlight();
@@ -4475,8 +4584,12 @@ export function Game() {
     handleUsePowerCard(draggingPowerCard, targetPlayerId);
   };
 
-  const handleActionTimerExpire = () => {
-    const randomBid = getRandomItem(possibleBids);
+  const handleActionTimerExpire = (expiredTimer = actionTimerRef.current) => {
+    if (!expiredTimer || actionTimerRef.current?.id !== expiredTimer.id) return;
+
+    const randomBid = expiredTimer.type === 'bid'
+      ? getRandomItem(possibleBids)
+      : null;
 
     if (randomBid !== null) {
       sendBid(randomBid);
@@ -4489,7 +4602,7 @@ export function Game() {
     }
 
     if (canPlayCards) {
-      const randomCard = getRandomItem(playerDeck);
+      const randomCard = getRandomItem(getPlayableCards(playerDeck, pileRef.current));
 
       if (randomCard) {
         handlePlayCard(randomCard);
@@ -4499,6 +4612,24 @@ export function Game() {
 
     clearActionTimer();
   };
+
+  actionTimerExpireHandlerRef.current = handleActionTimerExpire;
+
+  useEffect(() => {
+    if (!actionTimer) return undefined;
+
+    const timerId = actionTimer.id;
+    const remainingMs = Math.max(
+      0,
+      actionTimer.durationMs - (Date.now() - actionTimer.startedAt),
+    );
+    const timeout = window.setTimeout(() => {
+      if (actionTimerRef.current?.id !== timerId) return;
+      actionTimerExpireHandlerRef.current?.(actionTimer);
+    }, remainingMs + 25);
+
+    return () => window.clearTimeout(timeout);
+  }, [actionTimer]);
 
   return (
     <main
@@ -4518,9 +4649,11 @@ export function Game() {
 
       {gameType === gameTypes.FODINHA_CLASSIC ? (
         <ClassicTableInfo
+          bidSum={bidSum}
           logs={classicActionLogs}
           open={classicInfoOpen}
           onToggle={() => setClassicInfoOpen((current) => !current)}
+          tableBid={tableBid}
           visualOffsetX={officialVisualConfig.tableInfoOffsetX || 0}
           visualOffsetY={officialVisualConfig.tableInfoOffsetY || 0}
           visualScale={(officialVisualConfig.tableInfoScale || 1) * (officialVisualConfig.tableScale || 1)}
@@ -4532,6 +4665,7 @@ export function Game() {
         deckType={gamePreferences.deckType}
         elevatedPileCardKey={elevatedPileCardKey}
         pile={pile}
+        playerColorsById={gameType === gameTypes.FODINHA_CLASSIC ? playerColorsById : {}}
         playersById={playersById}
         upcard={upcard}
         visualOffsetX={officialVisualConfig.centerOffsetX || 0}
@@ -4540,7 +4674,6 @@ export function Game() {
       />
 
       <ActionTimer
-        onExpire={handleActionTimerExpire}
         timer={actionTimer}
         visualOffsetX={officialVisualConfig.timerOffsetX || 0}
         visualOffsetY={officialVisualConfig.timerOffsetY || 0}
@@ -4581,6 +4714,7 @@ export function Game() {
         return (
           <PlayerSeat
             key={player.id}
+            accentColor={gameType === gameTypes.FODINHA_CLASSIC ? playerColorsById[player.id] : ''}
             avatarSrc={player.avatarSrc}
             cardBackSrc={selectedCardBackSrc}
             bid={player.bid}

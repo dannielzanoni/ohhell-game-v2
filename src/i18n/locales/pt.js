@@ -49,10 +49,12 @@ export const pt = {
     },
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
     classicInfo: {
+      bidSum: 'Somatória da mesa das bids',
       button: 'Info',
       ranks: 'Numeração das cartas',
       suits: 'Naipes (Coringa: Carta virada na mesa + 1)',
       title: 'Da mais fraca à mais forte',
+      tableBid: 'Bid da mesa',
     },
     bidDone: 'Bid {{number}} feito',
     bidError: 'Não foi possível enviar o bid.',
@@ -720,6 +722,7 @@ export const pt = {
     spanish: 'Espanhol',
     spanish8Bit: 'Espanhol 8-bit',
     turnSound: 'Áudio de ação do turno',
+    playTurnActionAudio: 'Tocar áudio da ação do turno',
     title: 'Configurações',
   },
 };
