@@ -24,16 +24,7 @@ function loadSnapshot() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!parsed?.state) return null;
-    const defaults = cloneProfiles();
-    return {
-      state: parsed.state,
-      visualConfigs: Object.fromEntries(
-        Object.entries(defaults).map(([profile, config]) => [
-          profile,
-          { ...config, ...(parsed.visualConfigs?.[profile] || {}) },
-        ]),
-      ),
-    };
+    return { state: parsed.state };
   } catch { return null; }
 }
 
@@ -99,7 +90,10 @@ function VisualControls({ config, onChange, onReset }) {
 }
 
 export function GamePlaygroundClassic() {
-  const [snapshot, setSnapshot] = useState(() => loadSnapshot() || ({ state: createInitialPlaygroundState(), visualConfigs: cloneProfiles() }));
+  const [snapshot, setSnapshot] = useState(() => loadSnapshot() || ({ state: createInitialPlaygroundState() }));
+  const [visualConfigs, setVisualConfigs] = useState(cloneProfiles);
+  const [shouldPersistVisualConfig, setShouldPersistVisualConfig] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [selectedPlayerId, setSelectedPlayerId] = useState(mainPlayerId);
   const [selectedClassicCardId, setSelectedClassicCardId] = useState(mockCards.classicCards[0].id);
   const [newPlayerName, setNewPlayerName] = useState('Novo player');
@@ -107,16 +101,44 @@ export function GamePlaygroundClassic() {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [animationCard, setAnimationCard] = useState(null);
 
-  const { state, visualConfigs } = snapshot;
+  const { state } = snapshot;
   const selectedPlayer = state.players.find((player) => player.id === selectedPlayerId) || state.players[0];
   const activeProfile = controlTab in visualConfigs ? controlTab : 'desktop';
   const visualConfig = visualConfigs[activeProfile];
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot)); }, [snapshot]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify({ state })); }, [state]);
   useEffect(() => { if (!state.players.some((player) => player.id === selectedPlayerId)) setSelectedPlayerId(mainPlayerId); }, [selectedPlayerId, state.players]);
+  useEffect(() => {
+    if (!shouldPersistVisualConfig || !import.meta.env.DEV) return undefined;
+
+    const controller = new AbortController();
+    const persist = async () => {
+      try {
+        const response = await fetch('/__dev/game-visual-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(visualConfigs),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Não foi possível salvar a configuração central.');
+        setSaveError('');
+      } catch (error) {
+        if (error.name !== 'AbortError') setSaveError(error.message || 'Não foi possível salvar a configuração central.');
+      }
+    };
+    void persist();
+    return () => controller.abort();
+  }, [shouldPersistVisualConfig, visualConfigs]);
 
   const dispatch = (type, payload = {}) => setSnapshot((current) => ({ ...current, state: applyPlaygroundAction(current.state, createAction(type, payload)) }));
-  const updateVisual = (key, value) => setSnapshot((current) => ({ ...current, visualConfigs: { ...current.visualConfigs, [activeProfile]: { ...current.visualConfigs[activeProfile], [key]: value } } }));
+  const updateVisual = (key, value) => {
+    setVisualConfigs((current) => ({ ...current, [activeProfile]: { ...current[activeProfile], [key]: value } }));
+    setShouldPersistVisualConfig(true);
+  };
+  const resetVisualProfile = () => {
+    setVisualConfigs((current) => ({ ...current, [activeProfile]: { ...OFFICIAL_GAME_VISUAL_CONFIG[activeProfile], showGuides: false } }));
+    setShouldPersistVisualConfig(true);
+  };
   const playCard = (card) => { setAnimationCard(card); dispatch(PLAYGROUND_ACTIONS.PLAY_CLASSIC_CARD, { playerId: mainPlayerId, cardId: card.id }); };
 
   return (
@@ -128,7 +150,8 @@ export function GamePlaygroundClassic() {
       <div className="mx-auto w-[min(96%,118rem)] pb-5"><ClassicTableView animationCard={animationCard} animationDuration={visualConfig.animationDuration} onAnimationEnd={() => setAnimationCard(null)} onBid={(bid) => dispatch(PLAYGROUND_ACTIONS.CHANGE_BID, { playerId: mainPlayerId, amount: bid - (state.players.find((player) => player.id === mainPlayerId)?.bid || 0) })} onClassicPlay={playCard} pile={state.pile} players={state.players} selectedPlayerId={mainPlayerId} showGuides={visualConfig.showGuides} upcard={state.upcard} visualConfig={visualConfig} /></div>
       <Dialog open={controlsOpen} onOpenChange={setControlsOpen}>
         <DialogContent overlayClassName="!bg-transparent !backdrop-blur-none supports-backdrop-filter:!backdrop-blur-none" className="left-auto right-0 top-0 h-screen max-h-screen w-[min(34rem,100vw)] max-w-none translate-x-0 translate-y-0 gap-5 overflow-y-auto rounded-none border-y-0 border-r-0 border-l-amber-200/20 bg-zinc-950 p-4 text-white sm:max-w-none sm:p-6">
-          <DialogHeader><DialogTitle className="text-xl font-black text-amber-100">Controle visual do Fodinha Classic</DialogTitle><DialogDescription className="text-zinc-400">Os perfis usam a mesma estrutura central consumida pela rota /game.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl font-black text-amber-100">Controle visual do Fodinha Classic</DialogTitle><DialogDescription className="text-zinc-400">No ambiente de desenvolvimento, cada ajuste é salvo no arquivo central e refletido em /game.</DialogDescription></DialogHeader>
+          {saveError ? <p className="rounded-lg border border-red-300/30 bg-red-950/30 px-3 py-2 text-sm text-red-100">{saveError}</p> : null}
           <div className="flex flex-wrap gap-1 rounded-xl border border-white/10 bg-black/30 p-1">
             <button type="button" className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold ${controlTab === 'actions' ? 'bg-white/10 text-white' : 'text-zinc-400'}`} onClick={() => setControlTab('actions')}>Ações</button>
             {Object.keys(profileLabels).map((profile) => <button key={profile} type="button" className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold ${controlTab === profile ? 'bg-white/10 text-white' : 'text-zinc-400'}`} onClick={() => setControlTab(profile)}>{profileLabels[profile]}</button>)}
@@ -145,7 +168,7 @@ export function GamePlaygroundClassic() {
               <div className="grid gap-3 sm:grid-cols-3"><Button type="button" onClick={() => dispatch(PLAYGROUND_ACTIONS.ADD_CLASSIC_CARD, { playerId: selectedPlayerId, cardId: selectedClassicCardId })}><Plus /> Adicionar</Button><Button type="button" variant="outline" onClick={() => dispatch(PLAYGROUND_ACTIONS.REMOVE_CLASSIC_CARD, { playerId: selectedPlayerId, cardId: selectedClassicCardId })}><Minus /> Remover</Button><Button type="button" variant="outline" onClick={() => playCard(mockCards.classicCards.find((card) => card.id === selectedClassicCardId))}><Play /> Jogar</Button></div>
               <Button type="button" variant="outline" onClick={() => dispatch(PLAYGROUND_ACTIONS.SHUFFLE_CLASSIC_DECK)}><RotateCcw /> Embaralhar deck</Button>
             </Section>
-          </div> : <VisualControls config={visualConfig} onChange={updateVisual} onReset={() => setSnapshot((current) => ({ ...current, visualConfigs: { ...current.visualConfigs, [activeProfile]: { ...OFFICIAL_GAME_VISUAL_CONFIG[activeProfile], showGuides: false } } }))} />}
+          </div> : <VisualControls config={visualConfig} onChange={updateVisual} onReset={resetVisualProfile} />}
         </DialogContent>
       </Dialog>
     </main>
