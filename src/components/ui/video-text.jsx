@@ -12,6 +12,7 @@ export function VideoText({
  preload = "auto",
  fontSize = 20,
  fontWeight = "bold",
+ fitText = false,
  textAnchor = "middle",
  dominantBaseline = "middle",
  fontFamily = "sans-serif",
@@ -22,6 +23,12 @@ export function VideoText({
 
   useEffect(() => {
     const updateSvgMask = () => {
+      if (fitText) {
+        const newSvgMask = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 1000 200' preserveAspectRatio='xMidYMid meet'><text x='500' y='100' font-size='160' font-weight='${fontWeight}' text-anchor='${textAnchor}' dominant-baseline='${dominantBaseline}' font-family='${fontFamily}' textLength='900' lengthAdjust='spacingAndGlyphs'>${content}</text></svg>`
+        setSvgMask(newSvgMask)
+        return
+      }
+
       const responsiveFontSize =
         typeof fontSize === "number" ? `${fontSize}vw` : fontSize
       const newSvgMask = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><text x='50%' y='50%' font-size='${responsiveFontSize}' font-weight='${fontWeight}' text-anchor='${textAnchor}' dominant-baseline='${dominantBaseline}' font-family='${fontFamily}'>${content}</text></svg>`
@@ -31,7 +38,7 @@ export function VideoText({
     updateSvgMask()
     window.addEventListener("resize", updateSvgMask)
     return () => window.removeEventListener("resize", updateSvgMask);
-  }, [content, fontSize, fontWeight, textAnchor, dominantBaseline, fontFamily])
+  }, [content, fitText, fontSize, fontWeight, textAnchor, dominantBaseline, fontFamily])
 
   const dataUrlMask = `url("data:image/svg+xml,${encodeURIComponent(svgMask)}")`
 

@@ -34,7 +34,6 @@ export const pt = {
     refresh: 'Atualizar',
     settings: 'Configurações',
     appNameShort: 'Fodinha',
-    appNameShort2: '',
   },
   game: {
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
@@ -233,6 +232,7 @@ export const pt = {
     hellHandHome: {
       actions: {
         cards: 'Cartas',
+        howToPlay: 'Como jogar',
         mercenaries: 'Mercenários',
         play: 'Jogar',
         rooms: 'Salas',

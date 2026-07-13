@@ -22,7 +22,7 @@ export const en = {
     selectAvatarAria: 'Select avatar {{label}}',
   },
   common: {
-    appName: 'Oh Hell Game',
+    appName: 'Oh Hell',
     backHome: 'Back to Home',
     close: 'Close',
     create: 'Create',
@@ -34,7 +34,6 @@ export const en = {
     refresh: 'Refresh',
     settings: 'Settings',
     appNameShort: 'Oh Hell',
-    appNameShort2: 'Game',
   },
   game: {
     authSaveGuest: 'Save your guest before entering the room.',
@@ -233,6 +232,7 @@ export const en = {
     hellHandHome: {
       actions: {
         cards: 'Cards',
+        howToPlay: 'How To Play',
         mercenaries: 'Mercenaries',
         play: 'Play',
         rooms: 'Rooms',

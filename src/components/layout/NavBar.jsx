@@ -211,6 +211,7 @@ export function NavBar({ isCollapsed, onToggle }) {
       <GameSettingsModal
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
+        variant="classic"
       />
       <LanguageSettingsModal
         open={isLanguageOpen}

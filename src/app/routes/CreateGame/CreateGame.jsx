@@ -409,13 +409,13 @@ export function CreateGame() {
       </div>
       <div className="absolute inset-0 z-0 bg-background/80 backdrop-blur-[2px]" />
 
-      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-6 px-6 py-8">
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-8">
         <div className="rounded-lg border border-border bg-card/85 p-8 shadow-2xl shadow-black/20 backdrop-blur md:p-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
             {t('pages.createGame.liveTable')}
           </p>
           <h1 className="mt-4 text-4xl font-black tracking-tight md:text-6xl">
-            Oh Hell Game
+           {t('pages.links.createGame.label')}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
             {t('pages.createGame.configureBefore')}

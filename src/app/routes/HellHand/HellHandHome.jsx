@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Play,
   Settings,
   UserRound,
@@ -47,6 +48,13 @@ const actions = [
     icon: Wrench,
     labelKey: 'pages.hellHandHome.actions.workshop',
     path: '/hell-hand/workshop',
+    type: 'transition',
+  },
+  {
+    id: 'how-to-play',
+    icon: BookOpen,
+    labelKey: 'pages.hellHandHome.actions.howToPlay',
+    path: '/hell-hand/how-to-play',
     type: 'transition',
   },
   {
@@ -129,7 +137,7 @@ export function HellHandHome() {
       </div>
 
       <section
-        className={`relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 py-8 transition duration-700 sm:px-6 lg:px-8 ${
+        className={`relative z-10 mx-auto flex min-h-screen w-full max-w-[86.4rem] flex-col justify-center px-4 py-8 transition duration-700 sm:px-6 lg:px-8 ${
           isTransitioning ? 'scale-125 opacity-0 blur-sm' : 'scale-100 opacity-100 blur-0'
         }`}
       >
@@ -167,7 +175,7 @@ export function HellHandHome() {
           </div>
         </div>
 
-        <nav className="mt-8 grid w-full max-w-5xl gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <nav className="mt-8 grid w-full max-w-[86.4rem] gap-3 sm:grid-cols-2 lg:grid-cols-6">
           {actions.map((action) => {
             const Icon = action.icon;
             const content = (

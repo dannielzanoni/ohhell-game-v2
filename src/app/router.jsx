@@ -8,6 +8,7 @@ import { GameModeSelect } from './routes/GameModeSelect.jsx';
 import { HellHandGame } from './routes/HellHand/HellHandGame.jsx';
 import { Github } from './routes/Github/Github.jsx';
 import { HellHandHome } from './routes/HellHand/HellHandHome.jsx';
+import { HellHandHowToPlay } from './routes/HellHand/HellHandHowToPlay.jsx';
 import { HellHandRooms } from './routes/HellHand/HellHandRooms.jsx';
 import { HellHandWorkshop } from './routes/HellHand/HellHandWorkshop.jsx';
 import { Home } from './routes/Home/Home.jsx';
@@ -31,6 +32,7 @@ export function AppRouter() {
       <Routes>
         <Route path="/" element={<GameModeSelect />} />
         <Route path="/hell-hand" element={<HellHandHome />} />
+        <Route path="/hell-hand/how-to-play" element={<HellHandHowToPlay />} />
         <Route path="/hell-hand/game" element={<HellHandGame />} />
         <Route path="/hell-hand/rooms" element={<HellHandRooms />} />
         <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />

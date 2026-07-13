@@ -10,6 +10,7 @@ import gameBg from '@/assets/videos/game-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';
+import { LANGUAGE_STORAGE_KEY } from '@/i18n/index.js';
 import { authService } from '@/services/authService.js';
 import { getMyStats } from '@/services/statsService.js';
 
@@ -108,7 +109,7 @@ export function Home() {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const mobileTitleSecondLine = t('common.appNameShort2').trim();
+  const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en';
 
   const loadPlayerStats = useCallback(async () => {
     const token = authService.getAuthToken();
@@ -152,32 +153,13 @@ export function Home() {
       </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-[92rem] flex-col justify-center px-4 py-24 sm:px-6 lg:px-8 lg:py-8">
-        <div className="relative w-full max-w-[46rem] rounded-lg border border-white/15 bg-black/62 px-5 py-5 shadow-2xl shadow-black/40 backdrop-blur md:px-7">
-          <h1 className="hidden h-40 w-full overflow-hidden md:block">
-            <VideoText
-              src={gameBg}
-              fontSize={23}
-              fontWeight="900"
-              className="block size-full drop-shadow-2xl"
-              as="span"
-            >
-              {t('common.appName')}
+        <div className="relative w-full max-w-[46rem] rounded-lg border border-white/15 bg-black/62 px-5 py-4 shadow-2xl shadow-black/40 backdrop-blur md:px-7">
+          <h1 className="mt-7 hidden h-32 w-full overflow-hidden md:block">
+            <VideoText key={storedLanguage} src={gameBg} fontSize={storedLanguage.startsWith('en') ? 20 : 22} fontWeight="900" className="block size-full drop-shadow-2xl" as="span">
+              {t('common.appNameShort')}
             </VideoText>
           </h1>
-          <h1 className="grid w-full md:hidden">
-            <span className="block h-20 w-full overflow-hidden">
-              <VideoText src={gameBg} fontSize={24} fontWeight="900" className="block size-full drop-shadow-2xl" as="span">
-                {t('common.appNameShort')}
-              </VideoText>
-            </span>
-            {mobileTitleSecondLine ? (
-              <span className="block h-20 w-full overflow-hidden">
-                <VideoText src={gameBg} fontSize={28} fontWeight="900" className="block size-full drop-shadow-2xl" as="span">
-                  {mobileTitleSecondLine}
-                </VideoText>
-              </span>
-            ) : null}
-          </h1>
+          
           <div className="pointer-events-none absolute left-[calc(100%+1.5rem)] top-1/2 hidden h-48 w-60 -translate-y-1/2 lg:block" aria-hidden="true">
             <img src={card1Espada8Bit} alt="" className="absolute left-3 top-6 z-10 h-36 w-auto -rotate-[14deg] rounded shadow-2xl shadow-black/60" draggable="false" />
             <img src={card12Copas8Bit} alt="" className="absolute right-3 top-6 z-10 h-36 w-auto rotate-[14deg] rounded shadow-2xl shadow-black/60" draggable="false" />
@@ -212,7 +194,7 @@ export function Home() {
         </div>
       ) : null}
 
-      <GameSettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <GameSettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} variant="classic" />
     </main>
   );
 }

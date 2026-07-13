@@ -91,6 +91,7 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
     volume: defaultGamePreferences.volume,
   }));
   const isHellHand = variant === 'hellHand';
+  const showHomeMusicVolume = isHellHand;
 
   useEffect(() => {
     if (open) {
@@ -259,6 +260,8 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
                   }
                 />
 
+                {showHomeMusicVolume ? (
+                  <>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <button
@@ -311,6 +314,8 @@ export function GameSettingsModal({ onOpenChange, open, variant = 'default' }) {
                     )
                   }
                 />
+                  </>
+                ) : null}
               </div>
             ) : activeTab === 'deck' ? (
               <div className="grid gap-4" role="tabpanel">
