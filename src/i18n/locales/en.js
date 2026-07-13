@@ -36,6 +36,17 @@ export const en = {
     appNameShort: 'Oh Hell',
   },
   game: {
+    actionLog: {
+      cardLabel: '{{rank}} of {{suit}}',
+      cardPlayed: 'played {{card}}',
+      empty: 'Match actions will appear here.',
+      lifesLost: 'lost',
+      lifeUnit: 'life',
+      roundWon: 'won the round!',
+      setEnded: 'End of Set!',
+      setStarted: 'A new set started!',
+      title: 'Match log',
+    },
     authSaveGuest: 'Save your guest before entering the room.',
     classicInfo: {
       button: 'Info',

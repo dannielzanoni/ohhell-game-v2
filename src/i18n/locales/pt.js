@@ -36,6 +36,17 @@ export const pt = {
     appNameShort: 'Fodinha',
   },
   game: {
+    actionLog: {
+      cardLabel: '{{rank}} de {{suit}}',
+      cardPlayed: 'jogou {{card}}',
+      empty: 'As ações da partida aparecerão aqui.',
+      lifesLost: 'perdeu',
+      lifeUnit: 'de vida',
+      roundWon: 'ganhou a rodada!',
+      setEnded: 'Fim de Set!',
+      setStarted: 'Novo set começou!',
+      title: 'Log da partida',
+    },
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
     classicInfo: {
       button: 'Info',
