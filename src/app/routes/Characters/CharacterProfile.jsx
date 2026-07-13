@@ -133,6 +133,11 @@ function AbilityCard({ card, characterId, markerClass, t }) {
 function getOfficialMercenaryCards(characterId, cardDefinitions, decks) {
   const normalizedCharacterId = String(characterId).toLowerCase();
   const cardIds = new Set();
+  const cardsById = new Map(
+    [...cardDefinitions, ...decks.flatMap((deck) => deck?.cards || [])]
+      .filter((card) => card?.id || card?.card_id)
+      .map((card) => [String(card.id ?? card.card_id), card]),
+  );
 
   decks
     .filter((deck) => deck?.kind === 'official' || deck?.creator_id === 'official')
@@ -145,14 +150,14 @@ function getOfficialMercenaryCards(characterId, cardDefinitions, decks) {
       });
     });
 
-  return cardDefinitions.filter((card) =>
-    cardIds.has(String(card?.id ?? card?.card_id)),
-  );
+  return Array.from(cardIds, (cardId) => cardsById.get(cardId)).filter(Boolean);
 }
 
 export function CharacterProfile({ characterId }) {
   const { t } = useTranslation();
-  const [characters, setCharacters] = useState(mercenaries);
+  const [characters, setCharacters] = useState(() =>
+    mercenaries.map((mercenary) => ({ ...mercenary, cards: [] })),
+  );
 
   useEffect(() => {
     startHellHandHomeTheme();
@@ -173,13 +178,19 @@ export function CharacterProfile({ characterId }) {
           setCharacters(
             mergeMercenaries(remoteMercenaries).map((mercenary) => ({
               ...mercenary,
-              cards: getOfficialMercenaryCards(mercenary.id, cardDefinitions, decks),
+              cards: getOfficialMercenaryCards(
+                mercenary.apiId || mercenary.id,
+                cardDefinitions,
+                decks,
+              ),
             })),
           );
         }
       } catch {
         if (isActive) {
-          setCharacters(mercenaries);
+          setCharacters(
+            mercenaries.map((mercenary) => ({ ...mercenary, cards: [] })),
+          );
         }
       }
     }

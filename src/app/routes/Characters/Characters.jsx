@@ -159,7 +159,9 @@ function CharacterCard({
             asChild
             className="h-10 cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
           >
-            <Link to={character.path}>
+            <Link
+              to={`/hell-hand/mercenaries/${encodeURIComponent(character.name || character.id)}`}
+            >
               <Eye className="size-4" />
               {t('pages.characters.inspect')}
             </Link>
@@ -219,7 +221,9 @@ function CharacterPreviewCard({ canEdit, character, onEdit, t }) {
             asChild
             className="h-10 w-fit cursor-pointer gap-2 border border-amber-200/40 bg-amber-300 text-black shadow-lg shadow-black/30 hover:bg-amber-200 lg:h-9"
           >
-            <Link to={character.path}>
+            <Link
+              to={`/hell-hand/mercenaries/${encodeURIComponent(character.name || character.id)}`}
+            >
               <Eye className="size-4" />
               {t('pages.characters.inspect')}
             </Link>

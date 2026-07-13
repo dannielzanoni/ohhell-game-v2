@@ -28,7 +28,7 @@ export const mercenaries = [
   {
     id: 'artemis',
     accentClass: 'from-red-500/25 via-black/25 to-red-950/30',
-    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.42),transparent_48%)]',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.21),transparent_48%)]',
     banner: artemisBanner,
     bannerPosition: 'center 35%',
     icon: artemisIcon,
@@ -50,7 +50,7 @@ export const mercenaries = [
   {
     id: 'conjuruz',
     accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
-    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.21),transparent_48%)]',
     banner: conjuruzBanner,
     cards: [],
     icon: conjuruzIcon,
@@ -65,7 +65,7 @@ export const mercenaries = [
   {
     id: 'carmen',
     accentClass: 'from-green-500/25 via-black/25 to-green-950/30',
-    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.42),transparent_48%)]',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.21),transparent_48%)]',
     banner: carmenBanner,
     icon: carmenIcon,
     gameplayStyle: { icons: ['shield', 'mana'], label: 'Shield & Mana' },
@@ -84,7 +84,7 @@ export const mercenaries = [
   {
     id: 'gambler',
     accentClass: 'from-yellow-400/25 via-black/25 to-yellow-950/30',
-    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.42),transparent_48%)]',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.21),transparent_48%)]',
     banner: gamblerBanner,
     icon: gamblerIcon,
     gameplayStyle: { icons: ['bid'], label: 'High Stakes' },
@@ -105,7 +105,7 @@ export const mercenaries = [
   {
     id: 'leandro',
     accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
-    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
+    styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.21),transparent_48%)]',
     banner: leandroBanner,
     cards: [],
     icon: leandroIcon,
@@ -151,28 +151,28 @@ function getStyleVisuals(style) {
     return {
       accentClass: 'from-green-500/25 via-black/25 to-green-950/30',
       markerClass: 'bg-green-500',
-      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.42),transparent_48%)]',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.21),transparent_48%)]',
     };
   }
   if (normalized.includes('life') || normalized.includes('live') || normalized.includes('vida')) {
     return {
       accentClass: 'from-red-500/25 via-black/25 to-red-950/30',
       markerClass: 'bg-red-500',
-      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.42),transparent_48%)]',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.21),transparent_48%)]',
     };
   }
   if (normalized.includes('bid')) {
     return {
       accentClass: 'from-yellow-400/25 via-black/25 to-yellow-950/30',
       markerClass: 'bg-yellow-400',
-      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.42),transparent_48%)]',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.21),transparent_48%)]',
     };
   }
   if (normalized.includes('mana')) {
     return {
       accentClass: 'from-blue-500/25 via-black/25 to-blue-950/30',
       markerClass: 'bg-blue-500',
-      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.42),transparent_48%)]',
+      styleGlowClass: 'bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.21),transparent_48%)]',
     };
   }
 
@@ -199,19 +199,26 @@ export function mergeMercenaries(remoteMercenaries = []) {
   const merged = new Map(mercenaries.map((mercenary) => [mercenary.id, mercenary]));
 
   remoteMercenaries.forEach((remoteMercenary, index) => {
-    const id = remoteMercenary.id;
+    const apiId = remoteMercenary.id;
 
-    if (!id) {
+    if (!apiId) {
       return;
     }
 
-    const existing = merged.get(id) || {};
+    const normalizedName = String(remoteMercenary.name || '').toLowerCase();
+    const existing = Array.from(merged.values()).find((mercenary) =>
+      mercenary.id.toLowerCase() === String(apiId).toLowerCase() ||
+      mercenary.id.toLowerCase() === normalizedName ||
+      String(mercenary.name || '').toLowerCase() === normalizedName,
+    ) || {};
+    const id = existing.id || apiId;
     const gameplayStyle = getRemoteGameplayStyle(remoteMercenary) || existing.gameplayStyle;
     const styleVisuals = getStyleVisuals(gameplayStyle) || {};
 
     merged.set(id, {
       ...existing,
       id,
+      apiId,
       accentClass: styleVisuals.accentClass ||
         existing.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
       banner: remoteMercenary.banner_url || existing.banner,
@@ -238,7 +245,7 @@ export function mergeMercenaries(remoteMercenaries = []) {
       styleGlowClass: styleVisuals.styleGlowClass || existing.styleGlowClass,
       name: remoteMercenary.name || existing.name,
       passiveScript: remoteMercenary.passive_script || existing.passiveScript,
-      path: `/mercenaries/${id}`,
+      path: `${hellHandMercenariesPath}/${encodeURIComponent(remoteMercenary.name || id)}`,
       style: remoteMercenary.style || existing.style,
       subtitle: remoteMercenary.subtitle || existing.subtitle,
       temper: remoteMercenary.temper || existing.temper,
@@ -272,6 +279,7 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
 
       return {
         id,
+        apiId: id,
         accentClass: styleVisuals.accentClass || fallbackAccentClasses[index % fallbackAccentClasses.length],
         banner: remoteMercenary.banner_url || remoteMercenary.banner || '',
         cards: remoteMercenary.cards || remoteMercenary.deck || [],
@@ -295,7 +303,7 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
         styleGlowClass: styleVisuals.styleGlowClass,
         name: remoteMercenary.name,
         passiveScript: remoteMercenary.passive_script || remoteMercenary.passiveScript,
-        path: `/mercenaries/${id}`,
+        path: `${hellHandMercenariesPath}/${encodeURIComponent(remoteMercenary.name || id)}`,
         style: remoteMercenary.style,
         subtitle: remoteMercenary.subtitle,
         temper: remoteMercenary.temper,
@@ -318,5 +326,8 @@ export function normalizeRemoteMercenaries(remoteMercenaries = []) {
 export function findMercenary(id, source = mercenaries) {
   const normalizedId = String(id || '').toLowerCase();
 
-  return source.find((mercenary) => mercenary.id.toLowerCase() === normalizedId);
+  return source.find((mercenary) =>
+    mercenary.id.toLowerCase() === normalizedId ||
+    String(mercenary.name || '').toLowerCase() === normalizedId,
+  );
 }

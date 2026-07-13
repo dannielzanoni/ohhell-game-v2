@@ -36,11 +36,7 @@ export function AppRouter() {
         <Route path="/hell-hand/workshop" element={<HellHandWorkshop />} />
         <Route path="/hell-hand/game-playground" element={<GamePlayground />} />
         <Route path="/hell-hand/mercenaries" element={<Mercenaries />} />
-        <Route path="/hell-hand/mercenaries/Artemis" element={<CharacterProfile characterId="artemis" />} />
-        <Route path="/hell-hand/mercenaries/Carmen" element={<CharacterProfile characterId="carmen" />} />
-        <Route path="/hell-hand/mercenaries/Conjuruz" element={<CharacterProfile characterId="conjuruz" />} />
-        <Route path="/hell-hand/mercenaries/Gambler" element={<CharacterProfile characterId="gambler" />} />
-        <Route path="/hell-hand/mercenaries/Leandro" element={<CharacterProfile characterId="leandro" />} />
+        <Route path="/hell-hand/mercenaries/:mercenaryId" element={<CharacterProfileRoute />} />
         <Route element={<AppLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/create-game" element={<CreateGame />} />
@@ -50,12 +46,11 @@ export function AppRouter() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/characters" element={<Mercenaries />} />
           <Route path="/mercenaries" element={<Mercenaries />} />
-          <Route path="/mercenaries/:mercenaryId" element={<CharacterProfileRoute />} />
-          <Route path="/Artemis" element={<Navigate to="/mercenaries/Artemis" replace />} />
-          <Route path="/Carmen" element={<Navigate to="/mercenaries/Carmen" replace />} />
-          <Route path="/Conjuruz" element={<Navigate to="/mercenaries/Conjuruz" replace />} />
-          <Route path="/Gambler" element={<Navigate to="/mercenaries/Gambler" replace />} />
-          <Route path="/Leandro" element={<Navigate to="/mercenaries/Leandro" replace />} />
+          <Route path="/Artemis" element={<Navigate to="/hell-hand/mercenaries/Artemis" replace />} />
+          <Route path="/Carmen" element={<Navigate to="/hell-hand/mercenaries/Carmen" replace />} />
+          <Route path="/Conjuruz" element={<Navigate to="/hell-hand/mercenaries/Conjuruz" replace />} />
+          <Route path="/Gambler" element={<Navigate to="/hell-hand/mercenaries/Gambler" replace />} />
+          <Route path="/Leandro" element={<Navigate to="/hell-hand/mercenaries/Leandro" replace />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
           <Route path="/playground" element={<Playground />} />
           <Route path="/power-decks" element={<PowerDecks />} />
