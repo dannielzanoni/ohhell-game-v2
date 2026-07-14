@@ -9,7 +9,7 @@ import { avatars } from '@/components/auth/avatarOptions.js';
 const GUEST_AVATAR_STORAGE_KEY = 'ohhell_guest_avatar_id';
 const GUEST_NICKNAME_STORAGE_KEY = 'ohhell_guest_nickname';
 const REFRESH_TOKEN_STORAGE_KEY = 'REFRESH_TOKEN';
-const ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 30;
+const ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 0;
 const MISSING_REFRESH_TOKEN_CODE = 'MISSING_REFRESH_TOKEN';
 let pendingAuthRefresh = null;
 let pendingAuthHydration = null;
@@ -287,9 +287,9 @@ export async function hydrateAuthSession() {
       }
 
       try {
-        const response = await refreshAuth();
+        const response = await refreshAuthIfNeeded();
 
-        return response?.token || getAuthToken();
+        return response?.token || response || getAuthToken();
       } catch (error) {
         if (error?.status === 0) {
           return token;
