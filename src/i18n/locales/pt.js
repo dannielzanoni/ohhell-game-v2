@@ -89,6 +89,7 @@ export const pt = {
     playCardError: 'Não foi possível jogar a carta.',
     powerCard: 'Carta de poder',
     powerCardDragToTarget: 'Arraste esta carta de poder até o avatar de um jogador.',
+    multiTargetUnavailable: 'A seleção de múltiplos alvos ainda não está disponível neste cliente.',
     powerCardTargetError: 'Nenhum alvo válido para esta carta de poder.',
     powerCardUseError: 'Não foi possível usar a carta de poder.',
     mana: 'Mana',
@@ -563,6 +564,7 @@ export const pt = {
       cardTypes: {
         instant: 'Instantanea',
         interactive: 'Interativa',
+        multi_targetable: 'Com múltiplos alvos',
         targetable: 'Com alvo',
       },
       fields: {
@@ -654,6 +656,7 @@ export const pt = {
       cardTypes: {
         instant: 'Instantanea',
         interactive: 'Interativa',
+        multi_targetable: 'Com múltiplos alvos',
         targetable: 'Com alvo',
       },
       kind: {

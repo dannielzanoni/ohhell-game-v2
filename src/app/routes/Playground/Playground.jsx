@@ -95,19 +95,20 @@ const emptyDraft = {
 
 function readScriptCardMetadata(luaScript, fallback = {}) {
   const script = String(luaScript || '');
-  const typeMatch = script.match(/\btype\s*=\s*PowerCardType\.(Instant|Targetable|Interactive)\b/);
+  const typeMatch = script.match(/\btype\s*=\s*PowerCardType\.(Instant|Targetable|MultiTargetable|Interactive)\b/);
   const manaCostMatch = script.match(/\bmana_cost\s*=\s*(-?\d+)\b/);
   const quantityMatch = script.match(/\bquantity\s*=\s*(\d+)\b/);
   const normalizedType = {
     Instant: 'instant',
     Interactive: 'interactive',
+    MultiTargetable: 'multi_targetable',
     Targetable: 'targetable',
   }[typeMatch?.[1]];
 
   return {
     cardType:
       normalizedType ||
-      (['instant', 'targetable', 'interactive'].includes(fallback.cardType)
+      (['instant', 'targetable', 'multi_targetable', 'interactive'].includes(fallback.cardType)
         ? fallback.cardType
         : 'instant'),
     manaCost:

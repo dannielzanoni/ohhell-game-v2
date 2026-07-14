@@ -89,6 +89,7 @@ export const en = {
     playCardError: 'Could not play the card.',
     powerCard: 'Power card',
     powerCardDragToTarget: 'Drag this power card onto a player avatar.',
+    multiTargetUnavailable: 'Multi-target selection is not available in this client yet.',
     powerCardTargetError: 'No valid target for this power card.',
     powerCardUseError: 'Could not use the power card.',
     mana: 'Mana',
@@ -563,6 +564,7 @@ export const en = {
       cardTypes: {
         instant: 'Instant',
         interactive: 'Interactive',
+        multi_targetable: 'Multi-targetable',
         targetable: 'Targetable',
       },
       fields: {
@@ -654,6 +656,7 @@ export const en = {
       cardTypes: {
         instant: 'Instant',
         interactive: 'Interactive',
+        multi_targetable: 'Multi-targetable',
         targetable: 'Targetable',
       },
       kind: {

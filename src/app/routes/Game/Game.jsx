@@ -2235,8 +2235,9 @@ function PowerCardHand({
       >
       {cards.map((card, index) => {
         const isTargetable = card.type === 'targetable';
+        const isMultiTargetable = card.type === 'multi_targetable';
         const cardReady = card?.state?.ready !== false;
-        const canUseCard = canUsePowerCards && cardReady;
+        const canUseCard = canUsePowerCards && cardReady && !isMultiTargetable;
         const canDrag = canUseCard && (isTargetable || canDiscardPowerCards);
         const imageSrc = card.image || card.image_url || '';
 
@@ -2250,6 +2251,8 @@ function PowerCardHand({
             title={
               !cardReady
                 ? card.state?.reason || card.description || card.name
+                : isMultiTargetable
+                ? t('game.multiTargetUnavailable')
                 : isTargetable
                 ? t('game.powerCardDragToTarget')
                 : card.description || card.name
@@ -4492,7 +4495,7 @@ export function Game() {
     }
   };
 
-  const handleUsePowerCard = (card, targetPlayerId = null) => {
+  const handleUsePowerCard = (card, targets = []) => {
     if (!socketRef.current) {
       setJoinError(t('game.connectionNotReady'));
       return;
@@ -4512,7 +4515,7 @@ export function Game() {
       return;
     }
 
-    if (card.type === 'targetable' && !targetPlayerId) {
+    if (card.type === 'targetable' && targets.length !== 1) {
       setJoinError(t('game.powerCardTargetError'));
       return;
     }
@@ -4521,7 +4524,7 @@ export function Game() {
       setJoinError('');
       clearTurnPromptSound();
       clearActionTimer();
-      usePowerCard(socketRef.current, card.id, targetPlayerId);
+      usePowerCard(socketRef.current, card.id, targets);
       setDraggingPowerCard(null);
       setPlayersById((previousPlayers) => {
         if (!resolvedCurrentPlayerId || !previousPlayers[resolvedCurrentPlayerId]) {
@@ -4581,7 +4584,7 @@ export function Game() {
       return;
     }
 
-    handleUsePowerCard(draggingPowerCard, targetPlayerId);
+    handleUsePowerCard(draggingPowerCard, [targetPlayerId]);
   };
 
   const handleActionTimerExpire = (expiredTimer = actionTimerRef.current) => {

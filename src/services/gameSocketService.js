@@ -102,14 +102,14 @@ export function putBid(socket, bid) {
   );
 }
 
-export function usePowerCard(socket, cardId, targetPlayerId) {
+export function usePowerCard(socket, cardId, targets = []) {
   sendGameCommand(
     socket,
     buildGameCommand({
       type: 'UsePowerCard',
       data: {
         card_id: cardId,
-        ...(targetPlayerId ? { target_player_id: targetPlayerId } : {}),
+        targets,
       },
     }),
   );
