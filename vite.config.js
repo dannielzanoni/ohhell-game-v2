@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 const gameVisualConfigPath = fileURLToPath(
-  new URL('./src/services/gameVisualConfig.json', import.meta.url),
+  new URL('./src/games/core/config/gameVisualConfig.json', import.meta.url),
 );
 
 function persistGameVisualConfig() {
@@ -17,7 +17,9 @@ function persistGameVisualConfig() {
         if (request.method !== 'PUT') return next();
 
         let body = '';
-        request.on('data', (chunk) => { body += chunk; });
+        request.on('data', (chunk) => {
+          body += chunk;
+        });
         request.on('end', async () => {
           try {
             const config = JSON.parse(body);
