@@ -1,8 +1,8 @@
 import { Flame, Swords } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import classicBg from '@/assets/backgrounds/game-table-bg.png';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import classicBg from '@/assets/classic/backgrounds/game-table-bg.png';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
 import { cn } from '@/lib/utils.js';
 
 const gameModes = [

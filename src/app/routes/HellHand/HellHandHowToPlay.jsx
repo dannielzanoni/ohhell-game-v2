@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
 
 export function HellHandHowToPlay() {
   const { t } = useTranslation();

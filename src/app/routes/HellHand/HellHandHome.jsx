@@ -9,10 +9,10 @@ import {
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
-import luaIcon from '@/assets/icons/hell-hand/Lua-Dark.svg';
-import selectMenuSound from '@/assets/sounds/hell-hand/ui/select_menu.mp3';
-import hellHandTitleVideo from '@/assets/videos/hell-hand-bg.mp4';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
+import luaIcon from '@/assets/hell_hand/icons/Lua-Dark.svg';
+import selectMenuSound from '@/assets/hell_hand/sounds/ui/select_menu.mp3';
+import hellHandTitleVideo from '@/assets/hell_hand/videos/hell-hand-bg.mp4';
 import { LoginCard } from '@/components/auth/LoginCard.jsx';
 import { GameSettingsModal } from '@/components/settings/GameSettingsModal.jsx';
 import { VideoText } from '@/components/ui/video-text.jsx';

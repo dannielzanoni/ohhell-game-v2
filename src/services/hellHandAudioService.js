@@ -1,4 +1,4 @@
-import hellHandHomeTheme from '@/assets/sounds/hell-hand/home-theme.mp3';
+import hellHandHomeTheme from '@/assets/hell_hand/sounds/home-theme.mp3';
 import {
   getGamePreferences,
   subscribeToGamePreferences,

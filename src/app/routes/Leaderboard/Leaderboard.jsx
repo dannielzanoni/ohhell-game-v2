@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, House, RefreshCw, Trophy, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBg from '@/assets/classic/backgrounds/game-table-bg.png';
 import { avatars } from '@/components/auth/AvatarEditModal.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { getLeaderboard } from '@/services/statsService.js';

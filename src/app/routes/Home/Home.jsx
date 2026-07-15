@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BookOpen, Crown, Play, Settings, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBg from '@/assets/classic/backgrounds/game-table-bg.png';
 import card1Espada8Bit from '@/assets/cards/spanish_8bit/1espada.png';
 import card3Paus8Bit from '@/assets/cards/spanish_8bit/3paus.png';
 import card12Copas8Bit from '@/assets/cards/spanish_8bit/12copas.png';

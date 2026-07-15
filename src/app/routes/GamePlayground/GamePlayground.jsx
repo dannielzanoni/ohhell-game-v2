@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Dialog,

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, Home, Play, Sparkles, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBg from '@/assets/classic/backgrounds/game-table-bg.png';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { cn } from '@/lib/utils.js';

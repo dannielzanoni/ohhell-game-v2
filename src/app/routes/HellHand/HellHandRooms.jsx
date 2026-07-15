@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, DoorOpen, House, Plus, RefreshCw, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
 import { Button } from '@/components/ui/button.jsx';
 import { gameTypes, getGameTypeOption } from '@/services/gameTypesService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';

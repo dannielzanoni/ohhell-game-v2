@@ -3,8 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.jsx';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
-import manaIcon from '@/assets/icons/hell-hand/mana.png';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
+import manaIcon from '@/assets/hell_hand/icons/mana.png';
 import {
   Dialog,
   DialogContent,

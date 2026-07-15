@@ -1,8 +1,8 @@
-import artemisCard1 from '@/assets/characters/artemis/cards/1.png';
-import artemisCard2 from '@/assets/characters/artemis/cards/2.png';
-import artemisCard4 from '@/assets/characters/artemis/cards/4.png';
-import gamblerCard2 from '@/assets/characters/gambler/cards/2.png';
-import gamblerCard4 from '@/assets/characters/gambler/cards/4.png';
+import artemisCard1 from '@/assets/hell_hand/characters/artemis/cards/1.png';
+import artemisCard2 from '@/assets/hell_hand/characters/artemis/cards/2.png';
+import artemisCard4 from '@/assets/hell_hand/characters/artemis/cards/4.png';
+import gamblerCard2 from '@/assets/hell_hand/characters/gambler/cards/2.png';
+import gamblerCard4 from '@/assets/hell_hand/characters/gambler/cards/4.png';
 import mockCardData from './mockCards.json';
 import { OFFICIAL_GAME_VISUAL_CONFIG } from '@/services/gameVisualConfigService.js';
 

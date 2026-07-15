@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
 import { Playground } from '@/app/routes/Playground/Playground.jsx';
 import { PowerDecks } from '@/app/routes/PowerDecks/PowerDecks.jsx';
 import { Button } from '@/components/ui/button.jsx';

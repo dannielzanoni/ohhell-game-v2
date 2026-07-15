@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Layers3 } from 'lucide-react';
 import cardBack from '@/assets/cards/back_cards/back_card.png';
-import gameTableBackground from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBackground from '@/assets/classic/backgrounds/game-table-bg.png';
 import { deckTypes } from '@/services/gamePreferencesService.js';
 import {
   ActionTimer,

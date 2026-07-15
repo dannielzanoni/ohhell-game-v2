@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { House } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBg from '@/assets/classic/backgrounds/game-table-bg.png';
 
 export function RoutePage({ children, title, description, homeButtonInHeader = false, homePath = '/', tableBackground = false }) {
   const { t } = useTranslation();

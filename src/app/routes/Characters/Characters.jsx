@@ -22,8 +22,8 @@ import {
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { environment } from '@/config/environment.js';
 import TiltedCard from '@/components/ui/TiltedCard.jsx';
-import hellHandBg from '@/assets/backgrounds/hell-hand-bg.avif';
-import switchCardSound from '@/assets/sounds/hell-hand/ui/switch_card.mp3';
+import hellHandBg from '@/assets/hell_hand/backgrounds/hell-hand-bg.avif';
+import switchCardSound from '@/assets/hell_hand/sounds/ui/switch_card.mp3';
 import { cn } from '@/lib/utils.js';
 import { getGamePreferences } from '@/services/gamePreferencesService.js';
 import { startHellHandHomeTheme } from '@/services/hellHandAudioService.js';

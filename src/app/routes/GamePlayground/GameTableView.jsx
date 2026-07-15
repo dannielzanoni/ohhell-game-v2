@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { Layers3, Plus, Sparkles, Trash2 } from 'lucide-react';
 import cardBack from '@/assets/cards/back_cards/back_card.png';
-import magicCardBack from '@/assets/hell hand/cards/back_card_magic.jpg';
+import magicCardBack from '@/assets/hell_hand/cards/back_card_magic.jpg';
 import { Button } from '@/components/ui/button.jsx';
-import gameTableBackground from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBackground from '@/assets/classic/backgrounds/game-table-bg.png';
 import { findMercenary, mercenaries } from '@/app/routes/Characters/characterData.js';
 import {
   BidControls,

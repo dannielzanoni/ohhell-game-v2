@@ -3,7 +3,7 @@ import { AlertCircle, DoorOpen, House, Plus, RefreshCw, Users } from 'lucide-rea
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
-import gameTableBg from '@/assets/backgrounds/game-table-bg.png';
+import gameTableBg from '@/assets/classic/backgrounds/game-table-bg.png';
 import { getGameTypeOption } from '@/services/gameTypesService.js';
 import { getLobbies } from '@/services/lobbyService.js';
 
