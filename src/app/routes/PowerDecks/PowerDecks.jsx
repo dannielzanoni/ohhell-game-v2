@@ -85,6 +85,29 @@ function normalizeMercenaryCardIds(mercenaryCardIds = {}) {
   );
 }
 
+function cardRefId(cardRef) {
+  return typeof cardRef === 'string' ? cardRef : cardRef?.card_id;
+}
+
+function cardRefVersions(cardRefs = []) {
+  return Object.fromEntries(
+    cardRefs
+      .map((cardRef) => [cardRefId(cardRef), cardRef?.version])
+      .filter(([cardId, version]) => cardId && Number.isInteger(version)),
+  );
+}
+
+function toCardRefs(cardIds, versions, cards) {
+  const cardsById = new Map(cards.map((card) => [card.id, card]));
+
+  return uniqueCardIds(cardIds)
+    .map((cardId) => {
+      const version = versions[cardId] ?? cardsById.get(cardId)?.version;
+      return Number.isInteger(version) ? { card_id: cardId, version } : null;
+    })
+    .filter(Boolean);
+}
+
 function removeCardFromMercenarySelections(mercenaryCardIds, cardId) {
   return normalizeMercenaryCardIds(
     Object.fromEntries(
@@ -97,10 +120,10 @@ function removeCardFromMercenarySelections(mercenaryCardIds, cardId) {
 }
 
 function getDeckCardSelections(deck) {
-  const sourceGenericCardIds = deck?.generic_card_ids || deck?.genericCardIds || [];
+  const sourceGenericCardRefs = deck?.generic_cards || deck?.genericCards || [];
   const sourceMercenaryCardIds =
-    deck?.mercenary_card_ids || deck?.mercenaryCardIds || {};
-  const sourceCardIds = uniqueCardIds(sourceGenericCardIds);
+    deck?.mercenary_cards || deck?.mercenaryCards || {};
+  const sourceCardIds = uniqueCardIds(sourceGenericCardRefs.map(cardRefId));
   const selectedCardIds = new Set();
   const genericCardIds = sourceCardIds.filter((cardId) => {
     if (selectedCardIds.has(cardId)) {
@@ -114,7 +137,7 @@ function getDeckCardSelections(deck) {
     Object.entries(sourceMercenaryCardIds)
       .map(([mercenaryId, cardIds]) => [
         mercenaryId,
-        uniqueCardIds(cardIds).filter((cardId) => {
+        uniqueCardIds(cardIds.map(cardRefId)).filter((cardId) => {
           if (selectedCardIds.has(cardId)) {
             return false;
           }
@@ -126,7 +149,17 @@ function getDeckCardSelections(deck) {
       .filter(([, cardIds]) => cardIds.length > 0),
   );
 
-  return { genericCardIds, mercenaryCardIds };
+  return {
+    genericCardIds,
+    mercenaryCardIds,
+    cardVersions: {
+      ...cardRefVersions(sourceGenericCardRefs),
+      ...Object.values(sourceMercenaryCardIds).reduce(
+        (versions, cardRefs) => ({ ...versions, ...cardRefVersions(cardRefs) }),
+        {},
+      ),
+    },
+  };
 }
 
 const hellHandEmbeddedThemeClassName =
@@ -141,6 +174,7 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
   const [activeBucket, setActiveBucket] = useState('generic');
   const [selectedGenericCardIds, setSelectedGenericCardIds] = useState([]);
   const [selectedMercenaryCardIds, setSelectedMercenaryCardIds] = useState({});
+  const [selectedCardVersions, setSelectedCardVersions] = useState({});
   const [deckName, setDeckName] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
   const [deckKind, setDeckKind] = useState('community');
@@ -186,7 +220,9 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
     void loadData();
   }, []);
 
-  const toggleCard = (cardId) => {
+  const toggleCard = (card) => {
+    const cardId = card.id;
+    setSelectedCardVersions((current) => ({ ...current, [cardId]: card.version }));
     if (activeBucket === 'generic') {
       if (selectedGenericCardIds.includes(cardId)) {
         setSelectedGenericCardIds((current) =>
@@ -239,12 +275,13 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
     setEditingDeckId('');
     setSelectedGenericCardIds([]);
     setSelectedMercenaryCardIds({});
+    setSelectedCardVersions({});
     setActiveBucket('generic');
     setCreateError('');
   };
 
   const editDeck = (deck) => {
-    const { genericCardIds, mercenaryCardIds } = getDeckCardSelections(deck);
+    const { genericCardIds, mercenaryCardIds, cardVersions } = getDeckCardSelections(deck);
 
     setDeckName(deck.name || '');
     setDeckDescription(deck.description || '');
@@ -253,6 +290,7 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
     setEditingDeckId(deck.id);
     setSelectedGenericCardIds(genericCardIds);
     setSelectedMercenaryCardIds(mercenaryCardIds);
+    setSelectedCardVersions(cardVersions);
     setActiveBucket('generic');
     setCreateError('');
   };
@@ -271,9 +309,16 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
     try {
       const payload = {
         description: deckDescription,
-        genericCardIds: uniqueCardIds(selectedGenericCardIds),
+        genericCards: toCardRefs(selectedGenericCardIds, selectedCardVersions, cards),
         kind: canCreateOfficial ? deckKind : 'community',
-        mercenaryCardIds: normalizeMercenaryCardIds(selectedMercenaryCardIds),
+        mercenaryCards: Object.fromEntries(
+          Object.entries(normalizeMercenaryCardIds(selectedMercenaryCardIds))
+            .map(([mercenaryId, cardIds]) => [
+              mercenaryId,
+              toCardRefs(cardIds, selectedCardVersions, cards),
+            ])
+            .filter(([, cardRefs]) => cardRefs.length > 0),
+        ),
         name: deckName,
         status: deckStatus,
       };
@@ -608,7 +653,7 @@ export function PowerDecks({ embedded = false, variant = 'default' } = {}) {
                       <button
                         type="button"
                         className="block w-full cursor-pointer text-left"
-                        onClick={() => toggleCard(card.id)}
+                        onClick={() => toggleCard(card)}
                       >
                         <div className="aspect-[768/1344] bg-muted">
                           {card.image_url ? (

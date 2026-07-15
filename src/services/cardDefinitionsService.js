@@ -11,9 +11,9 @@ export function getPowerDecks() {
 
 export function createPowerDeck({
   description,
-  genericCardIds,
+  genericCards,
   kind = 'community',
-  mercenaryCardIds,
+  mercenaryCards,
   name,
   status,
 }) {
@@ -22,9 +22,9 @@ export function createPowerDeck({
       auth: true,
       body: {
         description,
-        generic_card_ids: genericCardIds,
+        generic_cards: genericCards,
         kind,
-        mercenary_card_ids: mercenaryCardIds,
+        mercenary_cards: mercenaryCards,
         name,
         status,
       },
@@ -36,9 +36,9 @@ export function createPowerDeck({
 export function updatePowerDeck({
   deckId,
   description,
-  genericCardIds,
+  genericCards,
   kind = 'community',
-  mercenaryCardIds,
+  mercenaryCards,
   name,
   status,
 }) {
@@ -47,9 +47,9 @@ export function updatePowerDeck({
       auth: true,
       body: {
         description,
-        generic_card_ids: genericCardIds,
+        generic_cards: genericCards,
         kind,
-        mercenary_card_ids: mercenaryCardIds,
+        mercenary_cards: mercenaryCards,
         name,
         status,
       },
