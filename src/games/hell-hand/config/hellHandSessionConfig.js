@@ -1,0 +1,3 @@
+export const POWER_TURN_DELAY_BASE_SECONDS = 30;
+export const TURN_DELAY_CARD_SECONDS = 2;
+export const TURN_DELAY_POWER_CARD_SECONDS = 5;
