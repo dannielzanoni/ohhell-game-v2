@@ -3,22 +3,10 @@ import { AlertCircle, House, RefreshCw, Trophy, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import gameTableBg from '@/games/classic/assets/backgrounds/game-table-bg.png';
-import { avatars } from '@/features/auth/components/AvatarEditModal.jsx';
+import { resolveAvatarSrc } from '@/features/auth/model/avatarRegistry.js';
 import { Button } from '@/shared/ui/button.jsx';
 import { getLeaderboard } from '@/games/classic/api/stats.js';
 import { getClassicCardLabel } from '@/games/classic/presentation/cardLabels.js';
-
-function resolveAvatarSrc(picture) {
-  if (!picture) {
-    return '';
-  }
-
-  const avatar = avatars.find((item) => {
-    return item.picture === picture || item.id === picture || item.src === picture;
-  });
-
-  return avatar?.src || picture;
-}
 
 function getPlayerName(player, fallback) {
   if (player?.type === 'Anonymous') {

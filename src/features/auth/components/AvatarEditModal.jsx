@@ -4,9 +4,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui/button.jsx';
 import { cn } from '@/shared/lib/utils.js';
-import { avatarGroups } from './avatarOptions.js';
-
-export { avatarGroups, avatars } from './avatarOptions.js';
+import { avatarGroups } from '@/features/auth/model/avatarRegistry.js';
 
 export function AvatarEditModal({
   isOpen,
@@ -82,8 +80,7 @@ export function AvatarEditModal({
             aria-label={t('auth.closeModal')}
             className={cn(
               'cursor-pointer',
-              isHellHand &&
-                'text-red-100 hover:bg-red-700/30 hover:text-white',
+              isHellHand && 'text-red-100 hover:bg-red-700/30 hover:text-white',
             )}
             onClick={onClose}
           >
@@ -116,8 +113,7 @@ export function AvatarEditModal({
                       className={cn(
                         'mx-auto grid size-11 min-w-0 cursor-pointer place-items-center rounded-full p-0.5 ring-2 ring-transparent transition hover:scale-105 hover:ring-primary/70 focus:outline-none focus:ring-4 focus:ring-ring min-[380px]:size-12 sm:size-16 sm:p-1',
                         isSelected && 'ring-primary',
-                        isHellHand &&
-                          'hover:ring-red-300/80 focus:ring-red-500/45',
+                        isHellHand && 'hover:ring-red-300/80 focus:ring-red-500/45',
                         isHellHand && isSelected && 'ring-red-400',
                       )}
                       onClick={() => {

@@ -1,20 +1,14 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { LogOut, Maximize2, Minus, Pencil, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AvatarEditModal, avatars } from './AvatarEditModal.jsx';
+import { AvatarEditModal } from './AvatarEditModal.jsx';
 import googleIcon from '@/shared/assets/icons/google.svg';
 import { Button } from '@/shared/ui/button.jsx';
 import { TypingAnimation } from '@/shared/ui/typing-animation.jsx';
 import { environment } from '@/shared/config/environment.js';
 import { cn } from '@/shared/lib/utils.js';
 import { authService } from '@/features/auth/api/authService.js';
+import { avatars, resolveAvatar } from '@/features/auth/model/avatarRegistry.js';
 
 const GOOGLE_IDENTITY_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
@@ -28,9 +22,7 @@ function loadGoogleIdentityScript() {
   }
 
   return new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(
-      `script[src="${GOOGLE_IDENTITY_SCRIPT_SRC}"]`,
-    );
+    const existingScript = document.querySelector(`script[src="${GOOGLE_IDENTITY_SCRIPT_SRC}"]`);
 
     if (existingScript) {
       existingScript.addEventListener('load', () => resolve(), { once: true });
@@ -47,20 +39,14 @@ function loadGoogleIdentityScript() {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error('Failed to load Google Identity Services.'));
+    script.onerror = () => reject(new Error('Failed to load Google Identity Services.'));
     document.head.appendChild(script);
   });
 }
 
 function GoogleLogo() {
   return (
-    <svg
-      className="size-5"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
         fill="#4285F4"
         d="M21.805 10.023h-9.62v3.955h5.536c-.239 1.271-.957 2.35-2.036 3.066v2.548h3.294c1.928-1.775 3.041-4.39 3.041-7.49 0-.71-.064-1.397-.215-2.079z"
@@ -87,26 +73,13 @@ function getSavedAvatar() {
   return avatars.find((avatar) => avatar.id === savedAvatarId) || null;
 }
 
-function resolveAvatarFromPicture(picture) {
-  if (!picture) {
-    return null;
-  }
-
-  const avatar = avatars.find((item) => {
-    return item.picture === picture || item.id === picture || item.src === picture;
-  });
-
-  return avatar || { id: '', picture, src: picture };
-}
-
 function getInitialProfile() {
   const profile = authService.getCurrentProfile();
 
   return {
-    avatar: resolveAvatarFromPicture(profile.picture) || getSavedAvatar(),
+    avatar: resolveAvatar(profile.picture) || getSavedAvatar(),
     isGoogle: profile.isGoogle,
-    nickname:
-      profile.nickname || localStorage.getItem('ohhell_guest_nickname') || '',
+    nickname: profile.nickname || localStorage.getItem('ohhell_guest_nickname') || '',
   };
 }
 
@@ -131,16 +104,10 @@ export const LoginCard = forwardRef(function LoginCard(
     initialProfileRef.current = getInitialProfile();
   }
 
-  const [hasAuthToken, setHasAuthToken] = useState(() =>
-    Boolean(authService.getAuthToken()),
-  );
-  const [isGoogleAuth, setIsGoogleAuth] = useState(
-    () => initialProfileRef.current.isGoogle,
-  );
+  const [hasAuthToken, setHasAuthToken] = useState(() => Boolean(authService.getAuthToken()));
+  const [isGoogleAuth, setIsGoogleAuth] = useState(() => initialProfileRef.current.isGoogle);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(
-    () => initialProfileRef.current.avatar,
-  );
+  const [selectedAvatar, setSelectedAvatar] = useState(() => initialProfileRef.current.avatar);
   const [savedAvatarId, setSavedAvatarId] = useState(() => {
     return initialProfileRef.current.avatar?.id || '';
   });
@@ -160,7 +127,7 @@ export const LoginCard = forwardRef(function LoginCard(
 
   const syncProfileFromAuth = useCallback(() => {
     const profile = authService.getCurrentProfile();
-    const profileAvatar = resolveAvatarFromPicture(profile.picture);
+    const profileAvatar = resolveAvatar(profile.picture);
     const nextNickname = profile.nickname || '';
     const nextAvatarId = profileAvatar?.id || '';
 
@@ -233,9 +200,7 @@ export const LoginCard = forwardRef(function LoginCard(
       setGoogleError('');
 
       try {
-        const loginResponse = await authService.loginWithGoogle(
-          response.credential,
-        );
+        const loginResponse = await authService.loginWithGoogle(response.credential);
         const profile = syncProfileFromAuth();
 
         onSaved?.({
@@ -279,9 +244,7 @@ export const LoginCard = forwardRef(function LoginCard(
   const trimmedNickname = nickname.trim();
   const selectedAvatarId = selectedAvatar?.id || '';
   const canSaveProfile =
-    !hasAuthToken ||
-    trimmedNickname !== savedNickname ||
-    selectedAvatarId !== savedAvatarId;
+    !hasAuthToken || trimmedNickname !== savedNickname || selectedAvatarId !== savedAvatarId;
   const displayNickname = trimmedNickname || savedNickname || 'Guest';
   const shouldAnimateNickname = Boolean(savedNickname) && !canSaveProfile;
   const canRenderGoogleLogin = Boolean(environment.googleClientId) && !isGoogleAuth;
@@ -316,13 +279,7 @@ export const LoginCard = forwardRef(function LoginCard(
       isSaving,
       saveError,
     });
-  }, [
-    canSaveProfile,
-    hasAuthToken,
-    isSaving,
-    onProfileStateChange,
-    saveError,
-  ]);
+  }, [canSaveProfile, hasAuthToken, isSaving, onProfileStateChange, saveError]);
 
   useEffect(() => {
     if (!canRenderGoogleLogin) {
@@ -336,11 +293,7 @@ export const LoginCard = forwardRef(function LoginCard(
 
     loadGoogleIdentityScript()
       .then(() => {
-        if (
-          !isMounted ||
-          !googleButtonRef.current ||
-          !window.google?.accounts?.id
-        ) {
+        if (!isMounted || !googleButtonRef.current || !window.google?.accounts?.id) {
           return;
         }
 
@@ -466,8 +419,7 @@ export const LoginCard = forwardRef(function LoginCard(
                 <div
                   className={cn(
                     'relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-stone-200/25 bg-white shadow-sm transition',
-                    isHellHand &&
-                      'border-red-200/15 bg-stone-100 hover:border-red-300/45',
+                    isHellHand && 'border-red-200/15 bg-stone-100 hover:border-red-300/45',
                   )}
                 >
                   <img
@@ -588,12 +540,7 @@ export const LoginCard = forwardRef(function LoginCard(
             </span>
           </div>
 
-          <div
-            className={cn(
-              'min-w-0 flex-1 self-start pt-1 mt-2',
-              compact && 'mt-1 pt-0',
-            )}
-          >
+          <div className={cn('min-w-0 flex-1 self-start pt-1 mt-2', compact && 'mt-1 pt-0')}>
             <div
               className={cn(
                 'min-h-8 truncate text-2xl font-medium leading-none text-foreground',
@@ -688,18 +635,8 @@ export const LoginCard = forwardRef(function LoginCard(
 
         {canRenderGoogleLogin ? (
           <>
-            <div
-              className={cn(
-                'my-6 flex items-center gap-3',
-                compact && 'my-3 gap-2',
-              )}
-            >
-              <span
-                className={cn(
-                  'h-px flex-1 bg-border',
-                  isHellHand && 'bg-red-200/15',
-                )}
-              />
+            <div className={cn('my-6 flex items-center gap-3', compact && 'my-3 gap-2')}>
+              <span className={cn('h-px flex-1 bg-border', isHellHand && 'bg-red-200/15')} />
               <span
                 className={cn(
                   'text-xs font-semibold uppercase tracking-wide text-muted-foreground',
@@ -709,12 +646,7 @@ export const LoginCard = forwardRef(function LoginCard(
               >
                 {t('auth.or')}
               </span>
-              <span
-                className={cn(
-                  'h-px flex-1 bg-border',
-                  isHellHand && 'bg-red-200/15',
-                )}
-              />
+              <span className={cn('h-px flex-1 bg-border', isHellHand && 'bg-red-200/15')} />
             </div>
 
             <div className="grid justify-items-center gap-2">
@@ -735,17 +667,11 @@ export const LoginCard = forwardRef(function LoginCard(
                   className={cn(
                     'h-11 w-full gap-3',
                     compact && 'h-9 gap-2 text-xs',
-                    isHellHand &&
-                      'border-red-200/15 bg-black/45 text-red-100 hover:bg-black/45',
+                    isHellHand && 'border-red-200/15 bg-black/45 text-red-100 hover:bg-black/45',
                   )}
                 >
                   {isGoogleSubmitting ? (
-                    <i
-                      className={cn(
-                        'pi pi-spin pi-spinner text-base',
-                        compact && 'text-sm',
-                      )}
-                    />
+                    <i className={cn('pi pi-spin pi-spinner text-base', compact && 'text-sm')} />
                   ) : (
                     <GoogleLogo />
                   )}

@@ -4,7 +4,7 @@ import {
   getAuthToken,
   setAuthToken,
 } from '@/shared/api/apiClient.js';
-import { avatars } from '@/features/auth/components/avatarOptions.js';
+import { avatars } from '@/features/auth/model/avatarRegistry.js';
 
 const GUEST_AVATAR_STORAGE_KEY = 'ohhell_guest_avatar_id';
 const GUEST_NICKNAME_STORAGE_KEY = 'ohhell_guest_nickname';
@@ -60,15 +60,10 @@ function decodeAuthTokenPayload(token) {
     }
 
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      '=',
-    );
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
 
     const decodedPayload = atob(padded);
-    const payloadBytes = Uint8Array.from(decodedPayload, (character) =>
-      character.charCodeAt(0),
-    );
+    const payloadBytes = Uint8Array.from(decodedPayload, (character) => character.charCodeAt(0));
 
     return JSON.parse(new TextDecoder().decode(payloadBytes));
   } catch {
@@ -144,8 +139,7 @@ function getPlayerRole(player, claims) {
 
 export function isMissingAuthTokenError(error) {
   return (
-    error?.status === 401 &&
-    getAuthErrorMessage(error).toLowerCase().includes('missing auth token')
+    error?.status === 401 && getAuthErrorMessage(error).toLowerCase().includes('missing auth token')
   );
 }
 
@@ -163,8 +157,7 @@ function isInvalidAuthTokenError(error, hadAuthToken = Boolean(getAuthToken())) 
 function canFallbackToGuestAuth(error) {
   return (
     error?.code === MISSING_REFRESH_TOKEN_CODE ||
-    (error?.status === 401 &&
-      getAuthErrorMessage(error).toLowerCase().includes('refresh token'))
+    (error?.status === 401 && getAuthErrorMessage(error).toLowerCase().includes('refresh token'))
   );
 }
 
@@ -176,9 +169,7 @@ function shouldRefreshAccessToken(token) {
     return true;
   }
 
-  return (
-    expiresAt <= Math.floor(Date.now() / 1000) + ACCESS_TOKEN_REFRESH_SKEW_SECONDS
-  );
+  return expiresAt <= Math.floor(Date.now() / 1000) + ACCESS_TOKEN_REFRESH_SKEW_SECONDS;
 }
 
 export function clearAuthToken() {
@@ -208,12 +199,8 @@ function persistAuth(response) {
 }
 
 function getSavedGuestProfile(payload = {}) {
-  const savedNickname = canUseStorage()
-    ? localStorage.getItem(GUEST_NICKNAME_STORAGE_KEY)
-    : '';
-  const savedAvatarId = canUseStorage()
-    ? localStorage.getItem(GUEST_AVATAR_STORAGE_KEY)
-    : '';
+  const savedNickname = canUseStorage() ? localStorage.getItem(GUEST_NICKNAME_STORAGE_KEY) : '';
+  const savedAvatarId = canUseStorage() ? localStorage.getItem(GUEST_AVATAR_STORAGE_KEY) : '';
   const savedAvatar = avatars.find((avatar) => avatar.id === savedAvatarId);
   const nickname = String(payload.nickname ?? savedNickname ?? '').trim();
 
@@ -442,10 +429,7 @@ export async function withAuthRetry(request, payload) {
     try {
       await refreshAuth();
     } catch (refreshError) {
-      if (
-        playerBeforeRequest?.type !== 'Anonymous' ||
-        !canFallbackToGuestAuth(refreshError)
-      ) {
+      if (playerBeforeRequest?.type !== 'Anonymous' || !canFallbackToGuestAuth(refreshError)) {
         throw refreshError;
       }
 
