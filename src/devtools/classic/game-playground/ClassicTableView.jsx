@@ -6,12 +6,12 @@ import { deckTypes } from '@/features/settings/model/gamePreferences.js';
 import {
   ActionTimer,
   BidControls,
-  ClassicTableInfo,
-  PlayedCardAnimation,
   PlayerHand,
   PlayerSeat,
   TableCenter,
 } from '@/games/session/GameSessionPage.jsx';
+import { ClassicTableInfo } from '@/games/classic/components/session/ClassicTableInfo.jsx';
+import { PlayedCardAnimation } from '@/games/session/animations/SessionAnimations.jsx';
 import { getSeatPosition, PLAYER_ACCENT_COLORS } from '@/games/session/config/tablePresentation.js';
 
 function DeckMarker({ count }) {

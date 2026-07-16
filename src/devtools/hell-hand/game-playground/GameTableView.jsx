@@ -7,12 +7,12 @@ import gameTableBackground from '@/games/classic/assets/backgrounds/game-table-b
 import { findMercenary, mercenaries } from '@/games/hell-hand/mercenaries/mercenaries.js';
 import {
   BidControls,
-  PlayedCardAnimation,
   PlayerHand,
   PlayerSeat,
-  PowerCardHand,
   TableCenter,
 } from '@/games/session/GameSessionPage.jsx';
+import { PlayedCardAnimation } from '@/games/session/animations/SessionAnimations.jsx';
+import { PowerCardHand } from '@/games/hell-hand/components/session/HellHandSessionComponents.jsx';
 import { getSeatPosition } from '@/games/session/config/tablePresentation.js';
 
 function DeckMarker({ count, label, power = false }) {

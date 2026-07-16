@@ -76,3 +76,19 @@ Os módulos podem usar as seguintes pastas conforme a responsabilidade:
 | `pages`        | Pontos de entrada das rotas do módulo.                           |
 
 Configuração não deve ser usada como depósito genérico. Mapas que determinam força de cartas pertencem ao `model`; resolução de arquivos pertence a `assets`; cores e geometria da mesa pertencem à apresentação da sessão.
+
+## Estrutura interna da sessão
+
+`games/session/GameSessionPage.jsx` é o orquestrador da partida. Código novo não deve voltar a concentrar regras, efeitos ou componentes específicos nessa página:
+
+| Pasta/arquivo                   | Responsabilidade                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------ |
+| `flow/`                         | Fluxo compartilhado da partida: lobby, snapshots, jogadores, timers e controles de sessão. |
+| `sounds/`                       | Reprodução, seleção e ciclo de vida dos sons usados durante a sessão.                      |
+| `animations/`                   | Componentes animados e detecção de eventos que disparam animações.                         |
+| `classic/components/session/`   | UI de sessão exclusiva do Classic.                                                         |
+| `classic/model/`                | Regras puras de cartas e turnos do Classic.                                                |
+| `hell-hand/components/session/` | UI de sessão exclusiva do Hell Hand.                                                       |
+| `hell-hand/model/`              | Regras puras de cartas de poder do Hell Hand.                                              |
+
+Quando um comportamento for exclusivo de um jogo, ele deve ser implementado no módulo da variante e apenas composto pela sessão. `games/session` só deve conhecer ambas as variantes quando a coordenação entre elas for realmente necessária.

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import hellHandBg from '@/games/hell-hand/assets/backgrounds/hell-hand-bg.avif';
-import bidIcon from '@/games/hell-hand/assets/icons/bid.svg';
+import bidIcon from '@/shared/assets/icons/bid.svg';
 import heartIcon from '@/games/hell-hand/assets/icons/heart_1.svg';
 import heartTwoIcon from '@/games/hell-hand/assets/icons/heart_2.svg';
 import magicIcon from '@/games/hell-hand/assets/icons/magic.svg';
@@ -166,12 +166,7 @@ function MercenaryInfoPanel({ character }) {
           const iconKey = normalizeGameplayIconKey(icon);
           const iconSrc = gameplayIconSources[iconKey] || manaIcon;
 
-          return (
-            <StatIcon
-              key={`${character.id}-${iconKey}-${iconIndex}`}
-              src={iconSrc}
-            />
-          );
+          return <StatIcon key={`${character.id}-${iconKey}-${iconIndex}`} src={iconSrc} />;
         })}
       </span>
       {temper ? (
@@ -229,12 +224,7 @@ function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect
           displayOverlayContent
           overlayContent={
             <div className="relative flex size-full flex-col justify-between overflow-hidden rounded-lg border border-red-200/15 p-4 text-left text-white shadow-2xl shadow-black/45 sm:p-5">
-              <div
-                className={cn(
-                  'absolute inset-0 bg-gradient-to-br',
-                  character.accentClass,
-                )}
-              />
+              <div className={cn('absolute inset-0 bg-gradient-to-br', character.accentClass)} />
               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
               <MercenaryInfoPanel character={character} />
               {isActive && isLocked ? (
@@ -251,9 +241,7 @@ function HellHandCharacterCard({ character, isActive, isLocked, offset, onSelect
                     character.markerClass,
                   )}
                 />
-                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-                  {title}
-                </h2>
+                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{title}</h2>
                 <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-white/78 sm:leading-6">
                   {subtitle}
                 </p>
@@ -278,12 +266,7 @@ function HellHandCharacterPreviewCard({ character, isLocked, t }) {
         className="absolute inset-0 size-full object-cover"
         draggable="false"
       />
-      <div
-        className={cn(
-          'absolute inset-0 bg-gradient-to-br',
-          character.accentClass,
-        )}
-      />
+      <div className={cn('absolute inset-0 bg-gradient-to-br', character.accentClass)} />
       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       <MercenaryInfoPanel character={character} />
       {isLocked ? (
@@ -292,15 +275,8 @@ function HellHandCharacterPreviewCard({ character, isLocked, t }) {
         </span>
       ) : null}
       <div className="relative flex size-full flex-col justify-end p-4 sm:p-5">
-        <span
-          className={cn(
-            'mb-2 block h-1.5 w-14 rounded-full sm:mb-3',
-            character.markerClass,
-          )}
-        />
-        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-          {title}
-        </h2>
+        <span className={cn('mb-2 block h-1.5 w-14 rounded-full sm:mb-3', character.markerClass)} />
+        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{title}</h2>
         <p className="mt-2 max-w-[24rem] text-sm font-semibold leading-5 text-white/78 sm:leading-6">
           {subtitle}
         </p>
@@ -429,9 +405,7 @@ export function HellHandGame() {
       const decks = await getPowerDecks();
 
       setPowerDecks(
-        (Array.isArray(decks) ? decks : []).filter(
-          (deck) => (deck.status || 'valid') === 'valid',
-        ),
+        (Array.isArray(decks) ? decks : []).filter((deck) => (deck.status || 'valid') === 'valid'),
       );
       setPowerDeckId('');
     } catch (error) {
@@ -439,9 +413,7 @@ export function HellHandGame() {
       setPowerDeckId('');
 
       if (!isMissingAuthTokenError(error)) {
-        setPowerDeckError(
-          error.message || t('pages.createGame.powerDeckLoadError'),
-        );
+        setPowerDeckError(error.message || t('pages.createGame.powerDeckLoadError'));
       }
     } finally {
       setIsLoadingPowerDecks(false);
@@ -492,9 +464,7 @@ export function HellHandGame() {
     }
 
     playSwitchCardSound();
-    setActiveCharacterIndex((current) =>
-      current === 0 ? characters.length - 1 : current - 1,
-    );
+    setActiveCharacterIndex((current) => (current === 0 ? characters.length - 1 : current - 1));
   };
 
   const goToNextCharacter = () => {
@@ -562,16 +532,10 @@ export function HellHandGame() {
       });
       const lobbyGameType = lobby.game_type || GAME_TYPES.HELL_HAND;
 
-      localStorage.setItem(
-        `ohhell_lobby_lifes_${lobby.lobby_id}`,
-        String(hellHandDefaultLives),
-      );
+      localStorage.setItem(`ohhell_lobby_lifes_${lobby.lobby_id}`, String(hellHandDefaultLives));
       localStorage.setItem(`ohhell_lobby_game_type_${lobby.lobby_id}`, lobbyGameType);
       localStorage.setItem(`ohhell_lobby_power_deck_${lobby.lobby_id}`, powerDeckId);
-      localStorage.setItem(
-        `ohhell_lobby_character_${lobby.lobby_id}`,
-        selectedCharacterId,
-      );
+      localStorage.setItem(`ohhell_lobby_character_${lobby.lobby_id}`, selectedCharacterId);
 
       navigate(`/hell-hand/game/${lobby.lobby_id}`, {
         state: {
@@ -792,9 +756,7 @@ export function HellHandGame() {
                     : t('pages.createGame.powerDeckEmpty')}
               </span>
               {powerDeckError ? (
-                <span className="mt-2 block text-sm text-red-300">
-                  {powerDeckError}
-                </span>
+                <span className="mt-2 block text-sm text-red-300">{powerDeckError}</span>
               ) : null}
             </label>
 

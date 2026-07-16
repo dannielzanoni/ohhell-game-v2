@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getClassicCardStrength } from './cardRules.js';
+import {
+  getClassicCardStrength,
+  getClassicPlayableCards,
+  getStrongestClassicTurn,
+  removeClassicCardFromDeck,
+} from './cardRules.js';
 
 describe('getClassicCardStrength', () => {
   it('orders cards by the Classic rank and suit rules', () => {
@@ -24,5 +29,34 @@ describe('getClassicCardStrength', () => {
 
   it('treats an absent card as non-playable', () => {
     expect(getClassicCardStrength(null)).toBe(Number.NEGATIVE_INFINITY);
+  });
+});
+
+describe('Classic turn rules', () => {
+  const goldFour = { rank: 'Four', suit: 'Golds' };
+  const cupFive = { rank: 'Five', suit: 'Cups' };
+  const swordSix = { rank: 'Six', suit: 'Swords' };
+
+  it('selects the strongest turn using the upcard joker rule', () => {
+    const pile = [
+      { card: swordSix, player_id: 'one' },
+      { card: cupFive, player_id: 'two' },
+    ];
+    expect(getStrongestClassicTurn(pile, goldFour)?.player_id).toBe('two');
+  });
+
+  it('requires following the lead suit when possible', () => {
+    const cards = [goldFour, cupFive, { rank: 'Seven', suit: 'Cups' }];
+    expect(getClassicPlayableCards(cards, [{ card: cupFive }])).toEqual([
+      cupFive,
+      { rank: 'Seven', suit: 'Cups' },
+    ]);
+  });
+
+  it('removes only one matching card from the deck', () => {
+    expect(removeClassicCardFromDeck([goldFour, goldFour, cupFive], goldFour)).toEqual([
+      goldFour,
+      cupFive,
+    ]);
   });
 });

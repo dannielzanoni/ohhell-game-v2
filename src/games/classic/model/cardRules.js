@@ -42,3 +42,46 @@ export function getClassicCardStrength(card, upcard) {
 
   return nextRank[upcard?.rank] === card.rank ? baseValue + 100 : baseValue;
 }
+
+export function getStrongestClassicTurn(pile, upcard) {
+  return (pile || []).reduce((strongestTurn, turn) => {
+    if (!strongestTurn) {
+      return turn;
+    }
+
+    return getClassicCardStrength(turn.card, upcard) >
+      getClassicCardStrength(strongestTurn.card, upcard)
+      ? turn
+      : strongestTurn;
+  }, null);
+}
+
+export function getClassicPlayableCards(cards, pile) {
+  if (!cards?.length || !pile?.length) {
+    return cards || [];
+  }
+
+  const leadSuit = pile[0]?.card?.suit;
+
+  if (!leadSuit) {
+    return cards;
+  }
+
+  const matchingSuitCards = cards.filter((card) => card?.suit === leadSuit);
+  return matchingSuitCards.length ? matchingSuitCards : cards;
+}
+
+export function removeClassicCardFromDeck(deck, card) {
+  let wasRemoved = false;
+
+  return deck.filter((deckCard) => {
+    const isSameCard = deckCard?.rank === card?.rank && deckCard?.suit === card?.suit;
+
+    if (!wasRemoved && isSameCard) {
+      wasRemoved = true;
+      return false;
+    }
+
+    return true;
+  });
+}
