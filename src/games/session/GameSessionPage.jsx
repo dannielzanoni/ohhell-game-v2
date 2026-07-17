@@ -19,6 +19,7 @@ import {
   getStrongestClassicTurn as getStrongestTurn,
   removeClassicCardFromDeck as removeCardFromDeck,
 } from '@/games/classic/model/cardRules.js';
+import { getClassicTableBidFromPossibleBids } from '@/games/classic/model/tableBid.js';
 import { getClassicCardLabel as getCardLabel } from '@/games/classic/presentation/cardLabels.js';
 import { ClassicTableInfo } from '@/games/classic/components/session/ClassicTableInfo.jsx';
 import bidIcon from '@/shared/assets/icons/bid.svg';
@@ -1420,7 +1421,13 @@ export function GameSessionPage({
       if (Array.isArray(gameInfo.deck)) {
         updatePlayerDeck(gameInfo.deck);
         updateRoundCardCount(gameInfo.deck.length);
-        updateTableBid(getInitialSetCardCount(gameInfo, localPlayerIds));
+        const tableBidFromBackend =
+          activeGameType === GAME_TYPES.CLASSIC
+            ? getClassicTableBidFromPossibleBids(gameInfo.stage?.data?.possible_bids)
+            : null;
+        updateTableBid(
+          tableBidFromBackend ?? getInitialSetCardCount(gameInfo, localPlayerIds),
+        );
       }
 
       const nextPowerCardCount = Array.isArray(gameInfo.power_cards)
