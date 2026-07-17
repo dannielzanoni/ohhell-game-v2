@@ -1,0 +1,5 @@
+src/shared/assets/** filter=lfs diff=lfs merge=lfs -text
+src/hell-hand/assets/** filter=lfs diff=lfs merge=lfs -text
+src/classic/assets/** filter=lfs diff=lfs merge=lfs -text
+src/games/hell-hand/assets/** filter=lfs diff=lfs merge=lfs -text
+src/games/classic/assets/** filter=lfs diff=lfs merge=lfs -text
