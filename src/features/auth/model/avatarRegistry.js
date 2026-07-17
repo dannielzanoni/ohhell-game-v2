@@ -1,17 +1,17 @@
-const pngAvatars = import.meta.glob('/src/shared/assets/profile-pictures/*.png', {
+const staticAvatars = import.meta.glob('/src/shared/assets/profile-pictures/*.webp', {
   eager: true,
   import: 'default',
   query: '?url',
 });
 
-const gifAvatars = import.meta.glob('/src/shared/assets/profile-pictures/gifs/*.gif', {
+const animatedAvatars = import.meta.glob('/src/shared/assets/profile-pictures/gifs/*.webp', {
   eager: true,
   import: 'default',
   query: '?url',
 });
 
 function avatarNumber(path) {
-  return Number(path.match(/(\d+)\.(png|gif)$/)?.[1] || 0);
+  return Number(path.match(/(\d+)\.webp$/)?.[1] || 0);
 }
 
 function toAvatarList(entries, type) {
@@ -32,26 +32,26 @@ function getLegacyAvatarIdentity(picture) {
     .replace(/\\/g, '/')
     .split(/[?#]/)[0]
     .toLowerCase();
-  const match = normalizedPicture.match(/(?:^|\/)(?:gifs\/)?(\d+)\.(png|gif)$/);
+  const match = normalizedPicture.match(/(?:^|\/)(gifs\/)?(\d+)\.(png|gif|webp)$/);
 
   if (!match) {
     return null;
   }
 
   return {
-    order: Number(match[1]),
-    type: match[2],
+    order: Number(match[2]),
+    type: match[1] ? 'gif' : 'png',
   };
 }
 
 export const avatarGroups = [
   {
     title: 'Avatares',
-    avatars: toAvatarList(pngAvatars, 'png'),
+    avatars: toAvatarList(staticAvatars, 'png'),
   },
   {
     title: 'GIFs',
-    avatars: toAvatarList(gifAvatars, 'gif'),
+    avatars: toAvatarList(animatedAvatars, 'gif'),
   },
 ];
 

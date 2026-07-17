@@ -5,6 +5,7 @@ describe('avatarRegistry', () => {
   it('resolves the current catalog path', () => {
     const avatar = avatars.find((item) => item.id === 'png-1');
     expect(resolveAvatarSrc('/src/shared/assets/profile-pictures/1.png')).toBe(avatar.src);
+    expect(avatar.picture).toMatch(/\.webp$/);
   });
 
   it('resolves profile paths stored by the legacy frontend', () => {
