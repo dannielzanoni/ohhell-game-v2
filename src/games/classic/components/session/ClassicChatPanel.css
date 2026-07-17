@@ -1,0 +1,128 @@
+.classic-chat .cs-main-container,
+.classic-chat .cs-chat-container,
+.classic-chat .cs-message-list,
+.classic-chat .cs-message-list__scroll-wrapper {
+  border: 0;
+  background: transparent;
+}
+
+.classic-chat .cs-message-list {
+  padding: 0.5rem 0.35rem;
+}
+
+.classic-chat .cs-message__content {
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(39 39 42 / 92%);
+  color: rgb(244 244 245);
+  font-size: 0.75rem;
+}
+
+.classic-chat .cs-message--outgoing .cs-message__content {
+  border-color: rgb(252 211 77 / 25%);
+  background: rgb(120 53 15 / 88%);
+}
+
+.classic-chat .cs-message__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+  color: rgb(252 211 77);
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.classic-chat .cs-message__sender-name,
+.classic-chat .cs-message__sent-time {
+  display: block;
+}
+
+.classic-chat .cs-message__sender-name {
+  color: rgb(252 211 77);
+  font-weight: 800;
+}
+
+.classic-chat .cs-message__sent-time {
+  color: rgb(161 161 170);
+}
+
+.classic-chat .cs-message__avatar {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+}
+
+.classic-chat .cs-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  max-width: 2.5rem;
+  max-height: 2.5rem;
+  flex: 0 0 2.5rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid rgb(252 211 77 / 35%);
+  background: rgb(39 39 42);
+}
+
+.classic-chat .cs-avatar > img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.classic-chat .cs-message-input {
+  border-color: rgb(255 255 255 / 10%);
+  background: rgb(9 9 11 / 96%);
+  color: rgb(244 244 245);
+  padding: 0.5rem;
+}
+
+.classic-chat .classic-chat__character-counter {
+  display: block;
+  border: 0;
+  background: rgb(9 9 11 / 96%);
+}
+
+.classic-chat__character-count {
+  display: block;
+  padding: 0 0.75rem 0.3rem;
+  color: rgb(113 113 122);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+}
+
+.classic-chat .cs-message-input__content-editor-wrapper,
+.classic-chat .cs-message-input__content-editor-container,
+.classic-chat .cs-message-input__content-editor {
+  background: rgb(39 39 42);
+  color: rgb(244 244 245);
+}
+
+.classic-chat .cs-message-input--disabled,
+.classic-chat .cs-message-input--disabled .cs-message-input__content-editor-wrapper,
+.classic-chat .cs-message-input--disabled .cs-message-input__content-editor-container,
+.classic-chat .cs-message-input--disabled .cs-message-input__content-editor {
+  background: rgb(24 24 27);
+  color: rgb(161 161 170);
+}
+
+.classic-chat .cs-message-input__content-editor[data-placeholder]:empty::before {
+  color: rgb(161 161 170);
+}
+
+.classic-chat .cs-button--send {
+  color: rgb(252 211 77);
+}
+
+.classic-chat .cs-loader::before,
+.classic-chat .cs-loader::after {
+  border-color: rgb(252 211 77) transparent transparent;
+}

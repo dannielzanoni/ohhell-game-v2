@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Info, MessageSquareText } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronDown, Info, MessageCircle, MessageSquareText, ScrollText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CLASSIC_SUIT_CARDS } from '@/games/classic/assets/cardAssetRegistry.js';
 import {
@@ -9,6 +9,7 @@ import {
 import bidIcon from '@/shared/assets/icons/bid.svg';
 import { cn } from '@/shared/lib/utils.js';
 import { Button } from '@/shared/ui/button.jsx';
+import { ClassicChatPanel } from './ClassicChatPanel.jsx';
 
 function formatClassicActionLog(entry, t) {
   const playerName = entry.player ? (
@@ -55,11 +56,34 @@ function formatClassicActionLog(entry, t) {
   }
 }
 
+function normalizeNickname(value) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase();
+}
+
+function NotificationBadge({ count, label }) {
+  if (!count) return null;
+
+  return (
+    <span
+      aria-label={label}
+      className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[0.62rem] font-black leading-none text-white shadow-sm shadow-red-950/60"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
 export function ClassicTableInfo({
   bidSum = 0,
-  logs,
+  chatEnabled = false,
+  currentPlayer = null,
+  lobbyId,
+  logs = [],
   open,
   onToggle,
+  players = [],
   tableBid = 0,
   visualOffsetX = 0,
   visualOffsetY = 0,
@@ -67,13 +91,73 @@ export function ClassicTableInfo({
 }) {
   const { t } = useTranslation();
   const logEndRef = useRef(null);
-  const [logOpen, setLogOpen] = useState(true);
+  const lastChatMessageIdRef = useRef(null);
+  const lastLogIdRef = useRef(logs.at(-1)?.id ?? null);
+  const notificationLobbyIdRef = useRef(lobbyId);
+  const [activeTab, setActiveTab] = useState('chat');
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadLogCount, setUnreadLogCount] = useState(0);
+
+  const handleChatMessagesChange = useCallback(
+    (messages) => {
+      const latestMessage = messages.at(-1);
+      if (!latestMessage || latestMessage.id === lastChatMessageIdRef.current) return;
+
+      const previousMessageIndex = messages.findIndex(
+        (message) => message.id === lastChatMessageIdRef.current,
+      );
+      const newMessages =
+        previousMessageIndex >= 0 ? messages.slice(previousMessageIndex + 1) : messages;
+      lastChatMessageIdRef.current = latestMessage.id;
+
+      if (panelOpen && activeTab === 'chat') return;
+
+      const currentNickname = normalizeNickname(currentPlayer?.nickname);
+      const incomingMessageCount = newMessages.filter((message) => {
+        return normalizeNickname(message.user) !== currentNickname;
+      }).length;
+
+      if (incomingMessageCount) {
+        setUnreadChatCount((currentCount) => currentCount + incomingMessageCount);
+      }
+    },
+    [activeTab, currentPlayer?.nickname, panelOpen],
+  );
 
   useEffect(() => {
-    if (logOpen) {
-      logEndRef.current?.scrollIntoView({ block: 'nearest' });
+    if (notificationLobbyIdRef.current === lobbyId) return;
+    notificationLobbyIdRef.current = lobbyId;
+    lastChatMessageIdRef.current = null;
+    lastLogIdRef.current = logs.at(-1)?.id ?? null;
+    setUnreadChatCount(0);
+    setUnreadLogCount(0);
+  }, [lobbyId, logs]);
+
+  useEffect(() => {
+    const latestLog = logs.at(-1);
+    if (!latestLog || latestLog.id === lastLogIdRef.current) return;
+
+    const previousLogIndex = logs.findIndex((entry) => entry.id === lastLogIdRef.current);
+    const newLogCount = previousLogIndex >= 0 ? logs.length - previousLogIndex - 1 : logs.length;
+    lastLogIdRef.current = latestLog.id;
+
+    if (!(panelOpen && activeTab === 'log')) {
+      setUnreadLogCount((currentCount) => currentCount + newLogCount);
     }
-  }, [logOpen, logs]);
+  }, [activeTab, logs, panelOpen]);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    if (activeTab === 'chat') setUnreadChatCount(0);
+    if (activeTab === 'log') setUnreadLogCount(0);
+  }, [activeTab, panelOpen]);
+
+  useEffect(() => {
+    if (panelOpen && activeTab === 'log') {
+      logEndRef.current?.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [activeTab, logs, panelOpen]);
 
   return (
     <aside
@@ -141,33 +225,105 @@ export function ClassicTableInfo({
       ) : null}
 
       <section
+        id="classic-match-panel"
         className={cn(
           'flex flex-col overflow-hidden rounded-md border border-white/15 bg-black/95 text-white shadow-2xl shadow-black/70 backdrop-blur-md transition-[height,width] duration-200 ease-out',
-          logOpen
-            ? 'h-48 w-[min(25rem,calc(100vw-1.5rem))]'
-            : 'h-10 w-[min(11rem,calc(100vw-1.5rem))]',
+          panelOpen
+            ? 'h-[24rem] w-[min(25rem,calc(100vw-1.5rem))]'
+            : 'h-10 w-[min(12rem,calc(100vw-1.5rem))]',
         )}
       >
         <button
           type="button"
-          aria-controls="classic-action-log"
-          aria-expanded={logOpen}
+          aria-expanded={panelOpen}
           className="flex h-10 w-full shrink-0 cursor-pointer items-center gap-2 border-b border-white/10 px-3 text-left text-xs font-black text-zinc-200 transition-colors hover:bg-white/5 hover:text-amber-100"
-          onClick={() => setLogOpen((current) => !current)}
+          onClick={() => setPanelOpen((current) => !current)}
         >
           <MessageSquareText className="size-4 shrink-0 text-amber-300" />
-          <span className="flex-1 whitespace-nowrap">{t('game.actionLog.title')}</span>
+          <span className="flex-1 whitespace-nowrap">{t('game.matchPanel.title')}</span>
+          {!panelOpen ? (
+            <NotificationBadge
+              count={unreadChatCount}
+              label={t('game.matchPanel.unreadChat', { count: unreadChatCount })}
+            />
+          ) : null}
           <ChevronDown
             className={cn(
               'size-4 shrink-0 text-zinc-400 transition-transform duration-200',
-              logOpen && 'rotate-180',
+              panelOpen && 'rotate-180',
             )}
           />
         </button>
-        {logOpen ? (
+
+        <div
+          className={cn('min-h-0 flex-1 flex-col', panelOpen ? 'flex' : 'hidden')}
+          aria-hidden={!panelOpen}
+        >
           <div
+            role="tablist"
+            aria-label={t('game.matchPanel.title')}
+            className="grid h-10 shrink-0 grid-cols-2 border-b border-white/10 bg-zinc-950"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'chat'}
+              className={cn(
+                'inline-flex cursor-pointer items-center justify-center gap-1.5 border-b-2 px-2 text-xs font-black transition',
+                activeTab === 'chat'
+                  ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                  : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-200',
+              )}
+              onClick={() => setActiveTab('chat')}
+            >
+              <MessageCircle className="size-3.5" />
+              {t('game.matchPanel.chatTab')}
+              <NotificationBadge
+                count={unreadChatCount}
+                label={t('game.matchPanel.unreadChat', { count: unreadChatCount })}
+              />
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'log'}
+              className={cn(
+                'inline-flex cursor-pointer items-center justify-center gap-1.5 border-b-2 px-2 text-xs font-black transition',
+                activeTab === 'log'
+                  ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                  : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-200',
+              )}
+              onClick={() => setActiveTab('log')}
+            >
+              <ScrollText className="size-3.5" />
+              {t('game.matchPanel.logTab')}
+              <NotificationBadge
+                count={unreadLogCount}
+                label={t('game.matchPanel.unreadLog', { count: unreadLogCount })}
+              />
+            </button>
+          </div>
+
+          <div
+            role="tabpanel"
+            className={cn('min-h-0 flex-1', activeTab === 'chat' ? 'flex' : 'hidden')}
+          >
+            <ClassicChatPanel
+              currentPlayer={currentPlayer}
+              enabled={chatEnabled}
+              lobbyId={lobbyId}
+              onMessagesChange={handleChatMessagesChange}
+              players={players}
+            />
+          </div>
+
+          <div
+            role="tabpanel"
             id="classic-action-log"
-            className="min-h-0 flex-1 overflow-y-auto px-3 py-2"
+            className={cn(
+              'min-h-0 flex-1 overflow-y-auto px-3 py-2',
+              activeTab === 'log' ? 'block' : 'hidden',
+            )}
             aria-live="polite"
             aria-label={t('game.actionLog.title')}
           >
@@ -187,13 +343,13 @@ export function ClassicTableInfo({
             )}
             <span ref={logEndRef} aria-hidden="true" />
           </div>
-        ) : null}
+        </div>
       </section>
 
       <div
         className={cn(
           'grid gap-1.5 rounded-md border border-white/15 bg-black/90 p-3 text-xs font-bold text-zinc-200 shadow-xl shadow-black/50 backdrop-blur transition-[width] duration-200 ease-out',
-          logOpen ? 'w-[min(25rem,calc(100vw-1.5rem))]' : 'w-[min(11rem,calc(100vw-1.5rem))]',
+          panelOpen ? 'w-[min(25rem,calc(100vw-1.5rem))]' : 'w-[min(12rem,calc(100vw-1.5rem))]',
         )}
       >
         <div className="flex items-center justify-between gap-3">

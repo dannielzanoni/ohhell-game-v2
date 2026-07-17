@@ -24,7 +24,10 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
+    "@chatscope/chat-ui-kit-react": "^2.1.1",
+    "@chatscope/chat-ui-kit-styles": "^1.4.0",
     "@fontsource-variable/geist": "^5.2.9",
+    "@microsoft/signalr": "^10.0.0",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@tailwindcss/vite": "^4.3.1",
     "@uiw/react-textarea-code-editor": "^3.1.1",

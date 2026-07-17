@@ -2573,9 +2573,13 @@ export function GameSessionPage({
         {gameType === GAME_TYPES.CLASSIC ? (
           <ClassicTableInfo
             bidSum={bidSum}
+            chatEnabled
+            currentPlayer={currentPlayer}
+            lobbyId={lobbyId}
             logs={classicActionLogs}
             open={classicInfoOpen}
             onToggle={() => setClassicInfoOpen((current) => !current)}
+            players={tablePlayers}
             tableBid={tableBid}
             visualOffsetX={officialVisualConfig.tableInfoOffsetX || 0}
             visualOffsetY={officialVisualConfig.tableInfoOffsetY || 0}

@@ -47,6 +47,18 @@ export const en = {
       setStarted: 'A new set started!',
       title: 'Match log',
     },
+    chat: {
+      characterLimit: '{{max}} character limit',
+      placeholder: 'Type a message...',
+      sendError: 'The message could not be sent.',
+      status: {
+        connected: 'Chat connected',
+        connecting: 'Connecting to chat...',
+        disabled: 'Chat disabled',
+        offline: 'Chat offline',
+        reconnecting: 'Reconnecting to chat...',
+      },
+    },
     authSaveGuest: 'Save your guest before entering the room.',
     classicInfo: {
       bidSum: 'Players bid sum',
@@ -55,6 +67,13 @@ export const en = {
       suits: 'Suits (Trump: Card turned over on the table +1)',
       title: 'From weakest to strongest',
       tableBid: 'Table bid',
+    },
+    matchPanel: {
+      chatTab: 'Chat',
+      logTab: 'Match Log',
+      title: 'Match Chat/Log',
+      unreadChat: '{{count}} unread chat messages',
+      unreadLog: '{{count}} unread match log updates',
     },
     bidDone: 'Bid {{number}} done',
     bidError: 'Could not send the bid.',

@@ -92,3 +92,14 @@ Configuração não deve ser usada como depósito genérico. Mapas que determina
 | `hell-hand/model/`              | Regras puras de cartas de poder do Hell Hand.                                              |
 
 Quando um comportamento for exclusivo de um jogo, ele deve ser implementado no módulo da variante e apenas composto pela sessão. `games/session` só deve conhecer ambas as variantes quando a coordenação entre elas for realmente necessária.
+
+## Chat do Classic
+
+O chat da mesa Classic permanece dentro do módulo `games/classic`:
+
+- `api/chatHub.js` contém o adapter do cliente SignalR.
+- `hooks/useClassicChat.js` controla conexão, reconexão e mensagens.
+- `components/session/ClassicChatPanel.jsx` compõe a UI do ChatScope.
+- `ClassicTableInfo.jsx` apenas organiza as abas `Chat` e `Match Log`.
+
+O endpoint é configurado por `VITE_CHAT_HUB_URL`; sem essa variável, a aplicação usa `/chatHub` na mesma origem. O `lobbyId` vem da rota da sessão e percorre `GameSessionPage`, `ClassicTableInfo` e `ClassicChatPanel` até `useClassicChat`. O contrato suportado é `JoinLobby(lobbyId)`, `LeaveLobby(lobbyId)` e `SendMessage(lobbyId, user, message)` no servidor, mantendo `ReceiveMessage(user, message)` no cliente. O hook entra no grupo após conectar, repete a entrada após cada reconexão e tenta sair antes de encerrar a conexão. Como o evento recebido ainda não inclui id ou avatar, o frontend associa avatares pelo nickname conhecido na partida.

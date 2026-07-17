@@ -47,6 +47,18 @@ export const pt = {
       setStarted: 'Novo set começou!',
       title: 'Log da partida',
     },
+    chat: {
+      characterLimit: 'Limite de {{max}} caracteres',
+      placeholder: 'Digite uma mensagem...',
+      sendError: 'Não foi possível enviar a mensagem.',
+      status: {
+        connected: 'Chat conectado',
+        connecting: 'Conectando ao chat...',
+        disabled: 'Chat desativado',
+        offline: 'Chat offline',
+        reconnecting: 'Reconectando ao chat...',
+      },
+    },
     authSaveGuest: 'Salve seu guest antes de entrar na sala.',
     classicInfo: {
       bidSum: 'Somatória da mesa das bids',
@@ -55,6 +67,13 @@ export const pt = {
       suits: 'Naipes (Coringa: Carta virada na mesa + 1)',
       title: 'Da mais fraca à mais forte',
       tableBid: 'Bid da mesa',
+    },
+    matchPanel: {
+      chatTab: 'Chat',
+      logTab: 'Match Log',
+      title: 'Match Chat/Log',
+      unreadChat: '{{count}} mensagens não lidas no chat',
+      unreadLog: '{{count}} atualizações não lidas no log da partida',
     },
     bidDone: 'Bid {{number}} feito',
     bidError: 'Não foi possível enviar o bid.',
@@ -100,8 +119,7 @@ export const pt = {
     readySending: 'Enviando...',
     reconnecting: 'Reconectando na partida...',
     roomLink: 'Link da sala',
-    chooseMercenaryDescription:
-      'Selecione um contrato antes de entrar nesta mesa de Hell Hand.',
+    chooseMercenaryDescription: 'Selecione um contrato antes de entrar nesta mesa de Hell Hand.',
     chooseMercenaryTitle: 'Escolha seu mercenario',
     enterWithMercenary: 'Entrar',
     noMercenariesAvailable: 'Nenhum mercenario disponivel para entrar na sala.',
@@ -165,8 +183,7 @@ export const pt = {
       communityDeckConsentHint:
         'Entendo que esta partida vai usar cartas e balanceamento criados por jogadores, e que todos da lobby vao jogar com este deck da comunidade.',
       communityDeckConsentLabel: 'Confirmar uso de deck da comunidade',
-      communityDeckConsentRequired:
-        'Confirme o aviso do deck da comunidade antes de criar a sala.',
+      communityDeckConsentRequired: 'Confirme o aviso do deck da comunidade antes de criar a sala.',
       communityDeckWarningDescription:
         'Decks da comunidade podem incluir scripts experimentais, balanceamento incomum e pools de cartas criados por jogadores. Use conscientemente.',
       communityDeckWarningTitle: 'Aviso de Deck da Comunidade',
@@ -179,13 +196,12 @@ export const pt = {
       loadingPowerDecks: 'Carregando decks de poder...',
       livesNumber: 'Número de vidas',
       livesRangeError: 'Informe um número inteiro de {{min}} a {{max}}.',
-      livesRangeHint:
-        'Faixa permitida: {{min}}-{{max}}. Dano por rodada: {{roundDamage}}.',
+      livesRangeHint: 'Faixa permitida: {{min}}-{{max}}. Dano por rodada: {{roundDamage}}.',
       noOptions: 'Nenhuma opção encontrada.',
       powerDeck: 'Deck do Fodinha Power',
-      powerDeckEmpty: 'Nenhum deck de poder disponivel ainda. Crie um deck antes de iniciar Fodinha Power.',
-      powerDeckHint:
-        'Todos na lobby jogam com o deck exato selecionado pelo criador da sala.',
+      powerDeckEmpty:
+        'Nenhum deck de poder disponivel ainda. Crie um deck antes de iniciar Fodinha Power.',
+      powerDeckHint: 'Todos na lobby jogam com o deck exato selecionado pelo criador da sala.',
       powerDeckCardCount: '{{count}} cartas',
       powerDeckCreatedBy: 'Por {{name}}',
       powerDeckLoadError: 'Nao foi possivel carregar os decks de poder.',
@@ -193,8 +209,7 @@ export const pt = {
       powerDeckGroupCommunityHint:
         'Decks montados por jogadores com combinacoes proprias de cartas, separados de forma clara para voce saber quando esta escolhendo conteudo da comunidade.',
       powerDeckGroupOfficial: 'Decks oficiais',
-      powerDeckGroupOfficialHint:
-        'Decks curados que servem como base oficial do Fodinha Power.',
+      powerDeckGroupOfficialHint: 'Decks curados que servem como base oficial do Fodinha Power.',
       powerDeckOfficialCreator: 'Oficial',
       powerDeckOption: '{{name}} ({{count}} cartas)',
       powerDeckSelected: 'Selecionado',
@@ -245,7 +260,8 @@ export const pt = {
         title: 'Fodinha Classic',
       },
       hellHand: {
-        description: 'Uma mesa mais sombria com mercenarios, maldicoes, cartas de poder e apostas desesperadas.',
+        description:
+          'Uma mesa mais sombria com mercenarios, maldicoes, cartas de poder e apostas desesperadas.',
         title: 'Hell Hand',
       },
     },
@@ -259,7 +275,8 @@ export const pt = {
         settings: 'Ajustes',
         workshop: 'Workshop',
       },
-      description: 'Jogo Multiplayer de cartas. Jogue com mercenários, explore maldições com apostas valendo sua permanência na mesa.',
+      description:
+        'Jogo Multiplayer de cartas. Jogue com mercenários, explore maldições com apostas valendo sua permanência na mesa.',
       luaIntegration: ' Crie Cartas e Decks da comunidade com integração com Lua',
       eyebrow: 'Modo dark magic',
       pillOne: 'Apostas amaldicoadas',
@@ -298,19 +315,26 @@ export const pt = {
       title: 'Como jogar',
       rules: {
         cardAlt: '{{label}} - carta 8-bit',
-        cardsText: 'O baralho possui 40 cartas e é embaralhado no início de cada rodada. Na primeira rodada, cada jogador recebe 1 carta; a quantidade aumenta nas rodadas seguintes. Uma carta é virada no centro da mesa para definir o coringa.',
+        cardsText:
+          'O baralho possui 40 cartas e é embaralhado no início de cada rodada. Na primeira rodada, cada jogador recebe 1 carta; a quantidade aumenta nas rodadas seguintes. Uma carta é virada no centro da mesa para definir o coringa.',
         cardsTitle: 'Cartas',
-        intro1: 'Fodinha é um jogo que pode ser jogado com 2 a 10 jogadores. O último jogador que permanecer no jogo com vida é o vencedor.',
-        intro2: 'Cada participante começa o jogo com 1 a 5 vidas e perde uma ou mais conforme erra seu palpite nas rodadas.',
-        intro3: 'Em cada rodada, a quantidade de cartas recebidas aumenta. O objetivo é adivinhar quantas jogadas o jogador fará naquela rodada.',
-        intro4: 'Caso erre o palpite, perde a diferença entre o número anunciado e o número de jogadas que realmente fez. Por exemplo: se disse que faria 1 jogada, mas fez 2, perde 1 vida.',
-        jokerText: 'O valor do coringa é sempre uma posição acima da carta virada. Exemplo: carta virada 4, coringa 5.',
+        intro1:
+          'Fodinha é um jogo que pode ser jogado com 2 a 10 jogadores. O último jogador que permanecer no jogo com vida é o vencedor.',
+        intro2:
+          'Cada participante começa o jogo com 1 a 5 vidas e perde uma ou mais conforme erra seu palpite nas rodadas.',
+        intro3:
+          'Em cada rodada, a quantidade de cartas recebidas aumenta. O objetivo é adivinhar quantas jogadas o jogador fará naquela rodada.',
+        intro4:
+          'Caso erre o palpite, perde a diferença entre o número anunciado e o número de jogadas que realmente fez. Por exemplo: se disse que faria 1 jogada, mas fez 2, perde 1 vida.',
+        jokerText:
+          'O valor do coringa é sempre uma posição acima da carta virada. Exemplo: carta virada 4, coringa 5.',
         jokerTitle: 'Coringa',
         rankOrder: 'Valores, da mais fraca à mais forte',
         strengthTitle: 'Ordem de força das cartas e naipes',
         suitOrder: 'Naipes, do mais fraco ao mais forte',
         suits: { cups: 'Copas', golds: 'Ouro', clubs: 'Paus', swords: 'Espada' },
-        bidsText: 'Depois que todos recebem suas cartas, acontece a etapa de palpites. A soma dos palpites não pode ser igual ao total de cartas distribuídas para cada jogador. Assim, em toda rodada pelo menos um participante perderá vida.',
+        bidsText:
+          'Depois que todos recebem suas cartas, acontece a etapa de palpites. A soma dos palpites não pode ser igual ao total de cartas distribuídas para cada jogador. Assim, em toda rodada pelo menos um participante perderá vida.',
         bidsTitle: 'Palpites',
       },
     },
@@ -324,8 +348,7 @@ export const pt = {
       carouselEyebrow: 'Selecao',
       carouselTitle: 'Carrossel de mercenarios',
       chooseCharacter: 'Selecionar {{name}}',
-      description:
-        'Escolha um mercenario para inspecionar suas cartas e habilidades.',
+      description: 'Escolha um mercenario para inspecionar suas cartas e habilidades.',
       edit: 'Editar',
       eyebrow: 'Mercenarios',
       emptyCardsDescription:
@@ -398,8 +421,7 @@ export const pt = {
               title: 'Vermelho profundo',
             },
             signInBlood: {
-              description:
-                'Escolhe um jogador para perder 5 pontos de vida e comprar 3 cartas',
+              description: 'Escolhe um jogador para perder 5 pontos de vida e comprar 3 cartas',
               story:
                 'As marcas da floresta guiam Artemis quando todos os caminhos parecem fechados.',
               title: 'Assinar em sangue',
@@ -415,7 +437,8 @@ export const pt = {
           history:
             'Artemis guarda as rotas antigas da mesa e joga como quem leu a rodada antes dela comecar. Sua historia e feita de juramentos, protecao e escolhas precisas: ela prefere vencer por controle, segurando riscos ate encontrar a janela perfeita.',
           style: 'Controle',
-          subtitle: 'O sangue das suas irmãs não foram o suficiente para saciar a fome do diabo que trouxe ela de volta à vida.',
+          subtitle:
+            'O sangue das suas irmãs não foram o suficiente para saciar a fome do diabo que trouxe ela de volta à vida.',
           temper: 'Paciente',
           title: 'Artemis',
         },
@@ -424,22 +447,19 @@ export const pt = {
             carmenCard2: {
               description:
                 'Uma carta de abertura para Carmen controlar o ritmo da mesa e preparar a proxima jogada.',
-              story:
-                'Carmen aprendeu cedo que toda divida tem uma melodia propria.',
+              story: 'Carmen aprendeu cedo que toda divida tem uma melodia propria.',
               title: 'Compasso Marcado',
             },
             carmenCard4: {
               description:
                 'Pressiona jogadores que apostaram alto e recompensa Carmen quando a mesa hesita.',
-              story:
-                'Quando Carmen sorri, alguem ja aceitou um contrato sem perceber.',
+              story: 'Quando Carmen sorri, alguem ja aceitou um contrato sem perceber.',
               title: 'Contrato Rubro',
             },
             carmenCard5: {
               description:
                 'Transforma uma rodada perigosa em vantagem, punindo perdas mal calculadas.',
-              story:
-                'O ultimo acorde sempre chega depois que a mesa acredita que a musica acabou.',
+              story: 'O ultimo acorde sempre chega depois que a mesa acredita que a musica acabou.',
               title: 'Ultimo Acorde',
             },
           },
@@ -464,8 +484,7 @@ export const pt = {
             crossYourFingers: {
               description:
                 'Gira uma roleta entre todos os jogadores, o sorteado ganha 20 de vida, todos os outros perdem 5 vida, Gambler tem +30% de chance se for a que estiver com maior aposta',
-              story:
-                'Gambler já perdeu um dente em um jogo de roleta.',
+              story: 'Gambler já perdeu um dente em um jogo de roleta.',
               title: 'Cruze os dedos',
             },
             isRightfullyMine: {
@@ -490,25 +509,26 @@ export const pt = {
               title: 'Tudo ou Nada',
             },
             guabiru: {
-              description:
-                'Jogador alvo tem +2 em apostas no turno',
-              story:
-                'Assim como Gambler, Guabiru gosta de uma boa aposta.',
+              description: 'Jogador alvo tem +2 em apostas no turno',
+              story: 'Assim como Gambler, Guabiru gosta de uma boa aposta.',
               title: 'Guabiru',
             },
           },
           history:
             'O Gambler aprendeu a ouvir o barulho das cartas antes de apostar. Ele vive entre blefe e coragem, vendendo a ideia de caos enquanto calcula cada perda possivel. Quando entra na mesa, toda rodada parece ter uma segunda aposta escondida.',
           style: 'Risco',
-          subtitle: 'A vida nem sempre é uma questão de ter boas cartas. Às vezes, trata-se de fazer uma boa jogada com uma mão ruim.',
+          subtitle:
+            'A vida nem sempre é uma questão de ter boas cartas. Às vezes, trata-se de fazer uma boa jogada com uma mão ruim.',
           temper: 'Ousado',
           title: 'Gambler',
         },
         leandro: {
           cards: {},
-          history: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
+          history:
+            'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
           style: 'Mago',
-          subtitle: 'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
+          subtitle:
+            'Pouco tempo depois de começar o seu treinamento no exército, Leandro não só chamou atenção do general, mas de escolares, magos e até mesmo do Destino.',
           temper: 'Enigmatico',
           title: 'Leandro',
         },
@@ -677,8 +697,7 @@ export const pt = {
       savedEyebrow: 'Decks salvos',
       savedTitle: 'Decks: {{count}}',
       saveAsDraft: 'Salvar como rascunho',
-      saveAsDraftHint:
-        'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
+      saveAsDraftHint: 'Rascunhos aparecem somente para voce e nao podem iniciar partidas.',
       selectedCards: '{{count}} cartas selecionadas',
       selectedHint:
         'As cartas sao opcionais. Vincule cada carta uma vez ao deck da mesa ou ao grupo de um mercenario. A quantidade vem do script Lua da carta.',

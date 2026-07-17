@@ -111,9 +111,12 @@ export function ClassicTableView({
         ) : null}
         <ClassicTableInfo
           bidSum={bidSum}
+          chatEnabled={false}
+          currentPlayer={currentPlayer}
           logs={infoLogs}
           open={false}
           onToggle={() => {}}
+          players={players}
           tableBid={currentPlayer?.classicHand?.length || 0}
           visualOffsetX={visualConfig.tableInfoOffsetX || 0}
           visualOffsetY={visualConfig.tableInfoOffsetY || 0}
